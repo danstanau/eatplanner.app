@@ -91,7 +91,18 @@ function heading(kicker, title, description) {
 }
 function tag(text, extra = "") { return h("span", { className: `tag ${extra}`, text }); }
 function hasImageCredit(credit) {
-  return credit && ["creator", "sourceUrl", "license", "licenseUrl"].every((key) => typeof credit[key] === "string" && credit[key].trim());
+  return credit &&
+    ["creator", "sourceUrl", "license", "licenseUrl"].every((key) => typeof credit[key] === "string" && credit[key].trim()) &&
+    (credit.creatorUrl === undefined || (typeof credit.creatorUrl === "string" && credit.creatorUrl.trim()));
+}
+function photoCreditParts(credit) {
+  if (!hasImageCredit(credit)) return null;
+  const creator = h("a", { href: credit.creatorUrl ?? credit.sourceUrl, target: "_blank", rel: "noreferrer", text: credit.creator });
+  if (credit.creatorUrl) {
+    return ["Photo by ", creator, " on ", h("a", { href: credit.sourceUrl, target: "_blank", rel: "noreferrer", text: "Unsplash" }),
+      " · ", h("a", { href: credit.licenseUrl, target: "_blank", rel: "noreferrer", text: "Unsplash licence" })];
+  }
+  return ["Photo by ", creator, ` · ${credit.license} `, h("a", { href: credit.licenseUrl, target: "_blank", rel: "noreferrer", text: "licence" })];
 }
 function field(label, input, help) {
   return h("label", { className: "field" }, h("span", { text: label }), input, help ? h("small", { text: help }) : null);
@@ -522,10 +533,9 @@ function showRecipe(recipe, servings = recipe.servings, weekKey, day, updateUrl 
   renderStep();
   const allSteps = h("details", { className: "all-steps" }, h("summary", { text: "See the whole method" }),
     h("ol", {}, ...recipe.steps.map((text) => h("li", { text }))));
+  const credit = photoCreditParts(recipe.imageCredit);
   openModal(h("img", { className: "recipe-hero", src: recipe.image, alt: recipe.title }),
-    hasImageCredit(recipe.imageCredit) ? h("p", { className: "fineprint photo-credit" }, "Photo by ",
-      h("a", { href: recipe.imageCredit.sourceUrl, target: "_blank", rel: "noreferrer", text: recipe.imageCredit.creator }),
-      ` · ${recipe.imageCredit.license} `, h("a", { href: recipe.imageCredit.licenseUrl, target: "_blank", rel: "noreferrer", text: "licence" })) : null,
+    credit ? h("p", { className: "fineprint photo-credit" }, ...credit) : null,
     h("div", { className: "recipe-intro" }, h("p", { className: "eyebrow", text: `${CATEGORIES[recipe.category]} / ${PROTEINS[recipe.protein]}` }),
       h("h2", { id: "modal-title", text: recipe.title }), h("p", { className: "muted", text: recipe.description }),
       h("div", { className: "recipe-stats" }, tag(`${servings} servings`), tag(`${recipe.prepMinutes} min prep`), tag(`${recipe.cookMinutes} min cook`), tag(recipe.diet)),
@@ -639,10 +649,11 @@ function addRecipeDialog(existing, updateUrl = true) {
   const status = h("p", { className: "muted", role: "status" });
   const photoCredit = h("p", { className: "fineprint photo-credit", hidden: true });
   let imageCredit = hasImageCredit(existing?.imageCredit) ? existing.imageCredit : undefined;
+  const excludedPhotoSources = new Set(typeof imageCredit?.sourceUrl === "string" ? [imageCredit.sourceUrl] : []);
   const showPhotoCredit = () => {
-    if (!hasImageCredit(imageCredit)) { photoCredit.hidden = true; photoCredit.replaceChildren(); return; }
-    photoCredit.replaceChildren("Photo by ", h("a", { href: imageCredit.sourceUrl, target: "_blank", rel: "noreferrer", text: imageCredit.creator }),
-      ` · ${imageCredit.license} `, h("a", { href: imageCredit.licenseUrl, target: "_blank", rel: "noreferrer", text: "licence" }));
+    const parts = photoCreditParts(imageCredit);
+    if (!parts) { photoCredit.hidden = true; photoCredit.replaceChildren(); return; }
+    photoCredit.replaceChildren(...parts);
     photoCredit.hidden = false;
   };
   showPhotoCredit();
@@ -683,14 +694,17 @@ function addRecipeDialog(existing, updateUrl = true) {
     save.disabled = true;
     status.textContent = "Searching and visually checking food photos for a recipe match with no people. This can take up to two minutes...";
     try {
+      if (typeof imageCredit?.sourceUrl === "string") excludedPhotoSources.add(imageCredit.sourceUrl);
       const result = await api("/recipes/find-image", {
         title: title.value,
         description: description.value,
         protein: protein.value,
         ingredients: ingredients.value.split("\n").map((line) => line.split("|")[2]?.trim()).filter(Boolean),
+        excludeSourceUrls: [...excludedPhotoSources].slice(-20),
       });
       image = result.image;
       imageCredit = result.imageCredit;
+      if (typeof imageCredit?.sourceUrl === "string") excludedPhotoSources.add(imageCredit.sourceUrl);
       preview.src = image;
       preview.hidden = false;
       showPhotoCredit();

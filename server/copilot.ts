@@ -114,6 +114,7 @@ export async function extractRecipe(photo: Photo) {
 }
 
 export async function findRecipeImage(recipe: RecipeImageSearch) {
+  const { excludeSourceUrls, ...recipeDetails } = recipe;
   const auth = await requireCopilotAuth();
   const session = await client.createSession({
     model: process.env.COPILOT_VISION_MODEL || auth.model,
@@ -152,14 +153,14 @@ export async function findRecipeImage(recipe: RecipeImageSearch) {
           "containsPeople is true if ANY person or human body part is visible, including faces, hands or arms, even in the background.",
           "If you cannot inspect the image confidently, set isFoodPhoto=false, matchesRecipe=false and containsPeople=true.",
           "Briefly explain your assessment in reason.",
-          JSON.stringify(recipe),
+          JSON.stringify(recipeDetails),
         ].join("\n"),
         attachments: [{ type: "blob", data: photo.data, mimeType: photo.mimeType, displayName: "candidate-food-photo" }],
       }, photoAssessmentSchema, 20_000);
       const approved = assessment.isFoodPhoto && assessment.matchesRecipe && !assessment.containsPeople;
       if (!approved) console.info("[eatplanner.app] Photo rejected by vision:", assessment.reason);
       return approved;
-    });
+    }, { excludeSourceUrls: excludeSourceUrls ?? [] });
     completed = true;
     return image;
   } finally {

@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 import { searchRecipePhoto } from "./photo-search.js";
+import { recipeImageSchema } from "./recipes.js";
 
 test("photo search downloads a CC0 image and retains its source credit", async () => {
   const image = await readFile(new URL("../public/images/chicken.jpg", import.meta.url));
@@ -37,6 +38,87 @@ test("photo search downloads a CC0 image and retains its source credit", async (
     license: "CC0",
     licenseUrl: "https://creativecommons.org/publicdomain/zero/1.0/",
   });
+});
+
+test("Unsplash photo search hotlinks selected photos, tracks downloads and excludes prior results", async () => {
+  const image = await readFile(new URL("../public/images/chicken.jpg", import.meta.url));
+  const pages: number[] = [];
+  const tracked: string[] = [];
+  const fetcher: typeof fetch = async (input, init) => {
+    const url = new URL(input.toString());
+    if (url.hostname === "api.unsplash.com" && url.pathname === "/search/photos") {
+      assert.equal(new Headers(init?.headers).get("authorization"), "Client-ID test-key");
+      assert.equal(new Headers(init?.headers).get("accept-version"), "v1");
+      pages.push(Number(url.searchParams.get("page")));
+      return Response.json({
+        results: ["photo-one", "photo-two"].map((id) => ({
+          id,
+          urls: {
+            regular: `https://images.unsplash.com/${id}?auto=format&fit=crop&w=800`,
+            small: `https://images.unsplash.com/${id}?auto=format&fit=crop&w=300`,
+          },
+          links: {
+            html: `https://unsplash.com/photos/${id}`,
+            download_location: `https://api.unsplash.com/photos/${id}/download`,
+          },
+          user: { name: "Example photographer", links: { html: "https://unsplash.com/@example" } },
+        })),
+      });
+    }
+    if (url.hostname === "api.unsplash.com") {
+      tracked.push(url.pathname);
+      assert.equal(new Headers(init?.headers).get("authorization"), "Client-ID test-key");
+      assert.equal(new Headers(init?.headers).get("accept-version"), "v1");
+      return new Response(null, { status: 200 });
+    }
+    return new Response(image, { headers: { "content-type": "image/jpeg" } });
+  };
+  const dependencies = {
+    fetcher,
+    unsplashAccessKey: "test-key",
+    resolve: async () => [{ address: "93.184.216.34" }],
+  };
+  const first = await searchRecipePhoto("turkey soup unsplash test", async () => true, dependencies);
+  assert.equal(first.image, "https://images.unsplash.com/photo-one?auto=format&fit=crop&w=800");
+  assert.equal(recipeImageSchema.safeParse(first.image).success, true);
+  assert.equal(recipeImageSchema.safeParse("https://images.example.test/photo.jpg").success, false);
+  assert.equal(first.imageCredit.creator, "Example photographer");
+  assert.match(first.imageCredit.sourceUrl, /utm_source=eatplanner\.app/);
+  assert.match(first.imageCredit.creatorUrl ?? "", /utm_medium=referral/);
+  assert.equal(first.imageCredit.license, "Unsplash License");
+
+  const second = await searchRecipePhoto("turkey soup unsplash test", async () => true, {
+    ...dependencies, excludeSourceUrls: [first.imageCredit.sourceUrl],
+  });
+  assert.equal(second.image, "https://images.unsplash.com/photo-two?auto=format&fit=crop&w=800");
+  assert.deepEqual(pages, [1, 2]);
+  assert.deepEqual(tracked, ["/photos/photo-one/download", "/photos/photo-two/download"]);
+});
+
+test("photo search falls back to Openverse when Unsplash is unavailable", async () => {
+  const image = await readFile(new URL("../public/images/chicken.jpg", import.meta.url));
+  const sources: string[] = [];
+  const result = await searchRecipePhoto("beef brisket", async () => true, {
+    unsplashAccessKey: "test-key",
+    resolve: async () => [{ address: "93.184.216.34" }],
+    fetcher: async (input) => {
+      const url = new URL(input.toString());
+      sources.push(url.hostname);
+      if (url.hostname === "api.unsplash.com") return new Response(null, { status: 503 });
+      if (url.hostname === "api.openverse.org") {
+        return Response.json({ results: [{
+          url: "https://images.example.test/beef.jpg",
+          foreign_landing_url: "https://example.test/beef",
+          creator: "Example photographer",
+          license: "cc0",
+          license_url: "https://creativecommons.org/publicdomain/zero/1.0/",
+        }] });
+      }
+      return new Response(image, { headers: { "content-type": "image/jpeg" } });
+    },
+  });
+  assert.ok(result.image.startsWith("data:image/jpeg;base64,"));
+  assert.deepEqual(sources, ["api.unsplash.com", "api.openverse.org", "images.example.test"]);
 });
 
 test("photo search rejects image sources that resolve to private addresses", async () => {
@@ -104,7 +186,7 @@ test("empty photo searches return a helpful error rather than a generic server f
       queries.push(new URL(input.toString()).searchParams.get("q")!);
       return Response.json({ results: [] });
     },
-  }), { status: 422, message: /No suitable public-domain food-only photo/ });
+  }), { status: 422, message: /No suitable food-only photo/ });
   assert.deepEqual(queries, ["bean burrito", "burrito"]);
 });
 
@@ -140,7 +222,7 @@ test("photo search visually checks the original when its thumbnail is unavailabl
         ? new Response(null, { status: 424 })
         : new Response(image, { headers: { "content-type": "image/jpeg" } });
     },
-  }), { status: 422, message: /No suitable public-domain food-only photo/ });
+  }), { status: 422, message: /No suitable food-only photo/ });
   assert.deepEqual(downloads, ["/thumbnail.jpg", "/original.jpg"]);
   assert.equal(assessments, 1);
 });
@@ -189,7 +271,7 @@ test("photo search fails closed if visual assessment rejects a photo or fails", 
       : new Response(image, { headers: { "content-type": "image/jpeg" } }),
   };
   await assert.rejects(searchRecipePhoto("burrito", async () => false, dependencies),
-    { status: 422, message: /No suitable public-domain food-only photo/ });
+    { status: 422, message: /No suitable food-only photo/ });
   await assert.rejects(searchRecipePhoto("burrito", async () => {
     throw new Error("Vision model unavailable");
   }, dependencies), /Vision model unavailable/);

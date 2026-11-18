@@ -24,15 +24,18 @@ export const recipeContentSchema = z.object({
   notes: z.string().max(1500),
 });
 
-export const recipeImageSchema = z.string().max(3_000_000).refine(
-  (value) => /^\/images\/[a-z0-9-]+\.jpg$/.test(value) ||
-    /^data:image\/(?:jpeg|png|webp);base64,[A-Za-z0-9+/]+=*$/.test(value),
-  "Use a bundled photo or a JPEG, PNG or WebP image.",
-);
+export const recipeImageSchema = z.string().max(3_000_000).refine((value) => {
+  if (/^\/images\/[a-z0-9-]+\.jpg$/.test(value) || /^data:image\/(?:jpeg|png|webp);base64,[A-Za-z0-9+/]+=*$/.test(value)) return true;
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" && url.hostname === "images.unsplash.com" && !url.username && !url.password;
+  } catch { return false; }
+}, "Use a bundled photo, a JPEG, PNG or WebP image, or an Unsplash photo.");
 
 export const imageCreditSchema = z.object({
   creator: z.string().trim().min(1).max(200),
   sourceUrl: z.string().url().max(2000).refine((value) => value.startsWith("https://")),
+  creatorUrl: z.string().url().max(2000).refine((value) => value.startsWith("https://")).optional(),
   license: z.string().trim().min(1).max(100),
   licenseUrl: z.string().url().max(2000).refine((value) => value.startsWith("https://")),
 });
@@ -55,6 +58,7 @@ export const recipeImageSearchSchema = z.object({
   description: z.string().trim().max(400),
   protein: z.string().trim().max(30),
   ingredients: z.array(z.string().trim().min(1).max(100)).max(40),
+  excludeSourceUrls: z.array(z.string().url().max(2000)).max(20).optional(),
 });
 
 export const photoSchema = z.object({

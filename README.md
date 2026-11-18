@@ -37,6 +37,11 @@ to the browser. If `auto` doesn't select a vision-capable model for imports or
 photo search, set
 `COPILOT_VISION_MODEL` to one available on your account and restart the server.
 `COPILOT_MODEL`, `PORT` and `COPILOT_CLI_PATH` are also optional configuration.
+To prefer Unsplash for photo search, create an API app at
+[Unsplash Developers](https://unsplash.com/developers), then set
+`UNSPLASH_ACCESS_KEY` in the server environment or git-ignored `.env` file.
+The key stays on the server. Without it, photo search uses Openverse and
+Wikimedia Commons.
 
 ## The weekly flow
 
@@ -104,13 +109,16 @@ editable form and reports ambiguities. Nothing enters your library until you
 review the details, tick the review checkbox and save.
 
 When editing a recipe, choose **Find a photo with Copilot** to turn its details
-into a search phrase and look for a matching CC0 photo in Openverse, falling back
-to Wikimedia Commons if Openverse is unavailable or has no suitable photo. The photo
-appears in the editor for review and is saved only when you update the recipe;
-its creator and licence are shown with the recipe. This sends recipe details to
-Copilot and the photo sources. A broader dish-name search is tried if the first
-search has no match or its photo is unavailable or rejected. The sources'
-anonymous search allowances apply; no separate photo API key is needed.
+into a search phrase and look for a matching photo. When `UNSPLASH_ACCESS_KEY`
+is configured, Unsplash is searched first, followed by CC0 photos from Openverse
+and Wikimedia Commons. Otherwise, those two CC0 sources are used directly.
+Unsplash images stay hotlinked to Unsplash and display photographer attribution;
+CC0 images are stored with the recipe. The selected photo appears in the editor
+for review and is saved only when you update the recipe. This sends recipe
+details to Copilot and the photo sources. A broader dish-name search is tried
+if the first search has no match or its photo is unavailable or rejected.
+Previously shown photos are excluded when you try another search in the same
+edit session. Unsplash API rate limits apply.
 Copilot visually checks up to five candidate photos before returning one: it must
 show the prepared dish with no people, including hands or arms. Rejected photos
 are skipped; if none is suitable, the current recipe image is left unchanged.
@@ -195,6 +203,9 @@ npm start      # Run compiled server; keep public/ and data/ alongside dist/
 - Only photo transcription and the retained original AI generation API make
   model calls. Photos and their contents are sent to GitHub Copilot and its model
   provider. Copilot may retain local session data in its normal data directory.
+- Recipe photos selected from Unsplash are served from Unsplash in the browser,
+  as required by its API guidelines. Photo search calls Unsplash only when
+  `UNSPLASH_ACCESS_KEY` is configured.
 - Monitor your Copilot allowance and configure additional-usage controls on
   GitHub. This app does not enforce a monetary spending cap. One photo task
   (extraction or search) runs at a time; failed requests can still consume
@@ -206,9 +217,12 @@ npm start      # Run compiled server; keep public/ and data/ alongside dist/
 ## Photography
 
 Bundled photos are downloaded from Unsplash and served locally. Normal browsing
-does not make third-party image requests; using the photo-search button sends a
-search to Openverse and downloads the chosen CC0 image on the server. See the
-[Unsplash licence](https://unsplash.com/license).
+does not make third-party image requests unless a recipe uses an Unsplash API
+photo, which stays hotlinked to Unsplash. Photo search uses Unsplash when
+configured, then Openverse and Wikimedia Commons; chosen CC0 images are
+downloaded and stored locally. Unsplash photos include required photographer
+attribution and download tracking. See the
+[Unsplash licence](https://unsplash.com/license) and [API guidelines](https://help.unsplash.com/en/articles/2511245-unsplash-api-guidelines).
 
 | Local photo | Source |
 | --- | --- |

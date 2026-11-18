@@ -15,7 +15,20 @@ const openverseResponseSchema = z.object({
   })),
 });
 
-type PhotoCandidate = z.infer<typeof openverseResponseSchema>["results"][number];
+type PhotoCandidate = z.infer<typeof openverseResponseSchema>["results"][number] & {
+  provider?: "unsplash";
+  hotlinkUrl?: string;
+  downloadLocation?: string;
+  creatorUrl?: string;
+};
+const unsplashResponseSchema = z.object({
+  results: z.array(z.object({
+    id: z.string(),
+    urls: z.object({ regular: z.string().url(), small: z.string().url().optional() }),
+    links: z.object({ html: z.string().url(), download_location: z.string().url() }),
+    user: z.object({ name: z.string(), links: z.object({ html: z.string().url() }) }),
+  })),
+});
 const commonsResponseSchema = z.object({
   error: z.object({ info: z.string() }).optional(),
   query: z.object({
@@ -33,6 +46,42 @@ const commonsResponseSchema = z.object({
     })),
   }).optional(),
 });
+const unsplashPages = new Map<string, number>();
+
+function unsplashReferralUrl(value: string) {
+  const url = new URL(value);
+  url.searchParams.set("utm_source", "eatplanner.app");
+  url.searchParams.set("utm_medium", "referral");
+  return url.href;
+}
+
+async function searchUnsplash(phrase: string, fetcher: typeof fetch, accessKey: string): Promise<PhotoCandidate[]> {
+  const page = (unsplashPages.get(phrase) ?? 0) % 10 + 1;
+  if (!unsplashPages.has(phrase) && unsplashPages.size >= 100) {
+    const oldestPhrase = unsplashPages.keys().next().value;
+    if (oldestPhrase) unsplashPages.delete(oldestPhrase);
+  }
+  unsplashPages.set(phrase, page);
+  const url = new URL("https://api.unsplash.com/search/photos");
+  url.search = new URLSearchParams({ query: phrase, per_page: "5", page: String(page), content_filter: "high" }).toString();
+  const response = await fetcher(url, {
+    headers: { Authorization: `Client-ID ${accessKey}`, "Accept-Version": "v1" },
+    signal: AbortSignal.timeout(5_000),
+  });
+  if (!response.ok) throw new Error(`Unsplash photo search failed (${response.status}).`);
+  return unsplashResponseSchema.parse(await response.json()).results.map((photo) => ({
+    url: photo.urls.regular,
+    thumbnail: photo.urls.small,
+    foreign_landing_url: unsplashReferralUrl(photo.links.html),
+    creator: photo.user.name,
+    license: "unsplash",
+    license_url: "https://unsplash.com/license",
+    provider: "unsplash",
+    hotlinkUrl: photo.urls.regular,
+    downloadLocation: photo.links.download_location,
+    creatorUrl: unsplashReferralUrl(photo.user.links.html),
+  }));
+}
 
 async function searchOpenverse(phrase: string, fetcher: typeof fetch): Promise<PhotoCandidate[]> {
   const url = new URL("https://api.openverse.org/v1/images/");
@@ -68,6 +117,26 @@ async function searchCommons(phrase: string, fetcher: typeof fetch): Promise<Pho
         license_url: "https://creativecommons.org/publicdomain/zero/1.0/",
       }];
     });
+}
+
+async function trackUnsplashDownload(downloadLocation: string, fetcher: typeof fetch, accessKey: string) {
+  const url = new URL(downloadLocation);
+  if (url.origin !== "https://api.unsplash.com" || !/^\/photos\/[A-Za-z0-9_-]+\/download$/.test(url.pathname)) {
+    throw new Error("Unsplash returned an invalid download-tracking URL.");
+  }
+  const response = await fetcher(url, {
+    headers: { Authorization: `Client-ID ${accessKey}`, "Accept-Version": "v1" },
+    redirect: "error",
+    signal: AbortSignal.timeout(5_000),
+  });
+  if (!response.ok) throw new Error(`Unsplash download tracking failed (${response.status}).`);
+}
+
+function photoKey(value: string) {
+  const url = new URL(value);
+  url.search = "";
+  url.hash = "";
+  return url.href.replace(/\/$/, "");
 }
 
 function isPublicAddress(address: string) {
@@ -136,9 +205,10 @@ async function readLimited(response: Response, maxBytes: number) {
 export async function searchRecipePhoto(
   query: string | string[],
   approvePhoto: (photo: Photo) => Promise<boolean>,
-  dependencies: { fetcher?: typeof fetch; resolve?: ResolveAddresses } = {},
+  dependencies: { fetcher?: typeof fetch; resolve?: ResolveAddresses; unsplashAccessKey?: string; excludeSourceUrls?: string[] } = {},
 ) {
   const sourceFetch = dependencies.fetcher ?? fetch;
+  const accessKey = dependencies.unsplashAccessKey ?? process.env.UNSPLASH_ACCESS_KEY?.trim();
   const deadline = AbortSignal.timeout(85_000);
   const fetcher: typeof fetch = (input, init) => sourceFetch(input, {
     ...init,
@@ -147,8 +217,18 @@ export async function searchRecipePhoto(
   const resolve = dependencies.resolve ?? (async (hostname) => lookup(hostname, { all: true, verbatim: true }));
   let lastError: unknown;
   let candidates = 0;
-  const seen = new Set<string>();
-  sources: for (const source of [searchOpenverse, searchCommons]) {
+  const excludedSources = new Set((dependencies.excludeSourceUrls ?? []).map(photoKey));
+  const seenImages = new Set<string>();
+  const seenSources = new Set<string>();
+  const sources: Array<(phrase: string, fetcher: typeof fetch) => Promise<PhotoCandidate[]>> = [];
+  if (accessKey) {
+    const unsplashSource = async function searchUnsplashWithKey(phrase: string, fetcher: typeof fetch) {
+      return searchUnsplash(phrase, fetcher, accessKey);
+    };
+    sources.push(unsplashSource);
+  }
+  sources.push(searchOpenverse, searchCommons);
+  sources: for (const source of sources) {
     for (const phrase of new Set(typeof query === "string" ? [query] : query)) {
       if (candidates >= 5 || deadline.aborted) break sources;
       let results: PhotoCandidate[];
@@ -161,12 +241,10 @@ export async function searchRecipePhoto(
       }
       for (const result of results) {
         if (candidates >= 5 || deadline.aborted) break sources;
-        const key = new URL(result.url);
-        for (const name of [...key.searchParams.keys()]) {
-          if (name.startsWith("utm_")) key.searchParams.delete(name);
-        }
-        if (seen.has(key.href)) continue;
-        seen.add(key.href);
+        const key = photoKey(result.url);
+        const sourceKey = photoKey(result.foreign_landing_url);
+        if (seenImages.has(key) || seenSources.has(sourceKey) || excludedSources.has(sourceKey)) continue;
+        seenImages.add(key);
         candidates++;
         let downloaded: Awaited<ReturnType<typeof downloadPhoto>>;
         try {
@@ -176,12 +254,22 @@ export async function searchRecipePhoto(
           lastError = error;
           continue;
         }
+        seenSources.add(sourceKey);
         if (!await approvePhoto(downloaded.photo)) {
           console.info("[eatplanner.app] Rejected a photo that did not show the recipe without people.");
           continue;
         }
+        if (downloaded.downloadLocation && accessKey) {
+          try {
+            await trackUnsplashDownload(downloaded.downloadLocation, fetcher, accessKey);
+          } catch (error) {
+            console.error("[eatplanner.app] Unsplash download tracking failed:", error instanceof Error ? error.message : "Unexpected tracking error");
+            lastError = error;
+            continue;
+          }
+        }
         return {
-          image: `data:${downloaded.photo.mimeType};base64,${downloaded.photo.data}`,
+          image: downloaded.hotlinkUrl ?? `data:${downloaded.photo.mimeType};base64,${downloaded.photo.data}`,
           imageCredit: downloaded.imageCredit,
         };
       }
@@ -193,7 +281,7 @@ export async function searchRecipePhoto(
   if (lastError) {
     throw new AppError(502, "No suitable photo was found. A photo source is unavailable. Your current image is unchanged. Please try again later.");
   }
-  throw new AppError(422, "No suitable public-domain food-only photo was found for this recipe. Photos with people or an uncertain match are not used. Your current image is unchanged.");
+  throw new AppError(422, "No suitable food-only photo was found for this recipe. Photos with people or an uncertain match are not used. Your current image is unchanged.");
 }
 
 async function downloadPhoto(
@@ -201,20 +289,26 @@ async function downloadPhoto(
   fetcher: typeof fetch,
   resolve: ResolveAddresses,
 ) {
-  if (result.license.toLowerCase() !== "cc0") {
+  if (result.provider !== "unsplash" && result.license.toLowerCase() !== "cc0") {
     throw new Error("The photo search returned an image without a public-domain licence.");
   }
 
   const credit = imageCreditSchema.parse({
     creator: result.creator?.trim() || "Openverse contributor",
     sourceUrl: result.foreign_landing_url,
-    license: result.license.toUpperCase(),
+    ...(result.creatorUrl ? { creatorUrl: result.creatorUrl } : {}),
+    license: result.provider === "unsplash" ? "Unsplash License" : result.license.toUpperCase(),
     licenseUrl: result.license_url,
   });
   let lastError: unknown;
   for (const url of new Set(result.thumbnail ? [result.thumbnail, result.url] : [result.url])) {
     try {
-      return { photo: await downloadImage(url, fetcher, resolve), imageCredit: credit };
+      return {
+        photo: await downloadImage(url, fetcher, resolve),
+        imageCredit: credit,
+        ...(result.hotlinkUrl ? { hotlinkUrl: result.hotlinkUrl } : {}),
+        ...(result.downloadLocation ? { downloadLocation: result.downloadLocation } : {}),
+      };
     } catch (error) {
       console.error("[eatplanner.app] Image source failed:", error instanceof Error ? error.message : "Unexpected download error");
       lastError = error;
