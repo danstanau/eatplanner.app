@@ -185,6 +185,20 @@ export function createApp(services: Services, store = new Store(), options: { al
       return week;
     }));
   });
+  app.post("/api/weeks/:week/cooked", async (request, response) => {
+    const key = weekKeySchema.parse(request.params.week);
+    const input = z.object({
+      day: daySchema, recipeId: z.string().min(1).max(120), cooked: z.boolean(),
+    }).parse(request.body);
+    response.json(await store.update((state) => {
+      const week = requireWeek(state.weeks, key);
+      const meal = week.meals.find((item) => item.day === input.day);
+      if (!meal) throw new AppError(404, "There is no meal on that day.");
+      if (meal.recipe.id !== input.recipeId) throw new AppError(409, "This meal changed. Reload the week before marking it cooked.");
+      meal.cooked = input.cooked;
+      return week;
+    }));
+  });
   app.post("/api/weeks/:week/move", async (request, response) => {
     const key = weekKeySchema.parse(request.params.week);
     const input = revisionSchema.extend({ from: daySchema, to: daySchema }).parse(request.body);

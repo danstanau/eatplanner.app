@@ -242,7 +242,8 @@ function planningForm() {
   const existing = state.week;
   const key = state.weekKey;
   const selected = new Set(existing ? existing.meals.map((meal) => meal.day) : [0, 1, 2, 3, 4]);
-  const people = h("input", { type: "number", min: 1, max: 12, value: existing?.people ?? 2, required: true });
+  const adults = h("input", { type: "number", inputMode: "numeric", min: 0, max: 12, step: 1, value: existing?.adults ?? (existing?.people ?? 2) - (existing?.children ?? 0), required: true });
+  const children = h("input", { type: "number", inputMode: "numeric", min: 0, max: 12, step: 1, value: existing?.children ?? 0, required: true });
   const diet = select({ anything: "A bit of everything", vegetarian: "Vegetarian", vegan: "Vegan", pescatarian: "Pescatarian" }, existing?.rules.diet ?? "anything");
   const time = select({ 20: "20 minutes", 30: "30 minutes", 45: "45 minutes", 60: "60 minutes", 90: "90 minutes", 180: "Any time (up to 3 hours)" }, existing?.rules.maxMinutes ?? 60);
   const weeksCount = select(Object.fromEntries(Array.from({ length: 12 }, (_, index) => [index + 1, `${index + 1} ${index === 0 ? "week" : "weeks"}`])), 1);
@@ -282,7 +283,9 @@ function planningForm() {
       dayList, h("div", { className: "day-picker-footer" }, count, quickPick),
       existing ? null : field("Plan ahead", weeksCount, "Use these cooking nights and house rules for each week.")),
     h("div", { className: "form-section" }, h("p", { className: "eyebrow", text: "02 / A FEW HOUSE RULES" }),
-      h("div", { className: "form-grid" }, field("People at the table", people), field("How we eat", diet), field("Total time per meal", time)),
+      h("div", { className: "form-grid" }, field("Adults", adults), field("Children", children)),
+      h("p", { className: "muted", text: "Plan for 1 to 12 people in total. Each adult and child counts as one serving; adjust portions to suit your household." }),
+      h("div", { className: "form-grid" }, field("How we eat", diet), field("Total time per meal", time)),
       h("label", { className: "check-field" }, different, h("span", {}, h("strong", { text: "A different protein each dinner" }), h("small", { text: "No repeated primary protein in the week. Includes tofu, beans, eggs and cheese." }))),
       h("label", { className: "check-field" }, overlap, h("span", {}, h("strong", { text: "Some overlapping ingredients" }), h("small", { text: "Favour shared fresh ingredients, for a shorter shopping list and less waste." })))),
     h("div", { className: "form-bottom" }, h("p", { className: "muted", text: "Picked from your recipe collection. No AI credits needed." }), submit));
@@ -290,7 +293,8 @@ function planningForm() {
     event.preventDefault();
     run(async () => {
       const planning = {
-        days: [...selected], people: Number(people.value),
+        days: [...selected], people: Number(adults.value) + Number(children.value),
+        adults: Number(adults.value), children: Number(children.value),
         rules: { differentProteins: different.checked, overlapIngredients: overlap.checked, maxMinutes: Number(time.value), diet: diet.value },
         revision: existing?.revision,
       };
@@ -306,12 +310,18 @@ function planningForm() {
   updateDays();
   return form;
 }
+function peopleLabel(week) {
+  if (week.adults === undefined && week.children === undefined) return `${week.people} people`;
+  const children = week.children ?? 0;
+  const adults = week.adults ?? week.people - children;
+  return `${adults} ${adults === 1 ? "adult" : "adults"}, ${children} ${children === 1 ? "child" : "children"}`;
+}
 function renderWeek() {
   const week = state.week;
   const locked = week?.status === "confirmed";
   const actions = h("div", { className: "action-row" }, button("\u2190 All weeks", () => showWeeks(), "text-button"));
-  if (week) actions.append(button("Refresh", () => openWeek(state.weekKey), "text-button"), button("Share week \u2197", shareWeek, "button secondary small"));
-  const title = heading(locked ? "DINNER IS SORTED" : "A LITTLE FORWARD THINKING", weekLabel(state.weekKey), week ? `${week.meals.length} dinners \u00b7 ${week.people} people \u00b7 ${locked ? "Confirmed and locked in" : "A draft to make your own"}` : "Choose the nights. Set a few rules. Find your weeknight rhythm.");
+  if (week) actions.append(button("Share week \u2197", shareWeek, "button secondary small"));
+  const title = heading(locked ? "DINNER IS SORTED" : "A LITTLE FORWARD THINKING", weekLabel(state.weekKey), week ? `${week.meals.length} dinners \u00b7 ${peopleLabel(week)} \u00b7 ${locked ? "Confirmed and locked in" : "A draft to make your own"}` : "Choose the nights. Set a few rules. Find your weeknight rhythm.");
   if (!week) {
     view.replaceChildren(actions, title, planningForm());
     return;
@@ -331,7 +341,9 @@ function renderWeek() {
       const recipe = meal.recipe;
       const open = button("", () => showRecipe(recipe, week.people, week.week, index), "recipe-open");
       open.append(h("img", { src: recipe.image, alt: recipe.title, loading: "lazy", className: "meal-photo" }),
-        h("div", { className: "meal-copy" }, h("div", { className: "recipe-meta" }, tag(PROTEINS[recipe.protein]), h("span", { text: `${recipe.prepMinutes + recipe.cookMinutes} min` })), h("h3", { text: recipe.title }), h("p", { text: CATEGORIES[recipe.category] }), h("span", { className: "card-link", text: locked ? "Let's cook \u2192" : "Read recipe \u2192" })));
+        h("div", { className: "meal-copy" }, h("div", { className: "recipe-meta" }, tag(PROTEINS[recipe.protein]), h("span", { text: `${recipe.prepMinutes + recipe.cookMinutes} min` })), h("h3", { text: recipe.title }), h("p", { text: CATEGORIES[recipe.category] }),
+          meal.cooked ? h("span", { className: "tag green meal-completion" }, "\u2713 Cooked!")
+            : h("span", { className: "card-link", text: locked ? "Let's cook \u2192" : "Read recipe \u2192" })));
       card.append(open);
       if (!locked) {
         const move = select(Object.fromEntries(DAYS.map((name, dayIndex) => [dayIndex, `Move to ${name}`])), index);
@@ -391,6 +403,8 @@ async function swapDialog(day) {
 
 function shoppingPanel(week) {
   const include = h("input", { type: "checkbox", checked: true });
+  const oliveNote = h("input", { type: "checkbox", checked: true });
+  const justAdd = h("input", { type: "checkbox" });
   const text = h("textarea", { className: "shopping-text", rows: 12, readOnly: true, "aria-label": "Combined shopping list for copying" });
   const checklist = h("div", { className: "shopping-checklist" });
   const progress = h("p", { className: "shopping-progress", role: "status", "aria-live": "polite" });
@@ -405,7 +419,12 @@ function shoppingPanel(week) {
     if (saved === null && stored.length) localStorage.setItem(storageKey, JSON.stringify(stored));
   } catch (error) { console.error(error); notify("The saved shopping ticks could not be loaded. Your confirmed list is safe.", true); }
   function render() {
-    text.value = shoppingText(week.shoppingList, include.checked);
+    const items = shoppingText(week.shoppingList, include.checked);
+    const instructions = [
+      oliveNote.checked ? "Add these items to my cart" : "",
+      justAdd.checked ? "Just add, don't confirm" : "",
+    ].filter(Boolean);
+    text.value = instructions.length && items ? `${instructions.join("\n")}\n\n${items}` : items;
     checklist.replaceChildren();
     const visibleItems = week.shoppingList.filter((item) => include.checked || !item.pantry);
     visibleItems.forEach((item) => {
@@ -426,6 +445,8 @@ function shoppingPanel(week) {
     progress.textContent = items.length ? `${complete} of ${items.length} items checked` : "No items in this list.";
   }
   include.addEventListener("change", render);
+  oliveNote.addEventListener("change", render);
+  justAdd.addEventListener("change", render);
   render();
   const copyStatus = h("p", { className: "muted", role: "status", "aria-live": "polite" });
   async function copyList(openWoolworths = false) {
@@ -447,25 +468,34 @@ function shoppingPanel(week) {
       copyStatus.textContent = "Your browser couldn't copy automatically. The ingredients are selected: press and hold the text, then tap Copy. Open Woolworths after copying.";
       return;
     }
-    copyStatus.textContent = "Ingredients copied. In Woolworths, press and hold a list-entry or search field and choose Paste.";
+    copyStatus.textContent = oliveNote.checked || justAdd.checked
+      ? "Ingredients copied. Open Olive in the Woolworths app, paste into the chat and send."
+      : "Ingredients copied. Paste into Olive or a supported Woolworths list-entry field.";
     if (openWoolworths) window.location.assign("https://www.woolworths.com.au/");
   }
   return h("section", { className: "shopping-panel", id: "shopping" },
     h("div", { className: "section-bar" }, h("div", {}, h("p", { className: "eyebrow", text: "ONE LIST. ONE LESS TRIP." }), h("h2", { text: "A little list for the shops." })),
       button("Copy shopping list", () => copyList(), "button")),
-    h("p", { className: "muted", text: `Combined and scaled for ${week.people} people. Quantities are recipe amounts, not supermarket pack sizes. Pantry items are included unless you untick them.` }),
+    h("p", { className: "muted", text: `Combined and scaled for ${peopleLabel(week)}. Quantities are recipe amounts, not supermarket pack sizes. Pantry items are included unless you untick them.` }),
     h("label", { className: "check-field compact" }, include, h("span", { text: "Include pantry staples" })),
     h("div", { className: "shopping-layout" }, h("div", {}, progress, checklist), h("div", {},
       h("h3", { text: "Take your ingredients to Woolworths" }),
+      h("label", { className: "check-field compact" }, oliveNote,
+        h("span", { text: 'Include Olive instruction: "Add these items to my cart"' })),
+      h("label", { className: "check-field compact" }, justAdd,
+        h("span", {}, h("strong", { text: "Just add" }),
+          h("small", { text: 'Adds "Just add, don\'t confirm". This requests fewer prompts; Olive may still require confirmation.' }))),
       h("ol", { className: "shopping-instructions" },
-        h("li", { text: "Choose whether to include pantry staples, then copy your ingredients." }),
-        h("li", { text: "Open Woolworths and choose or create a shopping list. Press and hold the item-entry field, then tap Paste if supported." }),
-        h("li", { text: "If your version doesn't accept a whole list, use these ingredients in product search individually. Check matches, pack sizes and quantities before adding products." })),
+        h("li", { text: "Choose whether to include pantry staples and the Olive instruction, then copy your ingredients." }),
+        h("li", { text: "In the Woolworths app, choose Pick up or Delivery mode and open Olive beside the home-page search bar. Press and hold the chat field, tap Paste, then send." }),
+        h("li", { text: "Follow Olive's prompts and check product matches, pack sizes and quantities. The instruction requests cart additions, but cannot skip any confirmation Olive requires. You complete checkout yourself." })),
       h("div", { className: "shopping-copy-actions" },
         button("Copy & open Woolworths", () => copyList(true)),
         h("a", { className: "button secondary", href: "https://www.woolworths.com.au/", text: "Open Woolworths" })),
       copyStatus, text,
-      h("p", { className: "fineprint", text: "The Woolworths link may open the installed app if your phone allows it; otherwise it opens the website. Nothing is pasted or added to your cart automatically." }))));
+      h("p", { className: "fineprint" },
+        "The Woolworths link may open the installed app if your phone allows it; otherwise it opens the website. Olive is only available in the app, not on the website or in in-store mode. Nothing is sent to Olive automatically. ",
+        h("a", { href: "https://www.woolworths.com.au/shop/services/olive", text: "Woolworths Olive help" })))));
 }
 
 function showRecipes(updateUrl = true) {
@@ -563,11 +593,27 @@ function showRecipe(recipe, servings = recipe.servings, weekKey, day, updateUrl 
   const allSteps = h("details", { className: "all-steps" }, h("summary", { text: "See the whole method" }),
     h("ol", {}, ...recipe.steps.map((text) => h("li", { text }))));
   const credit = photoCreditParts(recipe.imageCredit);
+  const scheduledMeal = weekKey === state.week?.week
+    ? state.week.meals.find((meal) => meal.day === day && meal.recipe.id === recipe.id)
+    : undefined;
+  const cookedStatus = h("p", { className: "muted", role: "status", text: scheduledMeal?.cooked ? "Done! You've cooked this meal." : "Not cooked yet." });
+  const cookedButton = scheduledMeal ? button(scheduledMeal.cooked ? "Undo cooked" : "Cooked!", async () => {
+    const cooked = !scheduledMeal.cooked;
+    const updated = await api(`/weeks/${weekKey}/cooked`, { day, recipeId: recipe.id, cooked });
+    scheduledMeal.cooked = cooked;
+    if (state.weekKey === weekKey) {
+      state.week = updated;
+      renderWeek();
+    }
+    cookedButton.textContent = cooked ? "Undo cooked" : "Cooked!";
+    cookedStatus.textContent = cooked ? "Done! You've cooked this meal." : "Not cooked yet.";
+  }) : null;
   openModal(h("img", { className: "recipe-hero", src: recipe.image, alt: recipe.title }),
     credit ? h("p", { className: "fineprint photo-credit" }, ...credit) : null,
     h("div", { className: "recipe-intro" }, h("p", { className: "eyebrow", text: `${CATEGORIES[recipe.category]} / ${PROTEINS[recipe.protein]}` }),
       h("h2", { id: "modal-title", text: recipe.title }), h("p", { className: "muted", text: recipe.description }),
       h("div", { className: "recipe-stats" }, tag(`${servings} servings`), tag(`${recipe.prepMinutes} min prep`), tag(`${recipe.cookMinutes} min cook`), tag(recipe.diet)),
+      cookedButton ? h("div", { className: "action-row" }, cookedButton, cookedStatus) : null,
       button("Edit recipe / update from photo", () => addRecipeDialog(recipe), "button secondary"),
       h("div", { className: "recipe-layout" }, h("section", {}, h("h3", { text: "What you'll need" }), ingredientList), h("section", { className: "cook-mode", "aria-label": "Step-by-step cooking" }, stepCount, stepText, h("div", { className: "step-controls" }, previous, next), allSteps)),
       recipe.notes ? h("p", { className: "notice", text: recipe.notes }) : null,
@@ -608,7 +654,7 @@ async function shareWeek() {
     ctx.strokeStyle = SHARE_PALETTE.line; ctx.beginPath(); ctx.moveTo(170, y + 110); ctx.lineTo(1000, y + 110); ctx.stroke();
   });
   ctx.fillStyle = SHARE_PALETTE.forest; ctx.font = "24px sans-serif";
-  ctx.fillText(`${week.people} at the table / ${week.meals.length} dinners / ${week.status === "confirmed" ? "Locked in" : "DRAFT - not yet confirmed"}`, 70, 1385);
+  ctx.fillText(`${peopleLabel(week)} / ${week.meals.length} dinners / ${week.status === "confirmed" ? "Locked in" : "DRAFT - not yet confirmed"}`, 70, 1385);
   ctx.fillStyle = SHARE_PALETTE.terracotta; ctx.fillRect(70, 1400, 40, 3);
   ctx.fillStyle = SHARE_PALETTE.muted; ctx.font = "22px Georgia"; ctx.fillText("A little less planning. A little more living.", 70, 1430);
   const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/png"));

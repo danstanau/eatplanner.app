@@ -38,8 +38,10 @@ test("swap options preserve rules and favour overlapping fresh ingredients, not 
   const names = new Set(others.flatMap((recipe) => recipe.ingredients.filter((i) => !i.pantry).map((i) => i.name)));
   const scores = options.map((recipe) => recipe.ingredients.filter((i) => !i.pantry && names.has(i.name)).length);
   assert.deepEqual(scores, [...scores].sort((a, b) => b - a));
+  week.meals[0].cooked = true;
   swapMeal(week, 0, recipes, options[0].id);
   assert.equal(week.meals[0].recipe.id, options[0].id);
+  assert.equal(week.meals[0].cooked, undefined);
   assert.throws(() => swapMeal(week, 0, recipes, "not-a-recipe"), /No alternative/);
 });
 
@@ -47,12 +49,31 @@ test("changing days exchanges occupied meals or moves to a free day without losi
   const week = planWeek("2026-11-16", { days: [0, 2], people: 2, rules }, recipes);
   const first = week.meals[0].recipe.id;
   const second = week.meals[1].recipe.id;
+  week.meals[0].cooked = true;
   moveMeal(week, 0, 2);
   assert.equal(week.meals.find((meal) => meal.day === 2)?.recipe.id, first);
   assert.equal(week.meals.find((meal) => meal.day === 0)?.recipe.id, second);
   moveMeal(week, 2, 6);
   assert.deepEqual(week.meals.map((meal) => meal.day), [0, 6]);
   assert.equal(week.meals.length, 2);
+  assert.equal(week.meals.find((meal) => meal.day === 6)?.cooked, true);
+});
+
+test("adult and child counts persist without changing per-person ingredient scaling", () => {
+  const input = { days: [0], people: 4, adults: 2, children: 2, rules };
+  const week = planWeek("2026-11-16", input, recipes);
+  assert.equal(week.adults, 2);
+  assert.equal(week.children, 2);
+  assert.deepEqual(shoppingList(week), shoppingList({ people: 4, meals: week.meals }));
+  assert.throws(() => planWeek("2026-11-16", { ...input, people: 3 }, recipes), /counts must match/);
+  const legacy = planWeek("2026-11-16", { days: [0], people: 2, rules }, recipes);
+  assert.equal(legacy.adults, 2);
+  assert.equal(legacy.children, 0);
+  const childrenOnly = planWeek("2026-11-16", { ...input, adults: 0, children: 4 }, recipes);
+  assert.equal(childrenOnly.adults, 0);
+  assert.equal(planningSchema.safeParse({ ...input, adults: -1 }).success, false);
+  assert.equal(planningSchema.safeParse({ ...input, children: 1.5 }).success, false);
+  assert.equal(planningSchema.safeParse({ ...input, people: 0, adults: 0, children: 0 }).success, false);
 });
 
 test("shopping combines compatible units, scales servings and keeps incompatible units separate", () => {

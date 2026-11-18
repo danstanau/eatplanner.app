@@ -20,6 +20,8 @@ export const rulesSchema = z.object({
 export const planningSchema = z.object({
   days: z.array(daySchema).min(1).max(7).refine((days) => new Set(days).size === days.length, "Choose each day only once."),
   people: z.number().int().min(1).max(12),
+  adults: z.number().int().min(0).max(12).optional(),
+  children: z.number().int().min(0).max(12).optional(),
   rules: rulesSchema,
   revision: z.number().int().min(0).optional(),
 });
@@ -33,8 +35,10 @@ export const shoppingItemSchema = z.object({
 export const weekSchema = z.object({
   week: weekKeySchema,
   people: z.number().int().min(1).max(12),
+  adults: z.number().int().min(0).max(12).optional(),
+  children: z.number().int().min(0).max(12).optional(),
   rules: rulesSchema,
-  meals: z.array(z.object({ day: daySchema, recipe: recipeSchema })).min(1).max(7),
+  meals: z.array(z.object({ day: daySchema, recipe: recipeSchema, cooked: z.boolean().optional() })).min(1).max(7),
   status: z.enum(["draft", "confirmed"]),
   confirmedAt: z.string().nullable(),
   revision: z.number().int().min(1),
@@ -63,6 +67,11 @@ function orderCandidates(candidates: Recipe[], selected: Recipe[], overlap: bool
 }
 
 export function planWeek(week: string, input: Planning, recipes: Recipe[]): Week {
+  const children = input.children ?? 0;
+  const adults = input.adults ?? input.people - children;
+  if (adults < 0 || adults + children !== input.people) {
+    throw new AppError(400, "The adult and child counts must match the total people (1 to 12).");
+  }
   const candidates = recipes.filter((recipe) => eligible(recipe, input.rules));
   const available = input.rules.differentProteins ? new Set(candidates.map((r) => r.protein)).size : candidates.length;
   if (available < input.days.length) {
@@ -78,7 +87,7 @@ export function planWeek(week: string, input: Planning, recipes: Recipe[]): Week
     return { day, recipe };
   });
   return {
-    week, people: input.people, rules: input.rules, meals,
+    week, people: input.people, adults, children, rules: input.rules, meals,
     status: "draft", confirmedAt: null, revision: 1, shoppingList: [],
   };
 }
@@ -105,6 +114,7 @@ export function swapMeal(week: Week, day: number, recipes: Recipe[], recipeId?: 
   const meal = week.meals.find((item) => item.day === day);
   if (!meal) throw new AppError(404, "Meal not found.");
   meal.recipe = replacement;
+  delete meal.cooked;
 }
 
 export function moveMeal(week: Week, from: number, to: number) {

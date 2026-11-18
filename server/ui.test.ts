@@ -123,6 +123,19 @@ test("UI completes week selection, swaps, moves, confirmation, cooking, sharing 
   assert.equal(new URL(browser.location.href).searchParams.get("view"), "week");
   assert.ok(new URL(browser.location.href).searchParams.get("week"));
   await waitFor(() => document.querySelectorAll(".day-toggle").length === 7);
+  const planningCount = (label: string) => {
+    const input = [...document.querySelectorAll(".planning-form .field")]
+      .find((field) => field.querySelector("span")?.textContent === label)?.querySelector("input");
+    assert.ok(input);
+    return input;
+  };
+  assert.equal(planningCount("Adults").value, "2");
+  assert.equal(planningCount("Children").value, "0");
+  for (const label of ["Adults", "Children"]) {
+    assert.equal(planningCount(label).type, "number");
+    assert.equal(planningCount(label).inputMode, "numeric");
+  }
+  planningCount("Children").value = "1";
   assert.match(document.querySelector(".selection-count")?.textContent ?? "", /5 dinners/);
   document.querySelectorAll(".day-toggle")[0].click();
   assert.match(document.querySelector(".selection-count")?.textContent ?? "", /4 dinners/);
@@ -134,6 +147,11 @@ test("UI completes week selection, swaps, moves, confirmation, cooking, sharing 
   findButton("Plan 3 weeks").click();
   await waitFor(() => document.querySelectorAll(".recipe-open").length === 3);
   assert.equal(Object.keys((await store.read()).weeks).length, 3);
+  const plannedHousehold = Object.values((await store.read()).weeks)[0];
+  assert.equal(plannedHousehold.adults, 2);
+  assert.equal(plannedHousehold.children, 1);
+  assert.equal(plannedHousehold.people, 3);
+  assert.match(document.querySelector(".page-heading .lede")?.textContent ?? "", /2 adults, 1 child/);
   const firstTitle = document.querySelector(".recipe-open h3")?.textContent;
   findButton("Swap").click();
   await waitFor(() => document.querySelectorAll(".swap-choice").length > 0);
@@ -149,6 +167,24 @@ test("UI completes week selection, swaps, moves, confirmation, cooking, sharing 
   await waitFor(() => document.querySelector("#shopping"));
   assert.equal(document.querySelectorAll(".meal-actions").length, 0);
   assert.ok(document.querySelector(".shopping-text")?.value.includes("\n"));
+  const oliveInstruction = [...document.querySelectorAll("#shopping .check-field")].find((label) => label.textContent?.includes("Include Olive instruction"))?.querySelector("input");
+  assert.ok(oliveInstruction);
+  const oliveShoppingText = document.querySelector(".shopping-text")?.value ?? "";
+  assert.ok(oliveShoppingText.startsWith("Add these items to my cart\n\n"));
+  oliveInstruction.click();
+  assert.equal(document.querySelector(".shopping-text")?.value, oliveShoppingText.replace("Add these items to my cart\n\n", ""));
+  oliveInstruction.click();
+  assert.equal(document.querySelector(".shopping-text")?.value, oliveShoppingText);
+  const justAddInstruction = [...document.querySelectorAll("#shopping .check-field")].find((label) => label.querySelector("strong")?.textContent === "Just add")?.querySelector("input");
+  assert.ok(justAddInstruction);
+  assert.equal(justAddInstruction.checked, false);
+  justAddInstruction.click();
+  assert.equal(document.querySelector(".shopping-text")?.value, oliveShoppingText.replace("\n\n", "\nJust add, don't confirm\n\n"));
+  oliveInstruction.click();
+  assert.equal(document.querySelector(".shopping-text")?.value, oliveShoppingText.replace("Add these items to my cart", "Just add, don't confirm"));
+  justAddInstruction.click();
+  assert.equal(document.querySelector(".shopping-text")?.value, oliveShoppingText.replace("Add these items to my cart\n\n", ""));
+  oliveInstruction.click();
   const expectedShoppingText = document.querySelector(".shopping-text")?.value;
   const clipboardDescriptor = Object.getOwnPropertyDescriptor(browser.navigator, "clipboard");
   let copiedText = "";
@@ -157,7 +193,7 @@ test("UI completes week selection, swaps, moves, confirmation, cooking, sharing 
   });
   findButton("Copy shopping list").click();
   await waitFor(() => copiedText === expectedShoppingText);
-  await waitFor(() => document.querySelector("#shopping")?.textContent?.includes("Ingredients copied."));
+  await waitFor(() => document.querySelector("#shopping")?.textContent?.includes("Open Olive in the Woolworths app"));
   let destination = "";
   const navigate = t.mock.method(browser.location, "assign", (url: string) => { destination = url; });
   Object.defineProperty(browser.navigator, "clipboard", { configurable: true, value: undefined });
@@ -189,6 +225,17 @@ test("UI completes week selection, swaps, moves, confirmation, cooking, sharing 
   const originalMealCard = document.querySelector(".recipe-open");
   originalMealCard?.click();
   assert.ok(new URL(browser.location.href).searchParams.get("recipe"));
+  findButton("Cooked!").click();
+  await waitFor(() => document.querySelector(".meal-completion"));
+  const cookedCard = document.querySelector(".meal-completion")?.closest(".recipe-open");
+  assert.ok(cookedCard);
+  assert.equal(cookedCard.querySelector(".card-link"), null);
+  assert.ok(document.querySelector("dialog")?.open);
+  assert.ok((await store.read()).weeks[Object.keys((await store.read()).weeks)[0]].meals.some((meal) => meal.cooked));
+  findButton("Undo cooked").click();
+  await waitFor(() => !document.querySelector(".meal-completion"));
+  assert.match(document.querySelector(".recipe-open .card-link")?.textContent ?? "", /Let's cook/);
+  assert.ok(!(await store.read()).weeks[Object.keys((await store.read()).weeks)[0]].meals.some((meal) => meal.cooked));
   findButton("Edit recipe / update from photo").click();
   assert.equal(new URL(browser.location.href).searchParams.get("edit"), "1");
   browser.history.back();

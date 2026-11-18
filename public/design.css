@@ -182,6 +182,14 @@ input:not([type=checkbox]), select, textarea {
   line-height: 1.45;
 }
 textarea { min-height: 110px; }
+select, .meal-actions select {
+  appearance: none;
+  padding-right: 42px;
+  background-image: linear-gradient(45deg, transparent 50%, currentColor 50%), linear-gradient(135deg, currentColor 50%, transparent 50%);
+  background-position: right 19px center, right 13px center;
+  background-size: 6px 6px;
+  background-repeat: no-repeat;
+}
 input::placeholder, textarea::placeholder { color: var(--subtle); opacity: 1; }
 input[type=checkbox] {
   appearance: none;
@@ -341,7 +349,7 @@ dialog h2 { color: var(--ink); }
 .recipe-meta { color: var(--muted); font-size: 14px; }
 .recipe-meta .tag { min-height: 26px; padding: 4px 9px; font-size: 13px; }
 .meal-actions { min-height: 58px; border-color: var(--line); }
-.meal-actions select { width: auto; min-width: 145px; min-height: 44px; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--paper-raised); color: var(--ink); font-size: 16px; }
+.meal-actions select { width: auto; min-width: 145px; min-height: 44px; padding-right: 42px; border: 1px solid var(--line); border-radius: var(--radius-sm); background-color: var(--paper-raised); color: var(--ink); font-size: 16px; }
 .day-off { background: var(--surface); box-shadow: none; }
 .off-content { min-height: 315px; }
 .off-mark { color: var(--subtle); }

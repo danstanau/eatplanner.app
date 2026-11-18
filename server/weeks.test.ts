@@ -67,13 +67,14 @@ test("weekly HTTP workflow persists recipes, swaps and locks, and safely imports
   assert.equal(planned.status, 200);
   let week: Week = await planned.json();
   const multiWeekPlan = await post("/weeks/plan", {
-    startWeek: "2026-11-23", count: 3, days: [0, 2, 4], people: 4,
+    startWeek: "2026-11-23", count: 3, days: [0, 2, 4], people: 4, adults: 2, children: 2,
     rules: { differentProteins: true, overlapIngredients: true, maxMinutes: 60, diet: "anything" },
   });
   assert.equal(multiWeekPlan.status, 200);
   const createdWeeks: Week[] = await multiWeekPlan.json();
   assert.deepEqual(createdWeeks.map((created) => created.week), ["2026-11-23", "2026-11-30", "2026-12-07"]);
   assert.ok(createdWeeks.every((created) => created.meals.length === 3));
+  assert.ok(createdWeeks.every((created) => created.adults === 2 && created.children === 2 && created.people === 4));
   assert.equal((await post("/weeks/2026-12-21/plan", {
     days: [0], people: 2, rules: week.rules,
   })).status, 200);
@@ -105,6 +106,17 @@ test("weekly HTTP workflow persists recipes, swaps and locks, and safely imports
   const persisted = await new Store(path).read();
   assert.deepEqual(persisted.weeks[week.week], snapshot);
   assert.deepEqual(JSON.parse(await readFile(path, "utf8")).weeks[week.week], snapshot);
+  const completedMeal = week.meals[0];
+  const cooked = await post(`${key}/cooked`, { day: completedMeal.day, recipeId: completedMeal.recipe.id, cooked: true });
+  assert.equal(cooked.status, 200);
+  week = await cooked.json();
+  assert.equal(week.meals[0].cooked, true);
+  assert.equal(week.revision, snapshot.revision, "cooking progress must not invalidate shopping checkmarks");
+  assert.deepEqual(week.shoppingList, snapshot.shoppingList);
+  assert.equal((await new Store(path).read()).weeks[week.week].meals[0].cooked, true);
+  assert.equal((await post(`${key}/cooked`, { day: completedMeal.day, recipeId: "stale-recipe", cooked: false })).status, 409);
+  week = await (await post(`${key}/cooked`, { day: completedMeal.day, recipeId: completedMeal.recipe.id, cooked: false })).json();
+  assert.equal(week.meals[0].cooked, false);
   week = await (await post(`${key}/unlock`, { revision: week.revision })).json();
   assert.equal(week.status, "draft");
   assert.deepEqual(week.shoppingList, []);

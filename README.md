@@ -81,6 +81,11 @@ shopping-cost calculation. After selecting a first recipe, subsequent choices
 favour ingredients shared with earlier meals. Pantry staples don't influence this
 score. Equal scores are randomised.
 
+Planning records **Adults** and **Children** separately, for 1 to 12 people
+combined. Both count as one serving when scaling recipes and shopping
+quantities; adjust portions to suit your household. Existing plans retain their
+original total until replanned.
+
 ### Woolworths
 
 “Copy shopping list” copies plain lines such as:
@@ -91,9 +96,17 @@ score. Equal scores are randomised.
 60 ml olive oil
 ```
 
-Paste them into a Woolworths shopping list wherever your app version supports
-pasting: choose or create a list, press and hold the item-entry field, then choose
-**Paste**. If bulk paste is unavailable, search for ingredients individually.
+The **Include Olive instruction** checkbox (on by default) prefixes the copied
+text with “Add these items to my cart”. Turn it off for plain ingredient lines.
+The separate **Just add** checkbox (off by default) adds “Just add, don't confirm”.
+It can be used with or without the first instruction and requests fewer prompts,
+but Olive may still require confirmation.
+In the Woolworths app, choose Pick up or Delivery mode, open Olive next to the
+home-page search bar, paste into the chat and send. Olive is not available on the
+website or in in-store mode. The instruction does not bypass confirmations;
+no supported confirmation-skip option is documented in the
+[official Olive FAQ](https://www.woolworths.com.au/shop/services/olive).
+Follow Olive's prompts and complete checkout yourself.
 **Copy & open Woolworths** copies first, then follows the official Woolworths
 website link. Your phone may open the installed app based on its link settings;
 otherwise it opens the website. Automatic copying uses a fallback on local HTTP
@@ -184,8 +197,13 @@ unwritable storage is reported as an error, never silently replaced.
 
 Confirmed weeks contain recipe snapshots and their shopping quantities, so
 future additions to the collection don't alter a locked plan. Revision checks
-prevent stale tabs overwriting newer edits. If prompted, use **Refresh** on the
-week before editing again.
+prevent stale tabs overwriting newer edits. If prompted, refresh the page using
+your browser before editing again.
+
+Open a meal from your week and press **Cooked!** to mark it done, including in
+a locked week. The week card shows a cooked badge; **Undo cooked** clears it.
+This status is saved for the household, follows a meal when moved, and resets
+when that meal is swapped. It does not change shopping quantities or checkmarks.
 
 Shopping checkmarks and cooking progress live in the current browser's
 `localStorage`; the actual recipes and weeks are saved on the server. Clearing
