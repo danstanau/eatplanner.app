@@ -596,7 +596,7 @@ function showRecipe(recipe, servings = recipe.servings, weekKey, day, updateUrl 
   const allSteps = h("details", { className: "all-steps" }, h("summary", { text: "See the whole method" }),
     h("ol", {}, ...recipe.steps.map((text) => h("li", { text }))));
   const credit = photoCreditParts(recipe.imageCredit);
-  const scheduledMeal = weekKey === state.week?.week
+  const scheduledMeal = weekKey !== undefined && weekKey === state.week?.week
     ? state.week.meals.find((meal) => meal.day === day && meal.recipe.id === recipe.id)
     : undefined;
   const cookedStatus = h("p", { className: "muted", role: "status", text: scheduledMeal?.cooked ? "Done! You've cooked this meal." : "Not cooked yet." });
