@@ -23,12 +23,20 @@ npm install -g @github/copilot
 copilot login
 ```
 
-Photo imports use the authenticated account's Copilot allowance. The SDK runs on
-the server with tools and skills disabled. Credentials never go to the browser.
-If `auto` doesn't select a vision-capable model, copy `.env.example` to `.env`,
-set `COPILOT_VISION_MODEL` to an image-capable model available on your account,
-and restart the server. `COPILOT_MODEL`, `PORT` and `COPILOT_CLI_PATH` are also
-optional configuration.
+If the server cannot see your CLI login, create a
+[fine-grained GitHub personal access token](https://github.com/settings/personal-access-tokens/new)
+owned by your personal account with the **Copilot Requests** account permission.
+Set `COPILOT_GITHUB_TOKEN` in the server environment or in the git-ignored `.env`
+file at the project root (use `.env.example` as a template), then restart the app.
+This takes precedence over CLI login. A classic token will not work, and the
+account still needs Copilot access.
+
+Photo imports and photo search use the authenticated account's Copilot allowance.
+The SDK runs on the server with tools and skills disabled. Credentials never go
+to the browser. If `auto` doesn't select a vision-capable model for imports or
+photo search, set
+`COPILOT_VISION_MODEL` to one available on your account and restart the server.
+`COPILOT_MODEL`, `PORT` and `COPILOT_CLI_PATH` are also optional configuration.
 
 ## The weekly flow
 
@@ -94,10 +102,17 @@ editable form and reports ambiguities. Nothing enters your library until you
 review the details, tick the review checkbox and save.
 
 When editing a recipe, choose **Find a photo with Copilot** to turn its details
-into a search phrase and look for a matching CC0 photo in Openverse. The photo
+into a search phrase and look for a matching CC0 photo in Openverse, falling back
+to Wikimedia Commons if Openverse is unavailable or has no suitable photo. The photo
 appears in the editor for review and is saved only when you update the recipe;
 its creator and licence are shown with the recipe. This sends recipe details to
-Copilot and Openverse. Openverse's anonymous search allowance applies.
+Copilot and the photo sources. A broader dish-name search is tried if the first
+search has no match or its photo is unavailable or rejected. The sources'
+anonymous search allowances apply; no separate photo API key is needed.
+Copilot visually checks up to five candidate photos before returning one: it must
+show the prepared dish with no people, including hands or arms. Rejected photos
+are skipped; if none is suitable, the current recipe image is left unchanged.
+These checks use a vision-capable model and additional Copilot allowance.
 
 Ingredient editor format:
 

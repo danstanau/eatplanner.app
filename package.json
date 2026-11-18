@@ -15,7 +15,7 @@
     "check": "tsc --noEmit"
   },
   "dependencies": {
-    "@github/copilot-sdk": "1.0.34",
+    "@microsoft/copilot-sdk": "2.0.0",
     "express": "^5.1.0",
     "zod": "^4.1.0"
   },
