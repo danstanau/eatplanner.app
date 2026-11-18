@@ -168,6 +168,10 @@ test("UI completes week selection, swaps, moves, confirmation, cooking, sharing 
   await waitFor(() => document.querySelector("#shopping"));
   assert.equal(document.querySelectorAll(".meal-actions").length, 0);
   assert.ok(document.querySelector(".shopping-text")?.value.includes("\n"));
+  const pantryToggle = [...document.querySelectorAll("#shopping .check-field")]
+    .find((label) => label.textContent?.includes("Include pantry items in Woolworths list"))?.querySelector("input");
+  assert.ok(pantryToggle);
+  assert.equal(pantryToggle.checked, true);
   const oliveInstruction = [...document.querySelectorAll("#shopping .check-field")].find((label) => label.textContent?.includes("Include Olive instruction"))?.querySelector("input");
   assert.ok(oliveInstruction);
   const oliveShoppingText = document.querySelector(".shopping-text")?.value ?? "";
@@ -264,6 +268,16 @@ test("UI completes week selection, swaps, moves, confirmation, cooking, sharing 
 
   document.querySelector("#nav-recipes")?.click();
   assert.equal(document.querySelectorAll(".collection-card").length, initialRecipes);
+  const recipeLayout = document.querySelector('[aria-label="Recipe card layout"]');
+  assert.ok(recipeLayout);
+  const compactLayout = [...recipeLayout.querySelectorAll("button")].find((item) => item.textContent === "Compact");
+  const comfortableLayout = [...recipeLayout.querySelectorAll("button")].find((item) => item.textContent === "Comfortable");
+  assert.ok(compactLayout && comfortableLayout);
+  assert.equal(comfortableLayout.getAttribute("aria-pressed"), "true");
+  compactLayout.click();
+  assert.ok(document.querySelector(".collection-grid")?.classList.contains("is-compact"));
+  assert.equal(compactLayout.getAttribute("aria-pressed"), "true");
+  assert.equal(browser.localStorage.getItem("eatplanner.app:recipe-layout"), "compact");
   const brisketCard = [...document.querySelectorAll(".collection-card")].find((card) => card.querySelector("h3")?.textContent === "Beef brisket");
   assert.ok(brisketCard);
   brisketCard.click();
@@ -271,6 +285,13 @@ test("UI completes week selection, swaps, moves, confirmation, cooking, sharing 
   assert.equal(document.querySelector(".photo-credit"), null);
   document.querySelector("#close-modal")?.click();
   await waitFor(() => !document.querySelector("dialog")?.open && document.querySelectorAll(".collection-card").length === initialRecipes);
+  assert.ok(document.querySelector(".collection-grid")?.classList.contains("is-compact"), "layout preference survives opening a recipe");
+  const comfortableAfterRecipe = [...document.querySelector('[aria-label="Recipe card layout"]')!.querySelectorAll("button")]
+    .find((item) => item.textContent === "Comfortable");
+  assert.ok(comfortableAfterRecipe);
+  comfortableAfterRecipe.click();
+  assert.equal(document.querySelector(".collection-grid")?.classList.contains("is-compact"), false);
+  assert.equal(browser.localStorage.getItem("eatplanner.app:recipe-layout"), "comfortable");
   document.querySelector("#add-recipe")?.click();
   assert.equal(new URL(browser.location.href).searchParams.get("edit"), "new");
   assert.ok(document.querySelector(".recipe-form"), document.querySelector("#modal-content")?.textContent);

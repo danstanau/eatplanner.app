@@ -146,6 +146,11 @@ original total until replanned.
 60 ml olive oil
 ```
 
+Ingredients marked `pantry` in a recipe are included in the shopping and
+Woolworths lists by default. Untick **Include pantry items in Woolworths list**
+to omit them. The checkboxes beside individual ingredients are only for tracking
+shopping progress; they do not affect what gets copied.
+
 The **Include Olive instruction** checkbox (on by default) prefixes the copied
 text with “Add these items to my cart”. Turn it off for plain ingredient lines.
 The separate **Just add** checkbox (off by default) adds “Just add, don't confirm”.
@@ -170,6 +175,10 @@ It does not scrape or automate private supermarket endpoints.
 The starter library includes **80 household meal cards** with generated draft
 ingredients, steps, categories, primary protein, diet, servings, prep/cooking
 times, notes and locally served food photography.
+
+In **Recipes**, switch between Comfortable cards and Compact cards. Compact
+cards show more recipes at once; your layout choice is remembered in that
+browser.
 
 Use **Add recipe** to type a recipe manually or choose an image file or take a
 photo of its ingredients and method. The browser resizes the photo, then sends it to Copilot

@@ -479,8 +479,8 @@ function shoppingPanel(week) {
   return h("section", { className: "shopping-panel", id: "shopping" },
     h("div", { className: "section-bar" }, h("div", {}, h("p", { className: "eyebrow", text: "ONE LIST. ONE LESS TRIP." }), h("h2", { text: "A little list for the shops." })),
       button("Copy shopping list", () => copyList(), "button")),
-    h("p", { className: "muted", text: `Combined and scaled for ${peopleLabel(week)}. Quantities are recipe amounts, not supermarket pack sizes. Pantry items are included unless you untick them.` }),
-    h("label", { className: "check-field compact" }, include, h("span", { text: "Include pantry staples" })),
+    h("p", { className: "muted", text: `Combined and scaled for ${peopleLabel(week)}. Quantities are recipe amounts, not supermarket pack sizes. Ingredients marked Pantry go into the Woolworths list by default; untick the option below to leave them out. The item checkboxes are just shopping progress.` }),
+    h("label", { className: "check-field compact" }, include, h("span", { text: "Include pantry items in Woolworths list" })),
     h("div", { className: "shopping-layout" }, h("div", {}, progress, checklist), h("div", {},
       h("h3", { text: "Take your ingredients to Woolworths" }),
       h("label", { className: "check-field compact" }, oliveNote,
@@ -517,6 +517,27 @@ function showRecipes(updateUrl = true) {
   const protein = select({ all: "Every protein", ...PROTEINS }, route.protein ?? "all");
   protein.setAttribute("aria-label", "Filter recipes by protein");
   const grid = h("div", { className: "collection-grid" });
+  let compact = false;
+  try { compact = localStorage.getItem("eatplanner.app:recipe-layout") === "compact"; }
+  catch (error) { console.error("Recipe layout preference could not be loaded:", error); }
+  const comfortableButton = button("Comfortable", () => setLayout(false), "collection-layout-option");
+  const compactButton = button("Compact", () => setLayout(true), "collection-layout-option");
+  comfortableButton.setAttribute("aria-pressed", "true");
+  compactButton.setAttribute("aria-pressed", "false");
+  function setLayout(value) {
+    compact = value;
+    grid.classList.toggle("is-compact", compact);
+    comfortableButton.setAttribute("aria-pressed", String(!compact));
+    compactButton.setAttribute("aria-pressed", String(compact));
+    try { localStorage.setItem("eatplanner.app:recipe-layout", compact ? "compact" : "comfortable"); }
+    catch (error) {
+      console.error("Recipe layout preference could not be saved:", error);
+      notify("Your layout choice couldn't be saved in this browser.", true);
+    }
+  }
+  setLayout(compact);
+  const layoutToggle = h("div", { className: "collection-layout-toggle", role: "group", "aria-label": "Recipe card layout" },
+    comfortableButton, compactButton);
   const count = h("p", { className: "muted", role: "status", "aria-live": "polite" });
   function filter() {
     const query = search.value.toLowerCase().trim();
@@ -546,7 +567,7 @@ function showRecipes(updateUrl = true) {
   category.addEventListener("change", updateFilters);
   protein.addEventListener("change", updateFilters);
   view.replaceChildren(heading("THE THINGS WE LOVE TO COOK", "Your recipe collection.", "A growing book of everyday favourites. Good ingredients, clear steps, and something for every kind of evening."),
-    h("div", { className: "collection-toolbar" }, search, category, protein), count, grid,
+    h("div", { className: "collection-toolbar" }, search, category, protein), layoutToggle, count, grid,
     h("p", { className: "fineprint collection-note", text: "Photography is serving inspiration and may not depict the exact recipe. Always check ingredient labels for allergens and follow safe food-handling guidance." }));
   filter();
 }
