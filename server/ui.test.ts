@@ -161,6 +161,7 @@ test("UI completes week selection, swaps, moves, confirmation, cooking, sharing 
   document.querySelector("#nav-recipes")?.click();
   assert.equal(document.querySelectorAll(".collection-card").length, initialRecipes);
   document.querySelector("#add-recipe")?.click();
+  assert.equal(new URL(browser.location.href).searchParams.get("edit"), "new");
   assert.ok(document.querySelector(".recipe-form"), document.querySelector("#modal-content")?.textContent);
   editor("Recipe name").value = "Our family pasta";
   editor("A little description").value = "A quick family favourite.";
@@ -202,7 +203,17 @@ test("UI completes week selection, swaps, moves, confirmation, cooking, sharing 
 
   Array.from(document.querySelectorAll(".collection-card")).at(-1)?.click();
   findButton("Edit recipe / update from photo").click();
+  assert.equal(new URL(browser.location.href).searchParams.get("recipe"), imported.id);
+  assert.equal(new URL(browser.location.href).searchParams.get("edit"), "1");
+  const previousEditor = document.querySelector(".recipe-form");
+  browser.history.pushState({ plannerRoute: true, plannerHasParent: false }, "", `/?view=recipes&recipe=${encodeURIComponent(imported.id)}&edit=1`);
+  browser.dispatchEvent(new browser.PopStateEvent("popstate"));
+  await waitFor(() => document.querySelector(".recipe-form") !== previousEditor);
   assert.equal(editor("Recipe name").value, imported.title);
+  document.querySelector("#close-modal")?.click();
+  await waitFor(() => new URL(browser.location.href).searchParams.get("recipe") === imported.id && !new URL(browser.location.href).searchParams.has("edit") && Boolean(document.querySelector(".recipe-layout")));
+  findButton("Edit recipe / update from photo").click();
+  await waitFor(() => Boolean(document.querySelector(".recipe-form")));
   const updateUpload = document.querySelector('input[type="file"]');
   assert.ok(updateUpload);
   Object.defineProperty(updateUpload, "files", { configurable: true, value: [new browser.File(["photo"], "updated-recipe.jpg", { type: "image/jpeg" })] });

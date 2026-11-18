@@ -19,7 +19,6 @@ const SHARE_PALETTE = {
 let toastTimer;
 let loadSequence = 0;
 let shareUrl;
-let restoringRoute = false;
 
 function h(tag, options = {}, ...children) {
   const node = document.createElement(tag);
@@ -141,7 +140,9 @@ function dismissRouteModal() {
   if (window.history.state?.plannerHasParent) {
     window.history.back();
   } else {
-    writeRoute({ ...route, recipe: undefined, day: undefined, edit: undefined }, true);
+    const parent = { ...route, edit: undefined };
+    if (!route.edit) { parent.recipe = undefined; parent.day = undefined; }
+    writeRoute(parent, true);
     if (modal.open) modal.close();
     run(restoreRoute);
   }
@@ -153,9 +154,11 @@ document.querySelector("#close-modal").addEventListener("click", () => {
 modal.addEventListener("click", (event) => {
   if (event.target === modal && !dismissRouteModal()) modal.close();
 });
+modal.addEventListener("cancel", (event) => {
+  if (dismissRouteModal()) event.preventDefault();
+});
 modal.addEventListener("close", () => {
   if (shareUrl) { URL.revokeObjectURL(shareUrl); shareUrl = undefined; }
-  if (!restoringRoute) dismissRouteModal();
 });
 
 function setNavigation() {
@@ -757,16 +760,14 @@ function addRecipeDialog(existing, updateUrl = true) {
 }
 
 document.querySelector("#nav-weeks").addEventListener("click", () => run(showWeeks));
-document.querySelector("#nav-recipes").addEventListener("click", showRecipes);
+document.querySelector("#nav-recipes").addEventListener("click", () => showRecipes());
 document.querySelector("#add-recipe").addEventListener("click", () => addRecipeDialog());
 
 let restoreSequence = 0;
 async function restoreRoute() {
   const sequence = ++restoreSequence;
   const route = readRoute();
-  restoringRoute = true;
-  try { if (modal.open) modal.close(); }
-  finally { restoringRoute = false; }
+  if (modal.open) modal.close();
 
   if (route.view === "week") {
     await openWeek(route.week, false);
