@@ -5,6 +5,17 @@ const modal = document.querySelector("#modal");
 const modalContent = document.querySelector("#modal-content");
 const toast = document.querySelector("#toast");
 const state = { view: "weeks", recipes: [], summaries: [], weekKey: mondayFor(today()), week: null };
+const SHARE_PALETTE = {
+  paper: "#f3efe4",
+  forest: "#203f32",
+  ink: "#203b30",
+  cream: "#fffdf7",
+  green: "#49644a",
+  muted: "#59695b",
+  line: "#ded8c8",
+  saffron: "#c2943c",
+  terracotta: "#9c4c31",
+};
 let toastTimer;
 let loadSequence = 0;
 let shareUrl;
@@ -24,6 +35,13 @@ function h(tag, options = {}, ...children) {
 
 function button(text, onClick, className = "button") {
   return h("button", { type: "button", text, className, onClick: (event) => run(onClick, event.currentTarget) });
+}
+function loadingState(message) {
+  return h("div", { className: "loading-state", role: "status" },
+    h("p", { className: "loading", text: message }),
+    h("span", { className: "skeleton-line", "aria-hidden": "true" }),
+    h("span", { className: "skeleton-line short", "aria-hidden": "true" }),
+    h("span", { className: "skeleton-line", "aria-hidden": "true" }));
 }
 function notify(message, error = false) {
   clearTimeout(toastTimer);
@@ -91,14 +109,18 @@ modal.addEventListener("click", (event) => { if (event.target === modal) modal.c
 modal.addEventListener("close", () => { if (shareUrl) { URL.revokeObjectURL(shareUrl); shareUrl = undefined; } });
 
 function setNavigation() {
-  document.querySelector("#nav-weeks").classList.toggle("active", state.view !== "recipes");
-  document.querySelector("#nav-recipes").classList.toggle("active", state.view === "recipes");
+  const weeks = document.querySelector("#nav-weeks");
+  const recipes = document.querySelector("#nav-recipes");
+  weeks.classList.toggle("active", state.view !== "recipes");
+  recipes.classList.toggle("active", state.view === "recipes");
+  weeks.setAttribute("aria-current", state.view !== "recipes" ? "page" : "false");
+  recipes.setAttribute("aria-current", state.view === "recipes" ? "page" : "false");
 }
 async function showWeeks() {
   const sequence = ++loadSequence;
   state.view = "weeks";
   setNavigation();
-  view.replaceChildren(h("p", { className: "loading", text: "Finding your weeks..." }));
+  view.replaceChildren(loadingState("Finding your weeks..."));
   const summaries = await api("/weeks");
   if (state.view !== "weeks" || sequence !== loadSequence) return;
   state.summaries = summaries;
@@ -139,7 +161,7 @@ async function openWeek(key) {
   state.view = "week";
   state.weekKey = key;
   setNavigation();
-  view.replaceChildren(h("p", { className: "loading", text: "Opening your week..." }));
+  view.replaceChildren(loadingState("Opening your week..."));
   const week = await api(`/weeks/${key}`);
   if (sequence !== loadSequence) return;
   state.week = week;
@@ -289,6 +311,7 @@ function shoppingPanel(week) {
   const include = h("input", { type: "checkbox", checked: true });
   const text = h("textarea", { className: "shopping-text", rows: 12, readOnly: true, "aria-label": "Combined shopping list for copying" });
   const checklist = h("div", { className: "shopping-checklist" });
+  const progress = h("p", { className: "shopping-progress", role: "status", "aria-live": "polite" });
   const storageKey = `eatplanner.app:checked:${week.week}:${week.revision}`;
   const legacyStorageKey = `mealplan.ai:checked:${week.week}:${week.revision}`;
   let checked = new Set();
@@ -302,16 +325,23 @@ function shoppingPanel(week) {
   function render() {
     text.value = shoppingText(week.shoppingList, include.checked);
     checklist.replaceChildren();
-    week.shoppingList.filter((item) => include.checked || !item.pantry).forEach((item) => {
+    const visibleItems = week.shoppingList.filter((item) => include.checked || !item.pantry);
+    visibleItems.forEach((item) => {
       const key = `${item.name}|${item.unit}`;
       const box = h("input", { type: "checkbox", checked: checked.has(key) });
       box.addEventListener("change", () => {
         if (box.checked) checked.add(key); else checked.delete(key);
+        updateProgress(visibleItems);
         try { localStorage.setItem(storageKey, JSON.stringify([...checked])); }
         catch (error) { console.error(error); notify("This browser couldn't save your shopping ticks.", true); }
       });
       checklist.append(h("label", { className: "shopping-item" }, box, h("span", { text: ingredientLine(item) }), item.pantry ? tag("Pantry") : null));
     });
+    updateProgress(visibleItems);
+  }
+  function updateProgress(items) {
+    const complete = items.filter((item) => checked.has(`${item.name}|${item.unit}`)).length;
+    progress.textContent = items.length ? `${complete} of ${items.length} items checked` : "No items in this list.";
   }
   include.addEventListener("change", render);
   render();
@@ -323,7 +353,7 @@ function shoppingPanel(week) {
       }, "button")),
     h("p", { className: "muted", text: `Combined and scaled for ${week.people} people. Quantities are recipe amounts, not supermarket pack sizes. Pantry items are included unless you untick them.` }),
     h("label", { className: "check-field compact" }, include, h("span", { text: "Include pantry staples" })),
-    h("div", { className: "shopping-layout" }, checklist, h("div", {}, h("h3", { text: "Ready to copy & paste" }), text,
+    h("div", { className: "shopping-layout" }, h("div", {}, progress, checklist), h("div", {}, h("h3", { text: "Ready to copy & paste" }), text,
       h("p", { className: "fineprint", text: "Paste into a Woolworths shopping list wherever your app supports it. Review product matches and quantities yourself; this does not add items directly to a cart." }))));
 }
 
@@ -337,7 +367,7 @@ function showRecipes() {
   const protein = select({ all: "Every protein", ...PROTEINS }, "all");
   protein.setAttribute("aria-label", "Filter recipes by protein");
   const grid = h("div", { className: "collection-grid" });
-  const count = h("p", { className: "muted" });
+  const count = h("p", { className: "muted", role: "status", "aria-live": "polite" });
   function filter() {
     const query = search.value.toLowerCase().trim();
     const filtered = state.recipes.filter((recipe) => (category.value === "all" || category.value === recipe.category) &&
@@ -420,11 +450,12 @@ async function shareWeek() {
   canvas.height = 1480;
   const ctx = canvas.getContext("2d");
   if (!ctx) throw new Error("This browser cannot create a share card.");
-  ctx.fillStyle = "#f4f2e9"; ctx.fillRect(0, 0, 1080, 1480);
-  ctx.fillStyle = "#244b3b"; ctx.fillRect(0, 0, 1080, 265);
-  ctx.fillStyle = "#c8d8a4"; ctx.font = "500 24px sans-serif"; ctx.fillText("EATPLANNER.APP / OUR HOME KITCHEN", 70, 65);
-  ctx.fillStyle = "#ffffff"; ctx.font = "62px Georgia"; ctx.fillText("This week, at our table.", 70, 143);
-  ctx.font = "29px sans-serif"; ctx.fillStyle = "#dfe7d2"; ctx.fillText(weekLabel(week.week), 70, 205);
+  ctx.fillStyle = SHARE_PALETTE.paper; ctx.fillRect(0, 0, 1080, 1480);
+  ctx.fillStyle = SHARE_PALETTE.forest; ctx.fillRect(0, 0, 1080, 265);
+  ctx.fillStyle = "#d8bd79"; ctx.fillRect(70, 86, 58, 4);
+  ctx.fillStyle = SHARE_PALETTE.saffron; ctx.font = "500 24px sans-serif"; ctx.fillText("EATPLANNER.APP / OUR HOME KITCHEN", 70, 65);
+  ctx.fillStyle = SHARE_PALETTE.cream; ctx.font = "62px Georgia"; ctx.fillText("This week, at our table.", 70, 143);
+  ctx.font = "29px sans-serif"; ctx.fillStyle = "#e4e6d9"; ctx.fillText(weekLabel(week.week), 70, 205);
   const wrap = (text, x, y, maxWidth) => {
     let line = ""; let offset = 0;
     for (const word of text.split(" ")) {
@@ -437,16 +468,17 @@ async function shareWeek() {
   DAYS.forEach((day, index) => {
     const y = 310 + index * 143;
     const meal = week.meals.find((item) => item.day === index);
-    ctx.fillStyle = "#e3e7d8"; ctx.beginPath(); ctx.arc(105, y + 40, 35, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = "#56714d"; ctx.font = "24px sans-serif"; ctx.fillText(day.slice(0, 1), 96, y + 48);
-    ctx.font = "600 19px sans-serif"; ctx.fillStyle = "#7b866a"; ctx.fillText(day.toUpperCase(), 170, y + 5);
-    ctx.font = "31px Georgia"; ctx.fillStyle = meal ? "#244b3b" : "#8a907c";
+    ctx.fillStyle = "#e5e9d9"; ctx.beginPath(); ctx.arc(105, y + 40, 35, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = SHARE_PALETTE.green; ctx.font = "24px sans-serif"; ctx.fillText(day.slice(0, 1), 96, y + 48);
+    ctx.font = "600 19px sans-serif"; ctx.fillStyle = SHARE_PALETTE.muted; ctx.fillText(day.toUpperCase(), 170, y + 5);
+    ctx.font = "31px Georgia"; ctx.fillStyle = meal ? SHARE_PALETTE.ink : SHARE_PALETTE.muted;
     wrap(meal ? meal.recipe.title : "A night off. Something spontaneous.", 170, y + 48, 810);
-    ctx.strokeStyle = "#daddce"; ctx.beginPath(); ctx.moveTo(170, y + 110); ctx.lineTo(1000, y + 110); ctx.stroke();
+    ctx.strokeStyle = SHARE_PALETTE.line; ctx.beginPath(); ctx.moveTo(170, y + 110); ctx.lineTo(1000, y + 110); ctx.stroke();
   });
-  ctx.fillStyle = "#244b3b"; ctx.font = "24px sans-serif";
+  ctx.fillStyle = SHARE_PALETTE.forest; ctx.font = "24px sans-serif";
   ctx.fillText(`${week.people} at the table / ${week.meals.length} dinners / ${week.status === "confirmed" ? "Locked in" : "DRAFT - not yet confirmed"}`, 70, 1385);
-  ctx.fillStyle = "#858d77"; ctx.font = "22px Georgia"; ctx.fillText("A little less planning. A little more living.", 70, 1430);
+  ctx.fillStyle = SHARE_PALETTE.terracotta; ctx.fillRect(70, 1400, 40, 3);
+  ctx.fillStyle = SHARE_PALETTE.muted; ctx.font = "22px Georgia"; ctx.fillText("A little less planning. A little more living.", 70, 1430);
   const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
   if (!blob) throw new Error("The share card couldn't be created.");
   const file = new File([blob], `eatplanner-${week.week}.png`, { type: "image/png" });
