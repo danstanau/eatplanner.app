@@ -1,0 +1,6496 @@
+[
+  {
+    "id": "bean-burritos",
+    "title": "Bean burritos",
+    "description": "A generated starting-point for bean burritos, ready to personalise with your household's recipe.",
+    "category": "quick",
+    "protein": "legumes",
+    "diet": "vegan",
+    "servings": 2,
+    "prepMinutes": 15,
+    "cookMinutes": 20,
+    "image": "/images/curry.jpg",
+    "source": "collection",
+    "ingredients": [
+      {
+        "name": "canned mixed beans",
+        "quantity": 400,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "tortilla",
+        "quantity": 6,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "canned black beans",
+        "quantity": 200,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "tomato",
+        "quantity": 2,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "lettuce",
+        "quantity": 100,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "greek yoghurt",
+        "quantity": 80,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "lime",
+        "quantity": 1,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "olive oil",
+        "quantity": 1,
+        "unit": "tbsp",
+        "pantry": true
+      },
+      {
+        "name": "salt",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      }
+    ],
+    "steps": [
+      "Prepare the toppings and warm the tortillas or wrappers according to the packet.",
+      "Heat oil in a pan. Cook the main ingredient with the beans or vegetables and season to taste. Taste and adjust seasoning, then check that all ingredients are piping hot.",
+      "Spoon the hot filling onto the wraps. Add tomato, lettuce and yoghurt or other toppings.",
+      "Fold or roll securely and serve warm, with lime wedges if available."
+    ],
+    "notes": "Generated draft: check the ingredients, quantities and method against your family's recipe, then photograph the source to update this card. Household log: Wed (1 time)."
+  },
+  {
+    "id": "bean-curry",
+    "title": "Bean curry",
+    "description": "A generated starting-point for bean curry, ready to personalise with your household's recipe.",
+    "category": "one-pot",
+    "protein": "legumes",
+    "diet": "vegan",
+    "servings": 2,
+    "prepMinutes": 10,
+    "cookMinutes": 25,
+    "image": "/images/curry.jpg",
+    "source": "collection",
+    "ingredients": [
+      {
+        "name": "canned mixed beans",
+        "quantity": 400,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "canned tomato",
+        "quantity": 400,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "coconut milk",
+        "quantity": 200,
+        "unit": "ml",
+        "pantry": false
+      },
+      {
+        "name": "rice",
+        "quantity": 150,
+        "unit": "g",
+        "pantry": true
+      },
+      {
+        "name": "brown onion",
+        "quantity": 1,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "garlic clove",
+        "quantity": 2,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "curry powder",
+        "quantity": 2,
+        "unit": "tsp",
+        "pantry": true
+      },
+      {
+        "name": "olive oil",
+        "quantity": 1,
+        "unit": "tbsp",
+        "pantry": true
+      },
+      {
+        "name": "salt",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      }
+    ],
+    "steps": [
+      "Rinse the rice and cook it according to the packet. Prepare the vegetables and main ingredients.",
+      "Warm a little oil in a saucepan. Soften the onion, then stir in garlic and curry powder for 30 seconds.",
+      "Add the recipe's main ingredient, tomato or coconut milk, and a splash of water. Simmer gently, stirring occasionally, until tender and cooked through. Taste and adjust seasoning, then check that all ingredients are piping hot.",
+      "Taste, season and serve the curry over rice. Add a squeeze of lemon or lime if available."
+    ],
+    "notes": "Generated draft: check the ingredients, quantities and method against your family's recipe, then photograph the source to update this card. Household log: Tue, Wed (2 times)."
+  },
+  {
+    "id": "slow-baked-beans-and-polenta",
+    "title": "Slow-baked beans and polenta",
+    "description": "A generated starting-point for slow-baked beans and polenta, ready to personalise with your household's recipe.",
+    "category": "comfort",
+    "protein": "legumes",
+    "diet": "vegan",
+    "servings": 2,
+    "prepMinutes": 20,
+    "cookMinutes": 45,
+    "image": "/images/curry.jpg",
+    "source": "collection",
+    "ingredients": [
+      {
+        "name": "canned mixed beans",
+        "quantity": 400,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "polenta",
+        "quantity": 200,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "canned tomato",
+        "quantity": 400,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "mozzarella",
+        "quantity": 120,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "cheddar",
+        "quantity": 80,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "brown onion",
+        "quantity": 1,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "garlic clove",
+        "quantity": 2,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "olive oil",
+        "quantity": 1,
+        "unit": "tbsp",
+        "pantry": true
+      },
+      {
+        "name": "salt",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      },
+      {
+        "name": "black pepper",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      }
+    ],
+    "steps": [
+      "Heat the oven to 200 C (180 C fan). Prepare and chop the vegetables and main ingredients.",
+      "If using meat or seafood, cook it in a pan until done. Taste and adjust seasoning, then check that all ingredients are piping hot. Soften onion and garlic in the same pan.",
+      "Layer the ingredients in a baking dish with tomato and cheese or sauce. Cover loosely with foil if the top browns too quickly.",
+      "Bake until bubbling, tender and piping hot throughout. Rest for 5 minutes before serving."
+    ],
+    "notes": "Generated draft: check the ingredients, quantities and method against your family's recipe, then photograph the source to update this card. Household log: Mon, Wed (2 times)."
+  },
+  {
+    "id": "beef-brisket",
+    "title": "Beef brisket",
+    "description": "A generated starting-point for beef brisket, ready to personalise with your household's recipe.",
+    "category": "comfort",
+    "protein": "beef",
+    "diet": "omnivore",
+    "servings": 2,
+    "prepMinutes": 15,
+    "cookMinutes": 45,
+    "image": "/images/beef.jpg",
+    "source": "collection",
+    "ingredients": [
+      {
+        "name": "beef brisket",
+        "quantity": 400,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "potato",
+        "quantity": 400,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "carrot",
+        "quantity": 2,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "green peas",
+        "quantity": 100,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "olive oil",
+        "quantity": 1,
+        "unit": "tbsp",
+        "pantry": true
+      },
+      {
+        "name": "dried rosemary",
+        "quantity": 1,
+        "unit": "tsp",
+        "pantry": true
+      },
+      {
+        "name": "salt",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      },
+      {
+        "name": "black pepper",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      }
+    ],
+    "steps": [
+      "Heat the oven to 220 C (200 C fan). Chop vegetables evenly and place them in a roasting dish with oil and seasoning.",
+      "Season the main ingredient and place it on the tray or in a separate dish. Add lemon, herbs or a sauce to suit the meal.",
+      "Roast, turning vegetables once, until tender and the main ingredient is safely cooked through. Cook minced meat through to 75 C; use a thermometer and follow safe guidance for the cut.",
+      "Rest meat for a few minutes before serving. Serve with the vegetables and any pan juices."
+    ],
+    "notes": "Generated draft: check the ingredients, quantities and method against your family's recipe, then photograph the source to update this card. Household log: Mon (1 time)."
+  },
+  {
+    "id": "beef-stroganoff",
+    "title": "Beef stroganoff",
+    "description": "A generated starting-point for beef stroganoff, ready to personalise with your household's recipe.",
+    "category": "one-pot",
+    "protein": "beef",
+    "diet": "omnivore",
+    "servings": 2,
+    "prepMinutes": 15,
+    "cookMinutes": 70,
+    "image": "/images/beef.jpg",
+    "source": "collection",
+    "ingredients": [
+      {
+        "name": "beef strips",
+        "quantity": 350,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "mushroom",
+        "quantity": 200,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "brown onion",
+        "quantity": 1,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "garlic clove",
+        "quantity": 2,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "olive oil",
+        "quantity": 1,
+        "unit": "tbsp",
+        "pantry": true
+      },
+      {
+        "name": "salt",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      },
+      {
+        "name": "black pepper",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      },
+      {
+        "name": "sour cream",
+        "quantity": 100,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "smoked paprika",
+        "quantity": 1,
+        "unit": "tsp",
+        "pantry": true
+      },
+      {
+        "name": "beef stock",
+        "quantity": 150,
+        "unit": "ml",
+        "pantry": true
+      },
+      {
+        "name": "egg noodles",
+        "quantity": 180,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "dijon mustard",
+        "quantity": 1,
+        "unit": "tsp",
+        "pantry": true
+      }
+    ],
+    "steps": [
+      "Cook the egg noodles according to the packet, then drain.",
+      "Thinly slice the beef. Sear it quickly in a hot pan with a little oil, working in batches; transfer to a plate.",
+      "Soften sliced onion and mushrooms in the pan. Stir in paprika, mustard and beef stock, then simmer until the mushrooms are tender.",
+      "Return beef to the pan and heat through until safely cooked. Remove from the heat, stir in sour cream and season to taste. Serve over noodles."
+    ],
+    "notes": "Generated draft: check the ingredients, quantities and method against your family's recipe, then photograph the source to update this card. Household log: Fri (1 time)."
+  },
+  {
+    "id": "beef-and-chickpea-stew",
+    "title": "Beef and chickpea stew",
+    "description": "A generated starting-point for beef and chickpea stew, ready to personalise with your household's recipe.",
+    "category": "one-pot",
+    "protein": "beef",
+    "diet": "omnivore",
+    "servings": 2,
+    "prepMinutes": 15,
+    "cookMinutes": 70,
+    "image": "/images/beef.jpg",
+    "source": "collection",
+    "ingredients": [
+      {
+        "name": "beef chuck",
+        "quantity": 350,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "carrot",
+        "quantity": 2,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "potato",
+        "quantity": 300,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "vegetable stock",
+        "quantity": 400,
+        "unit": "ml",
+        "pantry": true
+      },
+      {
+        "name": "brown onion",
+        "quantity": 1,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "garlic clove",
+        "quantity": 2,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "canned tomato",
+        "quantity": 400,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "dried thyme",
+        "quantity": 1,
+        "unit": "tsp",
+        "pantry": true
+      },
+      {
+        "name": "olive oil",
+        "quantity": 1,
+        "unit": "tbsp",
+        "pantry": true
+      },
+      {
+        "name": "salt",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      },
+      {
+        "name": "black pepper",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      },
+      {
+        "name": "canned chickpeas",
+        "quantity": 200,
+        "unit": "g",
+        "pantry": false
+      }
+    ],
+    "steps": [
+      "Chop the vegetables into bite-size pieces. Heat a little oil in a heavy pot and brown the main ingredient in batches if needed.",
+      "Add onion and garlic and cook until softened. Stir in the remaining vegetables, tomato and stock.",
+      "Cover and simmer gently, stirring occasionally, until the vegetables are tender and the main ingredient is cooked through. Cook minced meat through to 75 C; use a thermometer and follow safe guidance for the cut.",
+      "Taste and adjust seasoning. Serve hot, with extra vegetables or bread if desired."
+    ],
+    "notes": "Generated draft: check the ingredients, quantities and method against your family's recipe, then photograph the source to update this card. Household log: Sun (1 time)."
+  },
+  {
+    "id": "turkey-burgers",
+    "title": "Turkey burgers",
+    "description": "A generated starting-point for turkey burgers, ready to personalise with your household's recipe.",
+    "category": "comfort",
+    "protein": "chicken",
+    "diet": "omnivore",
+    "servings": 2,
+    "prepMinutes": 15,
+    "cookMinutes": 25,
+    "image": "/images/chicken.jpg",
+    "source": "collection",
+    "ingredients": [
+      {
+        "name": "turkey mince",
+        "quantity": 350,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "burger bun",
+        "quantity": 2,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "lettuce",
+        "quantity": 60,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "tomato",
+        "quantity": 1,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "cheddar",
+        "quantity": 2,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "potato",
+        "quantity": 300,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "olive oil",
+        "quantity": 1,
+        "unit": "tbsp",
+        "pantry": true
+      },
+      {
+        "name": "salt",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      },
+      {
+        "name": "black pepper",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      }
+    ],
+    "steps": [
+      "Cut the potatoes into chips or wedges and roast at 220 C with a little oil and seasoning until golden and tender.",
+      "Shape the mince into two patties, or prepare the patties as supplied. Cook in a hot pan or on a grill until cooked through. Cook chicken until the thickest piece reaches 75 C.",
+      "Toast the buns and prepare lettuce, tomato and cheese.",
+      "Build the burgers and serve with the hot potato chips."
+    ],
+    "notes": "Generated draft: check the ingredients, quantities and method against your family's recipe, then photograph the source to update this card. Household log: Thu (1 time)."
+  },
+  {
+    "id": "cauliflower-tofu-carrot-and-black-bean-sauce",
+    "title": "Cauliflower, tofu, carrot and black bean sauce",
+    "description": "A generated starting-point for cauliflower, tofu, carrot and black bean sauce, ready to personalise with your household's recipe.",
+    "category": "quick",
+    "protein": "tofu",
+    "diet": "vegan",
+    "servings": 2,
+    "prepMinutes": 15,
+    "cookMinutes": 20,
+    "image": "/images/salad.jpg",
+    "source": "collection",
+    "ingredients": [
+      {
+        "name": "firm tofu",
+        "quantity": 350,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "egg noodles",
+        "quantity": 180,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "broccoli",
+        "quantity": 200,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "carrot",
+        "quantity": 1,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "red capsicum",
+        "quantity": 1,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "soy sauce",
+        "quantity": 2,
+        "unit": "tbsp",
+        "pantry": true
+      },
+      {
+        "name": "ginger",
+        "quantity": 10,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "garlic clove",
+        "quantity": 2,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "olive oil",
+        "quantity": 1,
+        "unit": "tbsp",
+        "pantry": true
+      },
+      {
+        "name": "cauliflower",
+        "quantity": 250,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "black bean sauce",
+        "quantity": 2,
+        "unit": "tbsp",
+        "pantry": true
+      }
+    ],
+    "steps": [
+      "Prepare and slice the vegetables and main ingredient. Cook noodles according to the packet and drain.",
+      "Heat oil in a large wok or frying pan. Cook the main ingredient in batches until cooked through. Taste and adjust seasoning, then check that all ingredients are piping hot.",
+      "Add the vegetables and stir-fry until just tender. Stir soy sauce with a splash of water and add to the pan.",
+      "Return noodles to the pan and toss until hot and coated. Serve straight away."
+    ],
+    "notes": "Generated draft: check the ingredients, quantities and method against your family's recipe, then photograph the source to update this card. Household log: Thu (1 time)."
+  },
+  {
+    "id": "chicken-casserole",
+    "title": "Chicken casserole",
+    "description": "A generated starting-point for chicken casserole, ready to personalise with your household's recipe.",
+    "category": "one-pot",
+    "protein": "chicken",
+    "diet": "omnivore",
+    "servings": 2,
+    "prepMinutes": 15,
+    "cookMinutes": 70,
+    "image": "/images/chicken.jpg",
+    "source": "collection",
+    "ingredients": [
+      {
+        "name": "chicken thigh",
+        "quantity": 400,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "carrot",
+        "quantity": 2,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "potato",
+        "quantity": 300,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "vegetable stock",
+        "quantity": 400,
+        "unit": "ml",
+        "pantry": true
+      },
+      {
+        "name": "brown onion",
+        "quantity": 1,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "garlic clove",
+        "quantity": 2,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "canned tomato",
+        "quantity": 400,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "dried thyme",
+        "quantity": 1,
+        "unit": "tsp",
+        "pantry": true
+      },
+      {
+        "name": "olive oil",
+        "quantity": 1,
+        "unit": "tbsp",
+        "pantry": true
+      },
+      {
+        "name": "salt",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      },
+      {
+        "name": "black pepper",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      }
+    ],
+    "steps": [
+      "Chop the vegetables into bite-size pieces. Heat a little oil in a heavy pot and brown the main ingredient in batches if needed.",
+      "Add onion and garlic and cook until softened. Stir in the remaining vegetables, tomato and stock.",
+      "Cover and simmer gently, stirring occasionally, until the vegetables are tender and the main ingredient is cooked through. Cook chicken until the thickest piece reaches 75 C.",
+      "Taste and adjust seasoning. Serve hot, with extra vegetables or bread if desired."
+    ],
+    "notes": "Generated draft: check the ingredients, quantities and method against your family's recipe, then photograph the source to update this card. Household log: Wed (1 time)."
+  },
+  {
+    "id": "chicken-lemon-rice-dish",
+    "title": "Chicken lemon rice dish",
+    "description": "A generated starting-point for chicken lemon rice dish, ready to personalise with your household's recipe.",
+    "category": "comfort",
+    "protein": "chicken",
+    "diet": "omnivore",
+    "servings": 2,
+    "prepMinutes": 20,
+    "cookMinutes": 45,
+    "image": "/images/chicken.jpg",
+    "source": "collection",
+    "ingredients": [
+      {
+        "name": "chicken thigh",
+        "quantity": 400,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "cheddar",
+        "quantity": 80,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "brown onion",
+        "quantity": 1,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "garlic clove",
+        "quantity": 2,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "olive oil",
+        "quantity": 1,
+        "unit": "tbsp",
+        "pantry": true
+      },
+      {
+        "name": "salt",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      },
+      {
+        "name": "black pepper",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      },
+      {
+        "name": "rice",
+        "quantity": 150,
+        "unit": "g",
+        "pantry": true
+      },
+      {
+        "name": "lemon",
+        "quantity": 1,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "chicken stock",
+        "quantity": 350,
+        "unit": "ml",
+        "pantry": true
+      },
+      {
+        "name": "baby spinach",
+        "quantity": 60,
+        "unit": "g",
+        "pantry": false
+      }
+    ],
+    "steps": [
+      "Heat the oven to 190 C (170 C fan). Rinse the rice and place it in a lidded ovenproof dish with stock, lemon zest and juice.",
+      "Season the chicken and brown it briefly in a pan with oil. Arrange it over the rice with sliced onion and garlic.",
+      "Cover tightly and bake for 30-35 minutes, until the rice is tender and the chicken reaches 75 C in the thickest part. Add a splash of water if the rice needs more time.",
+      "Fold spinach through the hot rice, rest covered for 5 minutes, then serve."
+    ],
+    "notes": "Generated draft: check the ingredients, quantities and method against your family's recipe, then photograph the source to update this card. Household log: Fri (1 time)."
+  },
+  {
+    "id": "chicken-noodle-stir-fry",
+    "title": "Chicken noodle stir-fry",
+    "description": "A generated starting-point for chicken noodle stir-fry, ready to personalise with your household's recipe.",
+    "category": "quick",
+    "protein": "chicken",
+    "diet": "omnivore",
+    "servings": 2,
+    "prepMinutes": 15,
+    "cookMinutes": 20,
+    "image": "/images/chicken.jpg",
+    "source": "collection",
+    "ingredients": [
+      {
+        "name": "chicken thigh",
+        "quantity": 400,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "egg noodles",
+        "quantity": 180,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "broccoli",
+        "quantity": 200,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "carrot",
+        "quantity": 1,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "red capsicum",
+        "quantity": 1,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "soy sauce",
+        "quantity": 2,
+        "unit": "tbsp",
+        "pantry": true
+      },
+      {
+        "name": "ginger",
+        "quantity": 10,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "garlic clove",
+        "quantity": 2,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "olive oil",
+        "quantity": 1,
+        "unit": "tbsp",
+        "pantry": true
+      }
+    ],
+    "steps": [
+      "Prepare and slice the vegetables and main ingredient. Cook noodles according to the packet and drain.",
+      "Heat oil in a large wok or frying pan. Cook the main ingredient in batches until cooked through. Cook chicken until the thickest piece reaches 75 C.",
+      "Add the vegetables and stir-fry until just tender. Stir soy sauce with a splash of water and add to the pan.",
+      "Return noodles to the pan and toss until hot and coated. Serve straight away."
+    ],
+    "notes": "Generated draft: check the ingredients, quantities and method against your family's recipe, then photograph the source to update this card. Household log: Mon (1 time)."
+  },
+  {
+    "id": "chicken-quesadilla",
+    "title": "Chicken quesadilla",
+    "description": "A generated starting-point for chicken quesadilla, ready to personalise with your household's recipe.",
+    "category": "quick",
+    "protein": "chicken",
+    "diet": "omnivore",
+    "servings": 2,
+    "prepMinutes": 15,
+    "cookMinutes": 20,
+    "image": "/images/chicken.jpg",
+    "source": "collection",
+    "ingredients": [
+      {
+        "name": "chicken thigh",
+        "quantity": 400,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "tortilla",
+        "quantity": 6,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "canned black beans",
+        "quantity": 200,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "tomato",
+        "quantity": 2,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "lettuce",
+        "quantity": 100,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "greek yoghurt",
+        "quantity": 80,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "lime",
+        "quantity": 1,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "olive oil",
+        "quantity": 1,
+        "unit": "tbsp",
+        "pantry": true
+      },
+      {
+        "name": "salt",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      }
+    ],
+    "steps": [
+      "Prepare the toppings and warm the tortillas or wrappers according to the packet.",
+      "Heat oil in a pan. Cook the main ingredient with the beans or vegetables and season to taste. Cook chicken until the thickest piece reaches 75 C.",
+      "Spoon the hot filling onto the wraps. Add tomato, lettuce and yoghurt or other toppings.",
+      "Fold or roll securely and serve warm, with lime wedges if available."
+    ],
+    "notes": "Generated draft: check the ingredients, quantities and method against your family's recipe, then photograph the source to update this card. Household log: Wed (1 time)."
+  },
+  {
+    "id": "chickpea-curry",
+    "title": "Chickpea curry",
+    "description": "A generated starting-point for chickpea curry, ready to personalise with your household's recipe.",
+    "category": "one-pot",
+    "protein": "legumes",
+    "diet": "vegan",
+    "servings": 2,
+    "prepMinutes": 10,
+    "cookMinutes": 25,
+    "image": "/images/curry.jpg",
+    "source": "collection",
+    "ingredients": [
+      {
+        "name": "canned chickpeas",
+        "quantity": 400,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "canned tomato",
+        "quantity": 400,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "coconut milk",
+        "quantity": 200,
+        "unit": "ml",
+        "pantry": false
+      },
+      {
+        "name": "rice",
+        "quantity": 150,
+        "unit": "g",
+        "pantry": true
+      },
+      {
+        "name": "brown onion",
+        "quantity": 1,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "garlic clove",
+        "quantity": 2,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "curry powder",
+        "quantity": 2,
+        "unit": "tsp",
+        "pantry": true
+      },
+      {
+        "name": "olive oil",
+        "quantity": 1,
+        "unit": "tbsp",
+        "pantry": true
+      },
+      {
+        "name": "salt",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      }
+    ],
+    "steps": [
+      "Rinse the rice and cook it according to the packet. Prepare the vegetables and main ingredients.",
+      "Warm a little oil in a saucepan. Soften the onion, then stir in garlic and curry powder for 30 seconds.",
+      "Add the recipe's main ingredient, tomato or coconut milk, and a splash of water. Simmer gently, stirring occasionally, until tender and cooked through. Taste and adjust seasoning, then check that all ingredients are piping hot.",
+      "Taste, season and serve the curry over rice. Add a squeeze of lemon or lime if available."
+    ],
+    "notes": "Generated draft: check the ingredients, quantities and method against your family's recipe, then photograph the source to update this card. Household log: Tue, Wed (4 times)."
+  },
+  {
+    "id": "chickpea-masala",
+    "title": "Chickpea masala",
+    "description": "A generated starting-point for chickpea masala, ready to personalise with your household's recipe.",
+    "category": "one-pot",
+    "protein": "legumes",
+    "diet": "vegan",
+    "servings": 2,
+    "prepMinutes": 10,
+    "cookMinutes": 25,
+    "image": "/images/curry.jpg",
+    "source": "collection",
+    "ingredients": [
+      {
+        "name": "canned chickpeas",
+        "quantity": 400,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "canned tomato",
+        "quantity": 400,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "coconut milk",
+        "quantity": 200,
+        "unit": "ml",
+        "pantry": false
+      },
+      {
+        "name": "rice",
+        "quantity": 150,
+        "unit": "g",
+        "pantry": true
+      },
+      {
+        "name": "brown onion",
+        "quantity": 1,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "garlic clove",
+        "quantity": 2,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "curry powder",
+        "quantity": 2,
+        "unit": "tsp",
+        "pantry": true
+      },
+      {
+        "name": "olive oil",
+        "quantity": 1,
+        "unit": "tbsp",
+        "pantry": true
+      },
+      {
+        "name": "salt",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      }
+    ],
+    "steps": [
+      "Rinse the rice and cook it according to the packet. Prepare the vegetables and main ingredients.",
+      "Warm a little oil in a saucepan. Soften the onion, then stir in garlic and curry powder for 30 seconds.",
+      "Add the recipe's main ingredient, tomato or coconut milk, and a splash of water. Simmer gently, stirring occasionally, until tender and cooked through. Taste and adjust seasoning, then check that all ingredients are piping hot.",
+      "Taste, season and serve the curry over rice. Add a squeeze of lemon or lime if available."
+    ],
+    "notes": "Generated draft: check the ingredients, quantities and method against your family's recipe, then photograph the source to update this card. Household log: Mon (2 times)."
+  },
+  {
+    "id": "corned-beef",
+    "title": "Corned beef",
+    "description": "A generated starting-point for corned beef, ready to personalise with your household's recipe.",
+    "category": "one-pot",
+    "protein": "beef",
+    "diet": "omnivore",
+    "servings": 2,
+    "prepMinutes": 15,
+    "cookMinutes": 70,
+    "image": "/images/beef.jpg",
+    "source": "collection",
+    "ingredients": [
+      {
+        "name": "corned beef",
+        "quantity": 500,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "carrot",
+        "quantity": 2,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "potato",
+        "quantity": 300,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "vegetable stock",
+        "quantity": 400,
+        "unit": "ml",
+        "pantry": true
+      },
+      {
+        "name": "brown onion",
+        "quantity": 1,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "garlic clove",
+        "quantity": 2,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "canned tomato",
+        "quantity": 400,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "dried thyme",
+        "quantity": 1,
+        "unit": "tsp",
+        "pantry": true
+      },
+      {
+        "name": "olive oil",
+        "quantity": 1,
+        "unit": "tbsp",
+        "pantry": true
+      },
+      {
+        "name": "salt",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      },
+      {
+        "name": "black pepper",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      }
+    ],
+    "steps": [
+      "Chop the vegetables into bite-size pieces. Heat a little oil in a heavy pot and brown the main ingredient in batches if needed.",
+      "Add onion and garlic and cook until softened. Stir in the remaining vegetables, tomato and stock.",
+      "Cover and simmer gently, stirring occasionally, until the vegetables are tender and the main ingredient is cooked through. Cook minced meat through to 75 C; use a thermometer and follow safe guidance for the cut.",
+      "Taste and adjust seasoning. Serve hot, with extra vegetables or bread if desired."
+    ],
+    "notes": "Generated draft: check the ingredients, quantities and method against your family's recipe, then photograph the source to update this card. Household log: Thu, Fri, Sat (3 times)."
+  },
+  {
+    "id": "curry-chicken",
+    "title": "Curry chicken",
+    "description": "A generated starting-point for curry chicken, ready to personalise with your household's recipe.",
+    "category": "one-pot",
+    "protein": "chicken",
+    "diet": "omnivore",
+    "servings": 2,
+    "prepMinutes": 10,
+    "cookMinutes": 25,
+    "image": "/images/chicken.jpg",
+    "source": "collection",
+    "ingredients": [
+      {
+        "name": "chicken thigh",
+        "quantity": 400,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "canned tomato",
+        "quantity": 400,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "coconut milk",
+        "quantity": 200,
+        "unit": "ml",
+        "pantry": false
+      },
+      {
+        "name": "rice",
+        "quantity": 150,
+        "unit": "g",
+        "pantry": true
+      },
+      {
+        "name": "brown onion",
+        "quantity": 1,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "garlic clove",
+        "quantity": 2,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "curry powder",
+        "quantity": 2,
+        "unit": "tsp",
+        "pantry": true
+      },
+      {
+        "name": "olive oil",
+        "quantity": 1,
+        "unit": "tbsp",
+        "pantry": true
+      },
+      {
+        "name": "salt",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      }
+    ],
+    "steps": [
+      "Rinse the rice and cook it according to the packet. Prepare the vegetables and main ingredients.",
+      "Warm a little oil in a saucepan. Soften the onion, then stir in garlic and curry powder for 30 seconds.",
+      "Add the recipe's main ingredient, tomato or coconut milk, and a splash of water. Simmer gently, stirring occasionally, until tender and cooked through. Cook chicken until the thickest piece reaches 75 C.",
+      "Taste, season and serve the curry over rice. Add a squeeze of lemon or lime if available."
+    ],
+    "notes": "Generated draft: check the ingredients, quantities and method against your family's recipe, then photograph the source to update this card. Household log: Fri (1 time)."
+  },
+  {
+    "id": "curry-fried-rice",
+    "title": "Curry fried rice",
+    "description": "A generated starting-point for curry fried rice, ready to personalise with your household's recipe.",
+    "category": "quick",
+    "protein": "eggs",
+    "diet": "vegetarian",
+    "servings": 2,
+    "prepMinutes": 15,
+    "cookMinutes": 20,
+    "image": "/images/eggs.jpg",
+    "source": "collection",
+    "ingredients": [
+      {
+        "name": "egg",
+        "quantity": 4,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "rice",
+        "quantity": 180,
+        "unit": "g",
+        "pantry": true
+      },
+      {
+        "name": "broccoli",
+        "quantity": 200,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "carrot",
+        "quantity": 1,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "red capsicum",
+        "quantity": 1,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "soy sauce",
+        "quantity": 2,
+        "unit": "tbsp",
+        "pantry": true
+      },
+      {
+        "name": "ginger",
+        "quantity": 10,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "garlic clove",
+        "quantity": 2,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "olive oil",
+        "quantity": 1,
+        "unit": "tbsp",
+        "pantry": true
+      },
+      {
+        "name": "frozen peas",
+        "quantity": 80,
+        "unit": "g",
+        "pantry": false
+      }
+    ],
+    "steps": [
+      "Cook rice according to the packet and let it steam-dry. Prepare the vegetables and beat the eggs.",
+      "Heat oil in a wok. Scramble the eggs until set, then transfer to a plate.",
+      "Stir-fry the vegetables with curry powder until just tender. Add rice and soy sauce; toss over high heat until piping hot.",
+      "Return the eggs to the wok, toss through and serve immediately."
+    ],
+    "notes": "Generated draft: check the ingredients, quantities and method against your family's recipe, then photograph the source to update this card. Household log: Thu (1 time)."
+  },
+  {
+    "id": "green-lentil-curry",
+    "title": "Green lentil curry",
+    "description": "A generated starting-point for green lentil curry, ready to personalise with your household's recipe.",
+    "category": "one-pot",
+    "protein": "legumes",
+    "diet": "vegan",
+    "servings": 2,
+    "prepMinutes": 10,
+    "cookMinutes": 25,
+    "image": "/images/curry.jpg",
+    "source": "collection",
+    "ingredients": [
+      {
+        "name": "green lentils",
+        "quantity": 200,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "coconut milk",
+        "quantity": 200,
+        "unit": "ml",
+        "pantry": false
+      },
+      {
+        "name": "rice",
+        "quantity": 150,
+        "unit": "g",
+        "pantry": true
+      },
+      {
+        "name": "brown onion",
+        "quantity": 1,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "garlic clove",
+        "quantity": 2,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "curry powder",
+        "quantity": 2,
+        "unit": "tsp",
+        "pantry": true
+      },
+      {
+        "name": "olive oil",
+        "quantity": 1,
+        "unit": "tbsp",
+        "pantry": true
+      },
+      {
+        "name": "salt",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      }
+    ],
+    "steps": [
+      "Rinse the rice and cook it according to the packet. Prepare the vegetables and main ingredients.",
+      "Warm a little oil in a saucepan. Soften the onion, then stir in garlic and curry powder for 30 seconds.",
+      "Add the recipe's main ingredient, tomato or coconut milk, and a splash of water. Simmer gently, stirring occasionally, until tender and cooked through. Taste and adjust seasoning, then check that all ingredients are piping hot.",
+      "Taste, season and serve the curry over rice. Add a squeeze of lemon or lime if available."
+    ],
+    "notes": "Generated draft: check the ingredients, quantities and method against your family's recipe, then photograph the source to update this card. Household log: Sun (1 time)."
+  },
+  {
+    "id": "dal",
+    "title": "Dal",
+    "description": "A generated starting-point for dal, ready to personalise with your household's recipe.",
+    "category": "one-pot",
+    "protein": "legumes",
+    "diet": "vegan",
+    "servings": 2,
+    "prepMinutes": 10,
+    "cookMinutes": 25,
+    "image": "/images/curry.jpg",
+    "source": "collection",
+    "ingredients": [
+      {
+        "name": "canned chickpeas",
+        "quantity": 400,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "red lentils",
+        "quantity": 200,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "coconut milk",
+        "quantity": 200,
+        "unit": "ml",
+        "pantry": false
+      },
+      {
+        "name": "rice",
+        "quantity": 150,
+        "unit": "g",
+        "pantry": true
+      },
+      {
+        "name": "brown onion",
+        "quantity": 1,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "garlic clove",
+        "quantity": 2,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "curry powder",
+        "quantity": 2,
+        "unit": "tsp",
+        "pantry": true
+      },
+      {
+        "name": "olive oil",
+        "quantity": 1,
+        "unit": "tbsp",
+        "pantry": true
+      },
+      {
+        "name": "salt",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      }
+    ],
+    "steps": [
+      "Rinse the rice and cook it according to the packet. Prepare the vegetables and main ingredients.",
+      "Warm a little oil in a saucepan. Soften the onion, then stir in garlic and curry powder for 30 seconds.",
+      "Add the recipe's main ingredient, tomato or coconut milk, and a splash of water. Simmer gently, stirring occasionally, until tender and cooked through. Taste and adjust seasoning, then check that all ingredients are piping hot.",
+      "Taste, season and serve the curry over rice. Add a squeeze of lemon or lime if available."
+    ],
+    "notes": "Generated draft: check the ingredients, quantities and method against your family's recipe, then photograph the source to update this card. Household log: Sat (1 time)."
+  },
+  {
+    "id": "enchiladas",
+    "title": "Enchiladas",
+    "description": "A generated starting-point for enchiladas, ready to personalise with your household's recipe.",
+    "category": "comfort",
+    "protein": "legumes",
+    "diet": "vegan",
+    "servings": 2,
+    "prepMinutes": 20,
+    "cookMinutes": 45,
+    "image": "/images/curry.jpg",
+    "source": "collection",
+    "ingredients": [
+      {
+        "name": "canned chickpeas",
+        "quantity": 400,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "potato",
+        "quantity": 200,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "canned tomato",
+        "quantity": 400,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "mozzarella",
+        "quantity": 120,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "cheddar",
+        "quantity": 80,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "brown onion",
+        "quantity": 1,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "garlic clove",
+        "quantity": 2,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "olive oil",
+        "quantity": 1,
+        "unit": "tbsp",
+        "pantry": true
+      },
+      {
+        "name": "salt",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      },
+      {
+        "name": "black pepper",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      },
+      {
+        "name": "tortilla",
+        "quantity": 6,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "canned black beans",
+        "quantity": 200,
+        "unit": "g",
+        "pantry": false
+      }
+    ],
+    "steps": [
+      "Heat the oven to 200 C (180 C fan). Prepare and chop the vegetables and main ingredients.",
+      "If using meat or seafood, cook it in a pan until done. Taste and adjust seasoning, then check that all ingredients are piping hot. Soften onion and garlic in the same pan.",
+      "Layer the ingredients in a baking dish with tomato and cheese or sauce. Cover loosely with foil if the top browns too quickly.",
+      "Bake until bubbling, tender and piping hot throughout. Rest for 5 minutes before serving."
+    ],
+    "notes": "Generated draft: check the ingredients, quantities and method against your family's recipe, then photograph the source to update this card. Household log: Thu (2 times)."
+  },
+  {
+    "id": "eggplant-parmigiana-with-polenta",
+    "title": "Eggplant parmigiana with polenta",
+    "description": "A generated starting-point for eggplant parmigiana with polenta, ready to personalise with your household's recipe.",
+    "category": "comfort",
+    "protein": "cheese",
+    "diet": "vegetarian",
+    "servings": 2,
+    "prepMinutes": 20,
+    "cookMinutes": 45,
+    "image": "/images/pasta.jpg",
+    "source": "collection",
+    "ingredients": [
+      {
+        "name": "eggplant",
+        "quantity": 1,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "polenta",
+        "quantity": 200,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "canned tomato",
+        "quantity": 400,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "mozzarella",
+        "quantity": 120,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "cheddar",
+        "quantity": 80,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "brown onion",
+        "quantity": 1,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "garlic clove",
+        "quantity": 2,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "olive oil",
+        "quantity": 1,
+        "unit": "tbsp",
+        "pantry": true
+      },
+      {
+        "name": "salt",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      },
+      {
+        "name": "black pepper",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      }
+    ],
+    "steps": [
+      "Heat the oven to 200 C (180 C fan). Prepare and chop the vegetables and main ingredients.",
+      "If using meat or seafood, cook it in a pan until done. Taste and adjust seasoning, then check that all ingredients are piping hot. Soften onion and garlic in the same pan.",
+      "Layer the ingredients in a baking dish with tomato and cheese or sauce. Cover loosely with foil if the top browns too quickly.",
+      "Bake until bubbling, tender and piping hot throughout. Rest for 5 minutes before serving."
+    ],
+    "notes": "Generated draft: check the ingredients, quantities and method against your family's recipe, then photograph the source to update this card. Household log: Tue (1 time)."
+  },
+  {
+    "id": "fish-curry",
+    "title": "Fish curry",
+    "description": "A generated starting-point for fish curry, ready to personalise with your household's recipe.",
+    "category": "one-pot",
+    "protein": "fish",
+    "diet": "pescatarian",
+    "servings": 2,
+    "prepMinutes": 10,
+    "cookMinutes": 25,
+    "image": "/images/salmon.jpg",
+    "source": "collection",
+    "ingredients": [
+      {
+        "name": "white fish fillet",
+        "quantity": 350,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "canned tomato",
+        "quantity": 400,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "coconut milk",
+        "quantity": 200,
+        "unit": "ml",
+        "pantry": false
+      },
+      {
+        "name": "rice",
+        "quantity": 150,
+        "unit": "g",
+        "pantry": true
+      },
+      {
+        "name": "brown onion",
+        "quantity": 1,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "garlic clove",
+        "quantity": 2,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "curry powder",
+        "quantity": 2,
+        "unit": "tsp",
+        "pantry": true
+      },
+      {
+        "name": "olive oil",
+        "quantity": 1,
+        "unit": "tbsp",
+        "pantry": true
+      },
+      {
+        "name": "salt",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      }
+    ],
+    "steps": [
+      "Rinse the rice and cook it according to the packet. Prepare the vegetables and main ingredients.",
+      "Warm a little oil in a saucepan. Soften the onion, then stir in garlic and curry powder for 30 seconds.",
+      "Add the recipe's main ingredient, tomato or coconut milk, and a splash of water. Simmer gently, stirring occasionally, until tender and cooked through. Cook seafood until opaque and cooked through; fish should flake easily.",
+      "Taste, season and serve the curry over rice. Add a squeeze of lemon or lime if available."
+    ],
+    "notes": "Generated draft: check the ingredients, quantities and method against your family's recipe, then photograph the source to update this card. Household log: Wed (4 times)."
+  },
+  {
+    "id": "fish-pie",
+    "title": "Fish pie",
+    "description": "A generated starting-point for fish pie, ready to personalise with your household's recipe.",
+    "category": "comfort",
+    "protein": "fish",
+    "diet": "pescatarian",
+    "servings": 2,
+    "prepMinutes": 20,
+    "cookMinutes": 45,
+    "image": "/images/salmon.jpg",
+    "source": "collection",
+    "ingredients": [
+      {
+        "name": "white fish fillet",
+        "quantity": 350,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "potato",
+        "quantity": 200,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "brown onion",
+        "quantity": 1,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "garlic clove",
+        "quantity": 2,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "olive oil",
+        "quantity": 1,
+        "unit": "tbsp",
+        "pantry": true
+      },
+      {
+        "name": "salt",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      },
+      {
+        "name": "black pepper",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      },
+      {
+        "name": "frozen peas",
+        "quantity": 100,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "milk",
+        "quantity": 200,
+        "unit": "ml",
+        "pantry": false
+      },
+      {
+        "name": "plain flour",
+        "quantity": 1,
+        "unit": "tbsp",
+        "pantry": true
+      },
+      {
+        "name": "fish stock",
+        "quantity": 200,
+        "unit": "ml",
+        "pantry": true
+      },
+      {
+        "name": "butter",
+        "quantity": 30,
+        "unit": "g",
+        "pantry": false
+      }
+    ],
+    "steps": [
+      "Heat the oven to 200 C (180 C fan). Peel, dice and boil the potatoes until tender; drain and mash with a little milk and butter.",
+      "Make a sauce by melting butter, stirring in flour, then gradually whisking in milk and fish stock until smooth and thickened.",
+      "Fold peas and bite-size fish pieces into the sauce. Spoon into a baking dish and top evenly with mashed potato.",
+      "Bake for 25-30 minutes until bubbling and golden. Check the fish is opaque and cooked through before serving."
+    ],
+    "notes": "Generated draft: check the ingredients, quantities and method against your family's recipe, then photograph the source to update this card. Household log: Thu (1 time)."
+  },
+  {
+    "id": "fish-pilaf-with-broccolini-and-capsicum",
+    "title": "Fish pilaf with broccolini and capsicum",
+    "description": "A generated starting-point for fish pilaf with broccolini and capsicum, ready to personalise with your household's recipe.",
+    "category": "one-pot",
+    "protein": "fish",
+    "diet": "pescatarian",
+    "servings": 2,
+    "prepMinutes": 15,
+    "cookMinutes": 70,
+    "image": "/images/salmon.jpg",
+    "source": "collection",
+    "ingredients": [
+      {
+        "name": "white fish fillet",
+        "quantity": 350,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "vegetable stock",
+        "quantity": 400,
+        "unit": "ml",
+        "pantry": true
+      },
+      {
+        "name": "brown onion",
+        "quantity": 1,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "garlic clove",
+        "quantity": 2,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "dried thyme",
+        "quantity": 1,
+        "unit": "tsp",
+        "pantry": true
+      },
+      {
+        "name": "olive oil",
+        "quantity": 1,
+        "unit": "tbsp",
+        "pantry": true
+      },
+      {
+        "name": "salt",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      },
+      {
+        "name": "black pepper",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      },
+      {
+        "name": "rice",
+        "quantity": 150,
+        "unit": "g",
+        "pantry": true
+      },
+      {
+        "name": "broccolini",
+        "quantity": 200,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "red capsicum",
+        "quantity": 1,
+        "unit": "piece",
+        "pantry": false
+      }
+    ],
+    "steps": [
+      "Rinse the rice. Slice the capsicum and cut the broccolini into bite-size pieces.",
+      "Soften onion in a saucepan with a little oil. Add rice and stock, cover and cook according to the rice packet.",
+      "Add the fish and broccolini for the final 8-10 minutes, keeping the pan covered. Cook until fish is opaque and flakes easily.",
+      "Fold gently, check seasoning and serve hot."
+    ],
+    "notes": "Generated draft: check the ingredients, quantities and method against your family's recipe, then photograph the source to update this card. Household log: Thu (1 time)."
+  },
+  {
+    "id": "french-style-cod",
+    "title": "French-style cod",
+    "description": "A generated starting-point for french-style cod, ready to personalise with your household's recipe.",
+    "category": "comfort",
+    "protein": "fish",
+    "diet": "pescatarian",
+    "servings": 2,
+    "prepMinutes": 15,
+    "cookMinutes": 45,
+    "image": "/images/salmon.jpg",
+    "source": "collection",
+    "ingredients": [
+      {
+        "name": "cod fillet",
+        "quantity": 350,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "potato",
+        "quantity": 400,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "carrot",
+        "quantity": 2,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "green peas",
+        "quantity": 100,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "olive oil",
+        "quantity": 1,
+        "unit": "tbsp",
+        "pantry": true
+      },
+      {
+        "name": "dried rosemary",
+        "quantity": 1,
+        "unit": "tsp",
+        "pantry": true
+      },
+      {
+        "name": "salt",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      },
+      {
+        "name": "black pepper",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      },
+      {
+        "name": "lemon",
+        "quantity": 1,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "capers",
+        "quantity": 1,
+        "unit": "tbsp",
+        "pantry": true
+      },
+      {
+        "name": "butter",
+        "quantity": 20,
+        "unit": "g",
+        "pantry": false
+      }
+    ],
+    "steps": [
+      "Heat the oven to 220 C (200 C fan). Chop vegetables evenly and place them in a roasting dish with oil and seasoning.",
+      "Season the main ingredient and place it on the tray or in a separate dish. Add lemon, herbs or a sauce to suit the meal.",
+      "Roast, turning vegetables once, until tender and the main ingredient is safely cooked through. Cook seafood until opaque and cooked through; fish should flake easily.",
+      "Rest meat for a few minutes before serving. Serve with the vegetables and any pan juices."
+    ],
+    "notes": "Generated draft: check the ingredients, quantities and method against your family's recipe, then photograph the source to update this card. Household log: Sun (1 time)."
+  },
+  {
+    "id": "gnocchi",
+    "title": "Gnocchi",
+    "description": "A generated starting-point for gnocchi, ready to personalise with your household's recipe.",
+    "category": "comfort",
+    "protein": "cheese",
+    "diet": "vegetarian",
+    "servings": 2,
+    "prepMinutes": 10,
+    "cookMinutes": 25,
+    "image": "/images/pasta.jpg",
+    "source": "collection",
+    "ingredients": [
+      {
+        "name": "mozzarella",
+        "quantity": 180,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "potato gnocchi",
+        "quantity": 250,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "canned tomato",
+        "quantity": 400,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "mushroom",
+        "quantity": 150,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "brown onion",
+        "quantity": 1,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "garlic clove",
+        "quantity": 2,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "parmesan",
+        "quantity": 30,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "olive oil",
+        "quantity": 1,
+        "unit": "tbsp",
+        "pantry": true
+      },
+      {
+        "name": "salt",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      },
+      {
+        "name": "black pepper",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      }
+    ],
+    "steps": [
+      "Bring a large saucepan of salted water to the boil. Cook the pasta or gnocchi according to its packet, then drain, reserving a little cooking water.",
+      "Meanwhile, warm oil in a frying pan. Soften the onion and garlic, add the main ingredient and cook until done. Taste and adjust seasoning, then check that all ingredients are piping hot.",
+      "Stir in the tomato and mushrooms or other vegetables; simmer until saucy and tender. Add a splash of pasta water if needed.",
+      "Toss through the pasta, finish with parmesan, and season to taste."
+    ],
+    "notes": "Generated draft: check the ingredients, quantities and method against your family's recipe, then photograph the source to update this card. Household log: Wed, Thu (2 times)."
+  },
+  {
+    "id": "gnocchi-alla-sorrentina",
+    "title": "Gnocchi alla sorrentina",
+    "description": "A generated starting-point for gnocchi alla sorrentina, ready to personalise with your household's recipe.",
+    "category": "comfort",
+    "protein": "cheese",
+    "diet": "vegetarian",
+    "servings": 2,
+    "prepMinutes": 20,
+    "cookMinutes": 45,
+    "image": "/images/pasta.jpg",
+    "source": "collection",
+    "ingredients": [
+      {
+        "name": "mozzarella",
+        "quantity": 180,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "potato",
+        "quantity": 200,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "canned tomato",
+        "quantity": 400,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "cheddar",
+        "quantity": 80,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "brown onion",
+        "quantity": 1,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "garlic clove",
+        "quantity": 2,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "olive oil",
+        "quantity": 1,
+        "unit": "tbsp",
+        "pantry": true
+      },
+      {
+        "name": "salt",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      },
+      {
+        "name": "black pepper",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      },
+      {
+        "name": "basil",
+        "quantity": 10,
+        "unit": "g",
+        "pantry": false
+      }
+    ],
+    "steps": [
+      "Heat the oven to 200 C (180 C fan). Prepare and chop the vegetables and main ingredients.",
+      "If using meat or seafood, cook it in a pan until done. Taste and adjust seasoning, then check that all ingredients are piping hot. Soften onion and garlic in the same pan.",
+      "Layer the ingredients in a baking dish with tomato and cheese or sauce. Cover loosely with foil if the top browns too quickly.",
+      "Bake until bubbling, tender and piping hot throughout. Rest for 5 minutes before serving."
+    ],
+    "notes": "Generated draft: check the ingredients, quantities and method against your family's recipe, then photograph the source to update this card. Household log: Thu (1 time)."
+  },
+  {
+    "id": "harissa-prawns",
+    "title": "Harissa prawns",
+    "description": "A generated starting-point for harissa prawns, ready to personalise with your household's recipe.",
+    "category": "comfort",
+    "protein": "fish",
+    "diet": "pescatarian",
+    "servings": 2,
+    "prepMinutes": 15,
+    "cookMinutes": 45,
+    "image": "/images/salmon.jpg",
+    "source": "collection",
+    "ingredients": [
+      {
+        "name": "raw peeled prawns",
+        "quantity": 300,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "potato",
+        "quantity": 400,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "carrot",
+        "quantity": 2,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "green peas",
+        "quantity": 100,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "olive oil",
+        "quantity": 1,
+        "unit": "tbsp",
+        "pantry": true
+      },
+      {
+        "name": "dried rosemary",
+        "quantity": 1,
+        "unit": "tsp",
+        "pantry": true
+      },
+      {
+        "name": "salt",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      },
+      {
+        "name": "black pepper",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      },
+      {
+        "name": "harissa paste",
+        "quantity": 1,
+        "unit": "tbsp",
+        "pantry": true
+      },
+      {
+        "name": "couscous",
+        "quantity": 150,
+        "unit": "g",
+        "pantry": true
+      }
+    ],
+    "steps": [
+      "Heat the oven to 220 C (200 C fan). Chop vegetables evenly and place them in a roasting dish with oil and seasoning.",
+      "Season the main ingredient and place it on the tray or in a separate dish. Add lemon, herbs or a sauce to suit the meal.",
+      "Roast, turning vegetables once, until tender and the main ingredient is safely cooked through. Cook seafood until opaque and cooked through; fish should flake easily.",
+      "Rest meat for a few minutes before serving. Serve with the vegetables and any pan juices."
+    ],
+    "notes": "Generated draft: check the ingredients, quantities and method against your family's recipe, then photograph the source to update this card. Household log: Sat (1 time)."
+  },
+  {
+    "id": "halloumi-bake",
+    "title": "Halloumi bake",
+    "description": "A generated starting-point for halloumi bake, ready to personalise with your household's recipe.",
+    "category": "comfort",
+    "protein": "cheese",
+    "diet": "vegetarian",
+    "servings": 2,
+    "prepMinutes": 20,
+    "cookMinutes": 45,
+    "image": "/images/pasta.jpg",
+    "source": "collection",
+    "ingredients": [
+      {
+        "name": "halloumi",
+        "quantity": 225,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "potato",
+        "quantity": 200,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "canned tomato",
+        "quantity": 400,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "mozzarella",
+        "quantity": 120,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "cheddar",
+        "quantity": 80,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "brown onion",
+        "quantity": 1,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "garlic clove",
+        "quantity": 2,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "olive oil",
+        "quantity": 1,
+        "unit": "tbsp",
+        "pantry": true
+      },
+      {
+        "name": "salt",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      },
+      {
+        "name": "black pepper",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      }
+    ],
+    "steps": [
+      "Heat the oven to 200 C (180 C fan). Prepare and chop the vegetables and main ingredients.",
+      "If using meat or seafood, cook it in a pan until done. Taste and adjust seasoning, then check that all ingredients are piping hot. Soften onion and garlic in the same pan.",
+      "Layer the ingredients in a baking dish with tomato and cheese or sauce. Cover loosely with foil if the top browns too quickly.",
+      "Bake until bubbling, tender and piping hot throughout. Rest for 5 minutes before serving."
+    ],
+    "notes": "Generated draft: check the ingredients, quantities and method against your family's recipe, then photograph the source to update this card. Household log: Tue, Sat (2 times)."
+  },
+  {
+    "id": "homemade-pizza",
+    "title": "Homemade pizza",
+    "description": "A generated starting-point for homemade pizza, ready to personalise with your household's recipe.",
+    "category": "comfort",
+    "protein": "cheese",
+    "diet": "vegetarian",
+    "servings": 2,
+    "prepMinutes": 20,
+    "cookMinutes": 15,
+    "image": "/images/pasta.jpg",
+    "source": "collection",
+    "ingredients": [
+      {
+        "name": "mozzarella",
+        "quantity": 180,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "pizza base",
+        "quantity": 2,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "passata",
+        "quantity": 150,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "mushroom",
+        "quantity": 100,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "red capsicum",
+        "quantity": 1,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "olive oil",
+        "quantity": 1,
+        "unit": "tbsp",
+        "pantry": true
+      }
+    ],
+    "steps": [
+      "Heat the oven to 220 C (200 C fan). Prepare the vegetables and place the pizza bases on baking trays.",
+      "Spread passata over the bases, leaving a small border. Add cheese and toppings evenly.",
+      "Bake for 10-15 minutes until the edges are crisp and the cheese is bubbling.",
+      "Rest briefly, slice and serve with a simple salad if desired."
+    ],
+    "notes": "Generated draft: check the ingredients, quantities and method against your family's recipe, then photograph the source to update this card. Household log: Fri, Sat (2 times)."
+  },
+  {
+    "id": "lamb-chops",
+    "title": "Lamb chops",
+    "description": "A generated starting-point for lamb chops, ready to personalise with your household's recipe.",
+    "category": "comfort",
+    "protein": "lamb",
+    "diet": "omnivore",
+    "servings": 2,
+    "prepMinutes": 15,
+    "cookMinutes": 45,
+    "image": "/images/roast.jpg",
+    "source": "collection",
+    "ingredients": [
+      {
+        "name": "lamb chop",
+        "quantity": 4,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "potato",
+        "quantity": 400,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "carrot",
+        "quantity": 2,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "green peas",
+        "quantity": 100,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "olive oil",
+        "quantity": 1,
+        "unit": "tbsp",
+        "pantry": true
+      },
+      {
+        "name": "dried rosemary",
+        "quantity": 1,
+        "unit": "tsp",
+        "pantry": true
+      },
+      {
+        "name": "salt",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      },
+      {
+        "name": "black pepper",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      }
+    ],
+    "steps": [
+      "Heat the oven to 220 C (200 C fan). Chop vegetables evenly and place them in a roasting dish with oil and seasoning.",
+      "Season the main ingredient and place it on the tray or in a separate dish. Add lemon, herbs or a sauce to suit the meal.",
+      "Roast, turning vegetables once, until tender and the main ingredient is safely cooked through. Cook minced meat through to 75 C; use a thermometer and follow safe guidance for the cut.",
+      "Rest meat for a few minutes before serving. Serve with the vegetables and any pan juices."
+    ],
+    "notes": "Generated draft: check the ingredients, quantities and method against your family's recipe, then photograph the source to update this card. Household log: Sun (1 time)."
+  },
+  {
+    "id": "lamb-feta-pasta",
+    "title": "Lamb feta pasta",
+    "description": "A generated starting-point for lamb feta pasta, ready to personalise with your household's recipe.",
+    "category": "comfort",
+    "protein": "lamb",
+    "diet": "omnivore",
+    "servings": 2,
+    "prepMinutes": 10,
+    "cookMinutes": 25,
+    "image": "/images/roast.jpg",
+    "source": "collection",
+    "ingredients": [
+      {
+        "name": "lamb mince",
+        "quantity": 300,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "dried pasta",
+        "quantity": 250,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "canned tomato",
+        "quantity": 400,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "mushroom",
+        "quantity": 150,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "brown onion",
+        "quantity": 1,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "garlic clove",
+        "quantity": 2,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "parmesan",
+        "quantity": 30,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "olive oil",
+        "quantity": 1,
+        "unit": "tbsp",
+        "pantry": true
+      },
+      {
+        "name": "salt",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      },
+      {
+        "name": "black pepper",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      }
+    ],
+    "steps": [
+      "Bring a large saucepan of salted water to the boil. Cook the pasta or gnocchi according to its packet, then drain, reserving a little cooking water.",
+      "Meanwhile, warm oil in a frying pan. Soften the onion and garlic, add the main ingredient and cook until done. Cook minced meat through to 75 C; use a thermometer and follow safe guidance for the cut.",
+      "Stir in the tomato and mushrooms or other vegetables; simmer until saucy and tender. Add a splash of pasta water if needed.",
+      "Toss through the pasta, finish with parmesan, and season to taste."
+    ],
+    "notes": "Generated draft: check the ingredients, quantities and method against your family's recipe, then photograph the source to update this card. Household log: Tue (1 time)."
+  },
+  {
+    "id": "lamb-burgers",
+    "title": "Lamb burgers",
+    "description": "A generated starting-point for lamb burgers, ready to personalise with your household's recipe.",
+    "category": "comfort",
+    "protein": "lamb",
+    "diet": "omnivore",
+    "servings": 2,
+    "prepMinutes": 15,
+    "cookMinutes": 25,
+    "image": "/images/roast.jpg",
+    "source": "collection",
+    "ingredients": [
+      {
+        "name": "lamb mince",
+        "quantity": 350,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "burger bun",
+        "quantity": 2,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "lettuce",
+        "quantity": 60,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "tomato",
+        "quantity": 1,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "cheddar",
+        "quantity": 2,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "potato",
+        "quantity": 300,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "olive oil",
+        "quantity": 1,
+        "unit": "tbsp",
+        "pantry": true
+      },
+      {
+        "name": "salt",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      },
+      {
+        "name": "black pepper",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      }
+    ],
+    "steps": [
+      "Cut the potatoes into chips or wedges and roast at 220 C with a little oil and seasoning until golden and tender.",
+      "Shape the mince into two patties, or prepare the patties as supplied. Cook in a hot pan or on a grill until cooked through. Cook minced meat through to 75 C; use a thermometer and follow safe guidance for the cut.",
+      "Toast the buns and prepare lettuce, tomato and cheese.",
+      "Build the burgers and serve with the hot potato chips."
+    ],
+    "notes": "Generated draft: check the ingredients, quantities and method against your family's recipe, then photograph the source to update this card. Household log: Wed (1 time)."
+  },
+  {
+    "id": "lasagne",
+    "title": "Lasagne",
+    "description": "A generated starting-point for lasagne, ready to personalise with your household's recipe.",
+    "category": "comfort",
+    "protein": "beef",
+    "diet": "omnivore",
+    "servings": 2,
+    "prepMinutes": 20,
+    "cookMinutes": 45,
+    "image": "/images/beef.jpg",
+    "source": "collection",
+    "ingredients": [
+      {
+        "name": "beef strips",
+        "quantity": 350,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "potato",
+        "quantity": 200,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "canned tomato",
+        "quantity": 400,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "mozzarella",
+        "quantity": 120,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "cheddar",
+        "quantity": 80,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "brown onion",
+        "quantity": 1,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "garlic clove",
+        "quantity": 2,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "olive oil",
+        "quantity": 1,
+        "unit": "tbsp",
+        "pantry": true
+      },
+      {
+        "name": "salt",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      },
+      {
+        "name": "black pepper",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      },
+      {
+        "name": "beef mince",
+        "quantity": 350,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "lasagne sheets",
+        "quantity": 6,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "milk",
+        "quantity": 250,
+        "unit": "ml",
+        "pantry": false
+      },
+      {
+        "name": "plain flour",
+        "quantity": 1,
+        "unit": "tbsp",
+        "pantry": true
+      }
+    ],
+    "steps": [
+      "Heat the oven to 200 C (180 C fan). Prepare and chop the vegetables and main ingredients.",
+      "If using meat or seafood, cook it in a pan until done. Cook minced meat through to 75 C; use a thermometer and follow safe guidance for the cut. Soften onion and garlic in the same pan.",
+      "Layer the ingredients in a baking dish with tomato and cheese or sauce. Cover loosely with foil if the top browns too quickly.",
+      "Bake until bubbling, tender and piping hot throughout. Rest for 5 minutes before serving."
+    ],
+    "notes": "Generated draft: check the ingredients, quantities and method against your family's recipe, then photograph the source to update this card. Household log: Tue (1 time)."
+  },
+  {
+    "id": "lentil-and-mushroom-bolognese",
+    "title": "Lentil and mushroom bolognese",
+    "description": "A generated starting-point for lentil and mushroom bolognese, ready to personalise with your household's recipe.",
+    "category": "comfort",
+    "protein": "legumes",
+    "diet": "vegan",
+    "servings": 2,
+    "prepMinutes": 10,
+    "cookMinutes": 25,
+    "image": "/images/curry.jpg",
+    "source": "collection",
+    "ingredients": [
+      {
+        "name": "brown lentils",
+        "quantity": 200,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "dried pasta",
+        "quantity": 250,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "canned tomato",
+        "quantity": 400,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "mushroom",
+        "quantity": 150,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "brown onion",
+        "quantity": 1,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "garlic clove",
+        "quantity": 2,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "parmesan",
+        "quantity": 30,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "olive oil",
+        "quantity": 1,
+        "unit": "tbsp",
+        "pantry": true
+      },
+      {
+        "name": "salt",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      },
+      {
+        "name": "black pepper",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      }
+    ],
+    "steps": [
+      "Bring a large saucepan of salted water to the boil. Cook the pasta or gnocchi according to its packet, then drain, reserving a little cooking water.",
+      "Meanwhile, warm oil in a frying pan. Soften the onion and garlic, add the main ingredient and cook until done. Taste and adjust seasoning, then check that all ingredients are piping hot.",
+      "Stir in the tomato and mushrooms or other vegetables; simmer until saucy and tender. Add a splash of pasta water if needed.",
+      "Toss through the pasta, finish with parmesan, and season to taste."
+    ],
+    "notes": "Generated draft: check the ingredients, quantities and method against your family's recipe, then photograph the source to update this card. Household log: Tue, Thu, Fri (3 times)."
+  },
+  {
+    "id": "lentil-and-kale-ragu",
+    "title": "Lentil and kale ragu",
+    "description": "A generated starting-point for lentil and kale ragu, ready to personalise with your household's recipe.",
+    "category": "comfort",
+    "protein": "legumes",
+    "diet": "vegan",
+    "servings": 2,
+    "prepMinutes": 10,
+    "cookMinutes": 25,
+    "image": "/images/curry.jpg",
+    "source": "collection",
+    "ingredients": [
+      {
+        "name": "brown lentils",
+        "quantity": 200,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "dried pasta",
+        "quantity": 250,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "canned tomato",
+        "quantity": 400,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "mushroom",
+        "quantity": 150,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "brown onion",
+        "quantity": 1,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "garlic clove",
+        "quantity": 2,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "parmesan",
+        "quantity": 30,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "olive oil",
+        "quantity": 1,
+        "unit": "tbsp",
+        "pantry": true
+      },
+      {
+        "name": "salt",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      },
+      {
+        "name": "black pepper",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      },
+      {
+        "name": "kale",
+        "quantity": 100,
+        "unit": "g",
+        "pantry": false
+      }
+    ],
+    "steps": [
+      "Bring a large saucepan of salted water to the boil. Cook the pasta or gnocchi according to its packet, then drain, reserving a little cooking water.",
+      "Meanwhile, warm oil in a frying pan. Soften the onion and garlic, add the main ingredient and cook until done. Taste and adjust seasoning, then check that all ingredients are piping hot.",
+      "Stir in the tomato and mushrooms or other vegetables; simmer until saucy and tender. Add a splash of pasta water if needed.",
+      "Toss through the pasta, finish with parmesan, and season to taste."
+    ],
+    "notes": "Generated draft: check the ingredients, quantities and method against your family's recipe, then photograph the source to update this card. Household log: Sat (1 time)."
+  },
+  {
+    "id": "meatballs-with-feta",
+    "title": "Meatballs with feta",
+    "description": "A generated starting-point for meatballs with feta, ready to personalise with your household's recipe.",
+    "category": "comfort",
+    "protein": "beef",
+    "diet": "omnivore",
+    "servings": 2,
+    "prepMinutes": 10,
+    "cookMinutes": 25,
+    "image": "/images/beef.jpg",
+    "source": "collection",
+    "ingredients": [
+      {
+        "name": "beef mince",
+        "quantity": 350,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "dried pasta",
+        "quantity": 250,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "canned tomato",
+        "quantity": 400,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "mushroom",
+        "quantity": 150,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "brown onion",
+        "quantity": 1,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "garlic clove",
+        "quantity": 2,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "parmesan",
+        "quantity": 30,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "olive oil",
+        "quantity": 1,
+        "unit": "tbsp",
+        "pantry": true
+      },
+      {
+        "name": "salt",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      },
+      {
+        "name": "black pepper",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      },
+      {
+        "name": "feta",
+        "quantity": 80,
+        "unit": "g",
+        "pantry": false
+      }
+    ],
+    "steps": [
+      "Bring a large saucepan of salted water to the boil. Cook the pasta or gnocchi according to its packet, then drain, reserving a little cooking water.",
+      "Meanwhile, warm oil in a frying pan. Soften the onion and garlic, add the main ingredient and cook until done. Cook minced meat through to 75 C; use a thermometer and follow safe guidance for the cut.",
+      "Stir in the tomato and mushrooms or other vegetables; simmer until saucy and tender. Add a splash of pasta water if needed.",
+      "Toss through the pasta, finish with parmesan, and season to taste."
+    ],
+    "notes": "Generated draft: check the ingredients, quantities and method against your family's recipe, then photograph the source to update this card. Household log: Thu (1 time)."
+  },
+  {
+    "id": "mexican-bean-bake",
+    "title": "Mexican bean bake",
+    "description": "A generated starting-point for mexican bean bake, ready to personalise with your household's recipe.",
+    "category": "comfort",
+    "protein": "legumes",
+    "diet": "vegan",
+    "servings": 2,
+    "prepMinutes": 20,
+    "cookMinutes": 45,
+    "image": "/images/curry.jpg",
+    "source": "collection",
+    "ingredients": [
+      {
+        "name": "canned mixed beans",
+        "quantity": 400,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "potato",
+        "quantity": 200,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "canned tomato",
+        "quantity": 400,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "mozzarella",
+        "quantity": 120,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "cheddar",
+        "quantity": 80,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "brown onion",
+        "quantity": 1,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "garlic clove",
+        "quantity": 2,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "olive oil",
+        "quantity": 1,
+        "unit": "tbsp",
+        "pantry": true
+      },
+      {
+        "name": "salt",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      },
+      {
+        "name": "black pepper",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      }
+    ],
+    "steps": [
+      "Heat the oven to 200 C (180 C fan). Prepare and chop the vegetables and main ingredients.",
+      "If using meat or seafood, cook it in a pan until done. Taste and adjust seasoning, then check that all ingredients are piping hot. Soften onion and garlic in the same pan.",
+      "Layer the ingredients in a baking dish with tomato and cheese or sauce. Cover loosely with foil if the top browns too quickly.",
+      "Bake until bubbling, tender and piping hot throughout. Rest for 5 minutes before serving."
+    ],
+    "notes": "Generated draft: check the ingredients, quantities and method against your family's recipe, then photograph the source to update this card. Household log: Wed (1 time)."
+  },
+  {
+    "id": "mexican-veggie-pie",
+    "title": "Mexican veggie pie",
+    "description": "A generated starting-point for mexican veggie pie, ready to personalise with your household's recipe.",
+    "category": "comfort",
+    "protein": "legumes",
+    "diet": "vegan",
+    "servings": 2,
+    "prepMinutes": 20,
+    "cookMinutes": 45,
+    "image": "/images/curry.jpg",
+    "source": "collection",
+    "ingredients": [
+      {
+        "name": "canned chickpeas",
+        "quantity": 400,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "potato",
+        "quantity": 200,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "canned tomato",
+        "quantity": 400,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "mozzarella",
+        "quantity": 120,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "cheddar",
+        "quantity": 80,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "brown onion",
+        "quantity": 1,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "garlic clove",
+        "quantity": 2,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "olive oil",
+        "quantity": 1,
+        "unit": "tbsp",
+        "pantry": true
+      },
+      {
+        "name": "salt",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      },
+      {
+        "name": "black pepper",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      },
+      {
+        "name": "shortcrust pastry",
+        "quantity": 1,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "frozen peas",
+        "quantity": 100,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "canned black beans",
+        "quantity": 200,
+        "unit": "g",
+        "pantry": false
+      }
+    ],
+    "steps": [
+      "Heat the oven to 200 C (180 C fan). Prepare and chop the vegetables and main ingredients.",
+      "If using meat or seafood, cook it in a pan until done. Taste and adjust seasoning, then check that all ingredients are piping hot. Soften onion and garlic in the same pan.",
+      "Layer the ingredients in a baking dish with tomato and cheese or sauce. Cover loosely with foil if the top browns too quickly.",
+      "Bake until bubbling, tender and piping hot throughout. Rest for 5 minutes before serving."
+    ],
+    "notes": "Generated draft: check the ingredients, quantities and method against your family's recipe, then photograph the source to update this card. Household log: Wed (1 time)."
+  },
+  {
+    "id": "miso-salmon",
+    "title": "Miso salmon",
+    "description": "A generated starting-point for miso salmon, ready to personalise with your household's recipe.",
+    "category": "comfort",
+    "protein": "fish",
+    "diet": "pescatarian",
+    "servings": 2,
+    "prepMinutes": 15,
+    "cookMinutes": 45,
+    "image": "/images/salmon.jpg",
+    "source": "collection",
+    "ingredients": [
+      {
+        "name": "salmon fillet",
+        "quantity": 350,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "potato",
+        "quantity": 400,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "carrot",
+        "quantity": 2,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "green peas",
+        "quantity": 100,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "olive oil",
+        "quantity": 1,
+        "unit": "tbsp",
+        "pantry": true
+      },
+      {
+        "name": "dried rosemary",
+        "quantity": 1,
+        "unit": "tsp",
+        "pantry": true
+      },
+      {
+        "name": "salt",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      },
+      {
+        "name": "black pepper",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      },
+      {
+        "name": "white miso paste",
+        "quantity": 1,
+        "unit": "tbsp",
+        "pantry": true
+      }
+    ],
+    "steps": [
+      "Heat the oven to 220 C (200 C fan). Chop vegetables evenly and place them in a roasting dish with oil and seasoning.",
+      "Season the main ingredient and place it on the tray or in a separate dish. Add lemon, herbs or a sauce to suit the meal.",
+      "Roast, turning vegetables once, until tender and the main ingredient is safely cooked through. Cook seafood until opaque and cooked through; fish should flake easily.",
+      "Rest meat for a few minutes before serving. Serve with the vegetables and any pan juices."
+    ],
+    "notes": "Generated draft: check the ingredients, quantities and method against your family's recipe, then photograph the source to update this card. Household log: Wed, Thu (2 times)."
+  },
+  {
+    "id": "miso-tofu-curry",
+    "title": "Miso tofu curry",
+    "description": "A generated starting-point for miso tofu curry, ready to personalise with your household's recipe.",
+    "category": "one-pot",
+    "protein": "tofu",
+    "diet": "vegan",
+    "servings": 2,
+    "prepMinutes": 10,
+    "cookMinutes": 25,
+    "image": "/images/salad.jpg",
+    "source": "collection",
+    "ingredients": [
+      {
+        "name": "firm tofu",
+        "quantity": 350,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "canned tomato",
+        "quantity": 400,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "coconut milk",
+        "quantity": 200,
+        "unit": "ml",
+        "pantry": false
+      },
+      {
+        "name": "rice",
+        "quantity": 150,
+        "unit": "g",
+        "pantry": true
+      },
+      {
+        "name": "brown onion",
+        "quantity": 1,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "garlic clove",
+        "quantity": 2,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "curry powder",
+        "quantity": 2,
+        "unit": "tsp",
+        "pantry": true
+      },
+      {
+        "name": "olive oil",
+        "quantity": 1,
+        "unit": "tbsp",
+        "pantry": true
+      },
+      {
+        "name": "salt",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      },
+      {
+        "name": "white miso paste",
+        "quantity": 1,
+        "unit": "tbsp",
+        "pantry": true
+      }
+    ],
+    "steps": [
+      "Rinse the rice and cook it according to the packet. Prepare the vegetables and main ingredients.",
+      "Warm a little oil in a saucepan. Soften the onion, then stir in garlic and curry powder for 30 seconds.",
+      "Add the recipe's main ingredient, tomato or coconut milk, and a splash of water. Simmer gently, stirring occasionally, until tender and cooked through. Taste and adjust seasoning, then check that all ingredients are piping hot.",
+      "Taste, season and serve the curry over rice. Add a squeeze of lemon or lime if available."
+    ],
+    "notes": "Generated draft: check the ingredients, quantities and method against your family's recipe, then photograph the source to update this card. Household log: Sun (1 time)."
+  },
+  {
+    "id": "nachos",
+    "title": "Nachos",
+    "description": "A generated starting-point for nachos, ready to personalise with your household's recipe.",
+    "category": "comfort",
+    "protein": "beef",
+    "diet": "omnivore",
+    "servings": 2,
+    "prepMinutes": 20,
+    "cookMinutes": 45,
+    "image": "/images/beef.jpg",
+    "source": "collection",
+    "ingredients": [
+      {
+        "name": "beef mince",
+        "quantity": 350,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "potato",
+        "quantity": 200,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "canned tomato",
+        "quantity": 400,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "mozzarella",
+        "quantity": 120,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "cheddar",
+        "quantity": 80,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "brown onion",
+        "quantity": 1,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "garlic clove",
+        "quantity": 2,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "olive oil",
+        "quantity": 1,
+        "unit": "tbsp",
+        "pantry": true
+      },
+      {
+        "name": "salt",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      },
+      {
+        "name": "black pepper",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      },
+      {
+        "name": "corn tortilla chips",
+        "quantity": 150,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "sour cream",
+        "quantity": 80,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "avocado",
+        "quantity": 1,
+        "unit": "piece",
+        "pantry": false
+      }
+    ],
+    "steps": [
+      "Heat the oven to 200 C (180 C fan). Prepare and chop the vegetables and main ingredients.",
+      "If using meat or seafood, cook it in a pan until done. Cook minced meat through to 75 C; use a thermometer and follow safe guidance for the cut. Soften onion and garlic in the same pan.",
+      "Layer the ingredients in a baking dish with tomato and cheese or sauce. Cover loosely with foil if the top browns too quickly.",
+      "Bake until bubbling, tender and piping hot throughout. Rest for 5 minutes before serving."
+    ],
+    "notes": "Generated draft: check the ingredients, quantities and method against your family's recipe, then photograph the source to update this card. Household log: Mon, Wed (2 times)."
+  },
+  {
+    "id": "nikky-pasta",
+    "title": "Nikky pasta",
+    "description": "A generated starting-point for nikky pasta, ready to personalise with your household's recipe.",
+    "category": "comfort",
+    "protein": "cheese",
+    "diet": "vegetarian",
+    "servings": 2,
+    "prepMinutes": 10,
+    "cookMinutes": 25,
+    "image": "/images/pasta.jpg",
+    "source": "collection",
+    "ingredients": [
+      {
+        "name": "mozzarella",
+        "quantity": 180,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "dried pasta",
+        "quantity": 250,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "canned tomato",
+        "quantity": 400,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "mushroom",
+        "quantity": 150,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "brown onion",
+        "quantity": 1,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "garlic clove",
+        "quantity": 2,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "parmesan",
+        "quantity": 30,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "olive oil",
+        "quantity": 1,
+        "unit": "tbsp",
+        "pantry": true
+      },
+      {
+        "name": "salt",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      },
+      {
+        "name": "black pepper",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      }
+    ],
+    "steps": [
+      "Bring a large saucepan of salted water to the boil. Cook the pasta or gnocchi according to its packet, then drain, reserving a little cooking water.",
+      "Meanwhile, warm oil in a frying pan. Soften the onion and garlic, add the main ingredient and cook until done. Taste and adjust seasoning, then check that all ingredients are piping hot.",
+      "Stir in the tomato and mushrooms or other vegetables; simmer until saucy and tender. Add a splash of pasta water if needed.",
+      "Toss through the pasta, finish with parmesan, and season to taste."
+    ],
+    "notes": "Generated draft: check the ingredients, quantities and method against your family's recipe, then photograph the source to update this card. Household log: Fri (1 time)."
+  },
+  {
+    "id": "oaty-chicken",
+    "title": "Oaty chicken",
+    "description": "A generated starting-point for oaty chicken, ready to personalise with your household's recipe.",
+    "category": "comfort",
+    "protein": "chicken",
+    "diet": "omnivore",
+    "servings": 2,
+    "prepMinutes": 15,
+    "cookMinutes": 45,
+    "image": "/images/chicken.jpg",
+    "source": "collection",
+    "ingredients": [
+      {
+        "name": "chicken thigh",
+        "quantity": 400,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "potato",
+        "quantity": 400,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "carrot",
+        "quantity": 2,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "green peas",
+        "quantity": 100,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "olive oil",
+        "quantity": 1,
+        "unit": "tbsp",
+        "pantry": true
+      },
+      {
+        "name": "dried rosemary",
+        "quantity": 1,
+        "unit": "tsp",
+        "pantry": true
+      },
+      {
+        "name": "salt",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      },
+      {
+        "name": "black pepper",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      },
+      {
+        "name": "rolled oats",
+        "quantity": 50,
+        "unit": "g",
+        "pantry": true
+      },
+      {
+        "name": "egg",
+        "quantity": 1,
+        "unit": "piece",
+        "pantry": false
+      }
+    ],
+    "steps": [
+      "Heat the oven to 220 C (200 C fan). Chop vegetables evenly and place them in a roasting dish with oil and seasoning.",
+      "Season the main ingredient and place it on the tray or in a separate dish. Add lemon, herbs or a sauce to suit the meal.",
+      "Roast, turning vegetables once, until tender and the main ingredient is safely cooked through. Cook chicken until the thickest piece reaches 75 C.",
+      "Rest meat for a few minutes before serving. Serve with the vegetables and any pan juices."
+    ],
+    "notes": "Generated draft: check the ingredients, quantities and method against your family's recipe, then photograph the source to update this card. Household log: Mon, Sat (2 times)."
+  },
+  {
+    "id": "pasta-puttanesca",
+    "title": "Pasta puttanesca",
+    "description": "A generated starting-point for pasta puttanesca, ready to personalise with your household's recipe.",
+    "category": "comfort",
+    "protein": "fish",
+    "diet": "pescatarian",
+    "servings": 2,
+    "prepMinutes": 10,
+    "cookMinutes": 25,
+    "image": "/images/salmon.jpg",
+    "source": "collection",
+    "ingredients": [
+      {
+        "name": "anchovy fillet",
+        "quantity": 4,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "dried pasta",
+        "quantity": 250,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "canned tomato",
+        "quantity": 400,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "mushroom",
+        "quantity": 150,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "brown onion",
+        "quantity": 1,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "garlic clove",
+        "quantity": 2,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "parmesan",
+        "quantity": 30,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "olive oil",
+        "quantity": 1,
+        "unit": "tbsp",
+        "pantry": true
+      },
+      {
+        "name": "salt",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      },
+      {
+        "name": "black pepper",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      },
+      {
+        "name": "black olives",
+        "quantity": 50,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "capers",
+        "quantity": 1,
+        "unit": "tbsp",
+        "pantry": true
+      }
+    ],
+    "steps": [
+      "Bring a large saucepan of salted water to the boil. Cook the pasta or gnocchi according to its packet, then drain, reserving a little cooking water.",
+      "Meanwhile, warm oil in a frying pan. Soften the onion and garlic, add the main ingredient and cook until done. Cook seafood until opaque and cooked through; fish should flake easily.",
+      "Stir in the tomato and mushrooms or other vegetables; simmer until saucy and tender. Add a splash of pasta water if needed.",
+      "Toss through the pasta, finish with parmesan, and season to taste."
+    ],
+    "notes": "Generated draft: check the ingredients, quantities and method against your family's recipe, then photograph the source to update this card. Household log: Tue (1 time)."
+  },
+  {
+    "id": "peri-peri-chicken",
+    "title": "Peri-peri chicken",
+    "description": "A generated starting-point for peri-peri chicken, ready to personalise with your household's recipe.",
+    "category": "comfort",
+    "protein": "chicken",
+    "diet": "omnivore",
+    "servings": 2,
+    "prepMinutes": 15,
+    "cookMinutes": 45,
+    "image": "/images/chicken.jpg",
+    "source": "collection",
+    "ingredients": [
+      {
+        "name": "chicken thigh",
+        "quantity": 400,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "potato",
+        "quantity": 400,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "carrot",
+        "quantity": 2,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "green peas",
+        "quantity": 100,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "olive oil",
+        "quantity": 1,
+        "unit": "tbsp",
+        "pantry": true
+      },
+      {
+        "name": "dried rosemary",
+        "quantity": 1,
+        "unit": "tsp",
+        "pantry": true
+      },
+      {
+        "name": "salt",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      },
+      {
+        "name": "black pepper",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      },
+      {
+        "name": "peri-peri seasoning",
+        "quantity": 1,
+        "unit": "tbsp",
+        "pantry": true
+      }
+    ],
+    "steps": [
+      "Heat the oven to 220 C (200 C fan). Chop vegetables evenly and place them in a roasting dish with oil and seasoning.",
+      "Season the main ingredient and place it on the tray or in a separate dish. Add lemon, herbs or a sauce to suit the meal.",
+      "Roast, turning vegetables once, until tender and the main ingredient is safely cooked through. Cook chicken until the thickest piece reaches 75 C.",
+      "Rest meat for a few minutes before serving. Serve with the vegetables and any pan juices."
+    ],
+    "notes": "Generated draft: check the ingredients, quantities and method against your family's recipe, then photograph the source to update this card. Household log: Fri, Tue, Sun (3 times)."
+  },
+  {
+    "id": "pork-chops",
+    "title": "Pork chops",
+    "description": "A generated starting-point for pork chops, ready to personalise with your household's recipe.",
+    "category": "comfort",
+    "protein": "pork",
+    "diet": "omnivore",
+    "servings": 2,
+    "prepMinutes": 15,
+    "cookMinutes": 45,
+    "image": "/images/roast.jpg",
+    "source": "collection",
+    "ingredients": [
+      {
+        "name": "pork chop",
+        "quantity": 2,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "potato",
+        "quantity": 400,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "carrot",
+        "quantity": 2,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "green peas",
+        "quantity": 100,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "olive oil",
+        "quantity": 1,
+        "unit": "tbsp",
+        "pantry": true
+      },
+      {
+        "name": "dried rosemary",
+        "quantity": 1,
+        "unit": "tsp",
+        "pantry": true
+      },
+      {
+        "name": "salt",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      },
+      {
+        "name": "black pepper",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      }
+    ],
+    "steps": [
+      "Heat the oven to 220 C (200 C fan). Chop vegetables evenly and place them in a roasting dish with oil and seasoning.",
+      "Season the main ingredient and place it on the tray or in a separate dish. Add lemon, herbs or a sauce to suit the meal.",
+      "Roast, turning vegetables once, until tender and the main ingredient is safely cooked through. Cook minced meat through to 75 C; use a thermometer and follow safe guidance for the cut.",
+      "Rest meat for a few minutes before serving. Serve with the vegetables and any pan juices."
+    ],
+    "notes": "Generated draft: check the ingredients, quantities and method against your family's recipe, then photograph the source to update this card. Household log: Thu (1 time)."
+  },
+  {
+    "id": "roast-pork-with-pigs-n-blankets-gc",
+    "title": "Roast pork with pigs ’n blankets (GC)",
+    "description": "A generated starting-point for roast pork with pigs ’n blankets (gc), ready to personalise with your household's recipe.",
+    "category": "comfort",
+    "protein": "pork",
+    "diet": "omnivore",
+    "servings": 2,
+    "prepMinutes": 15,
+    "cookMinutes": 45,
+    "image": "/images/roast.jpg",
+    "source": "collection",
+    "ingredients": [
+      {
+        "name": "pork sausage",
+        "quantity": 400,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "potato",
+        "quantity": 400,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "carrot",
+        "quantity": 2,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "green peas",
+        "quantity": 100,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "olive oil",
+        "quantity": 1,
+        "unit": "tbsp",
+        "pantry": true
+      },
+      {
+        "name": "dried rosemary",
+        "quantity": 1,
+        "unit": "tsp",
+        "pantry": true
+      },
+      {
+        "name": "salt",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      },
+      {
+        "name": "black pepper",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      },
+      {
+        "name": "pork loin",
+        "quantity": 400,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "streaky bacon",
+        "quantity": 4,
+        "unit": "piece",
+        "pantry": false
+      }
+    ],
+    "steps": [
+      "Heat the oven to 220 C (200 C fan). Chop vegetables evenly and place them in a roasting dish with oil and seasoning.",
+      "Season the main ingredient and place it on the tray or in a separate dish. Add lemon, herbs or a sauce to suit the meal.",
+      "Roast, turning vegetables once, until tender and the main ingredient is safely cooked through. Cook minced meat through to 75 C; use a thermometer and follow safe guidance for the cut.",
+      "Rest meat for a few minutes before serving. Serve with the vegetables and any pan juices."
+    ],
+    "notes": "Generated draft: check the ingredients, quantities and method against your family's recipe, then photograph the source to update this card. Household log: Tue (1 time)."
+  },
+  {
+    "id": "prawn-omelette",
+    "title": "Prawn omelette",
+    "description": "A generated starting-point for prawn omelette, ready to personalise with your household's recipe.",
+    "category": "quick",
+    "protein": "fish",
+    "diet": "pescatarian",
+    "servings": 2,
+    "prepMinutes": 15,
+    "cookMinutes": 20,
+    "image": "/images/salmon.jpg",
+    "source": "collection",
+    "ingredients": [
+      {
+        "name": "raw peeled prawns",
+        "quantity": 300,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "potato",
+        "quantity": 250,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "tomato",
+        "quantity": 2,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "milk",
+        "quantity": 40,
+        "unit": "ml",
+        "pantry": false
+      },
+      {
+        "name": "baby spinach",
+        "quantity": 60,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "brown onion",
+        "quantity": 1,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "olive oil",
+        "quantity": 1,
+        "unit": "tbsp",
+        "pantry": true
+      },
+      {
+        "name": "salt",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      },
+      {
+        "name": "black pepper",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      }
+    ],
+    "steps": [
+      "Dice the potatoes and vegetables. If using potato, simmer it for 8 minutes until almost tender, then drain.",
+      "Cook the main ingredient in a lightly oiled pan until done. Cook seafood until opaque and cooked through; fish should flake easily. Add the vegetables and cook until softened.",
+      "Whisk the eggs with milk and a pinch of seasoning. Pour into the pan and cook gently until set, covering briefly if needed.",
+      "Check eggs are fully cooked, then serve hot with the remaining vegetables."
+    ],
+    "notes": "Generated draft: check the ingredients, quantities and method against your family's recipe, then photograph the source to update this card. Household log: Thu, Sun (2 times)."
+  },
+  {
+    "id": "prawn-spaghetti",
+    "title": "Prawn spaghetti",
+    "description": "A generated starting-point for prawn spaghetti, ready to personalise with your household's recipe.",
+    "category": "comfort",
+    "protein": "fish",
+    "diet": "pescatarian",
+    "servings": 2,
+    "prepMinutes": 10,
+    "cookMinutes": 25,
+    "image": "/images/salmon.jpg",
+    "source": "collection",
+    "ingredients": [
+      {
+        "name": "raw peeled prawns",
+        "quantity": 300,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "dried pasta",
+        "quantity": 250,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "canned tomato",
+        "quantity": 400,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "mushroom",
+        "quantity": 150,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "brown onion",
+        "quantity": 1,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "garlic clove",
+        "quantity": 2,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "parmesan",
+        "quantity": 30,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "olive oil",
+        "quantity": 1,
+        "unit": "tbsp",
+        "pantry": true
+      },
+      {
+        "name": "salt",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      },
+      {
+        "name": "black pepper",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      }
+    ],
+    "steps": [
+      "Bring a large saucepan of salted water to the boil. Cook the pasta or gnocchi according to its packet, then drain, reserving a little cooking water.",
+      "Meanwhile, warm oil in a frying pan. Soften the onion and garlic, add the main ingredient and cook until done. Cook seafood until opaque and cooked through; fish should flake easily.",
+      "Stir in the tomato and mushrooms or other vegetables; simmer until saucy and tender. Add a splash of pasta water if needed.",
+      "Toss through the pasta, finish with parmesan, and season to taste."
+    ],
+    "notes": "Generated draft: check the ingredients, quantities and method against your family's recipe, then photograph the source to update this card. Household log: Mon (1 time)."
+  },
+  {
+    "id": "prawn-green-curry",
+    "title": "Prawn green curry",
+    "description": "A generated starting-point for prawn green curry, ready to personalise with your household's recipe.",
+    "category": "one-pot",
+    "protein": "fish",
+    "diet": "pescatarian",
+    "servings": 2,
+    "prepMinutes": 10,
+    "cookMinutes": 25,
+    "image": "/images/salmon.jpg",
+    "source": "collection",
+    "ingredients": [
+      {
+        "name": "raw peeled prawns",
+        "quantity": 300,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "canned tomato",
+        "quantity": 400,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "coconut milk",
+        "quantity": 200,
+        "unit": "ml",
+        "pantry": false
+      },
+      {
+        "name": "rice",
+        "quantity": 150,
+        "unit": "g",
+        "pantry": true
+      },
+      {
+        "name": "brown onion",
+        "quantity": 1,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "garlic clove",
+        "quantity": 2,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "curry powder",
+        "quantity": 2,
+        "unit": "tsp",
+        "pantry": true
+      },
+      {
+        "name": "olive oil",
+        "quantity": 1,
+        "unit": "tbsp",
+        "pantry": true
+      },
+      {
+        "name": "salt",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      }
+    ],
+    "steps": [
+      "Rinse the rice and cook it according to the packet. Prepare the vegetables and main ingredients.",
+      "Warm a little oil in a saucepan. Soften the onion, then stir in garlic and curry powder for 30 seconds.",
+      "Add the recipe's main ingredient, tomato or coconut milk, and a splash of water. Simmer gently, stirring occasionally, until tender and cooked through. Cook seafood until opaque and cooked through; fish should flake easily.",
+      "Taste, season and serve the curry over rice. Add a squeeze of lemon or lime if available."
+    ],
+    "notes": "Generated draft: check the ingredients, quantities and method against your family's recipe, then photograph the source to update this card. Household log: Thu (1 time)."
+  },
+  {
+    "id": "prawn-linguine",
+    "title": "Prawn linguine",
+    "description": "A generated starting-point for prawn linguine, ready to personalise with your household's recipe.",
+    "category": "comfort",
+    "protein": "fish",
+    "diet": "pescatarian",
+    "servings": 2,
+    "prepMinutes": 10,
+    "cookMinutes": 25,
+    "image": "/images/salmon.jpg",
+    "source": "collection",
+    "ingredients": [
+      {
+        "name": "raw peeled prawns",
+        "quantity": 300,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "dried pasta",
+        "quantity": 250,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "canned tomato",
+        "quantity": 400,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "mushroom",
+        "quantity": 150,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "brown onion",
+        "quantity": 1,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "garlic clove",
+        "quantity": 2,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "parmesan",
+        "quantity": 30,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "olive oil",
+        "quantity": 1,
+        "unit": "tbsp",
+        "pantry": true
+      },
+      {
+        "name": "salt",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      },
+      {
+        "name": "black pepper",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      }
+    ],
+    "steps": [
+      "Bring a large saucepan of salted water to the boil. Cook the pasta or gnocchi according to its packet, then drain, reserving a little cooking water.",
+      "Meanwhile, warm oil in a frying pan. Soften the onion and garlic, add the main ingredient and cook until done. Cook seafood until opaque and cooked through; fish should flake easily.",
+      "Stir in the tomato and mushrooms or other vegetables; simmer until saucy and tender. Add a splash of pasta water if needed.",
+      "Toss through the pasta, finish with parmesan, and season to taste."
+    ],
+    "notes": "Generated draft: check the ingredients, quantities and method against your family's recipe, then photograph the source to update this card. Household log: Mon (1 time)."
+  },
+  {
+    "id": "prawn-noodle-stir-fry",
+    "title": "Prawn noodle stir-fry",
+    "description": "A generated starting-point for prawn noodle stir-fry, ready to personalise with your household's recipe.",
+    "category": "quick",
+    "protein": "fish",
+    "diet": "pescatarian",
+    "servings": 2,
+    "prepMinutes": 15,
+    "cookMinutes": 20,
+    "image": "/images/salmon.jpg",
+    "source": "collection",
+    "ingredients": [
+      {
+        "name": "raw peeled prawns",
+        "quantity": 300,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "egg noodles",
+        "quantity": 180,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "broccoli",
+        "quantity": 200,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "carrot",
+        "quantity": 1,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "red capsicum",
+        "quantity": 1,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "soy sauce",
+        "quantity": 2,
+        "unit": "tbsp",
+        "pantry": true
+      },
+      {
+        "name": "ginger",
+        "quantity": 10,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "garlic clove",
+        "quantity": 2,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "olive oil",
+        "quantity": 1,
+        "unit": "tbsp",
+        "pantry": true
+      }
+    ],
+    "steps": [
+      "Prepare and slice the vegetables and main ingredient. Cook noodles according to the packet and drain.",
+      "Heat oil in a large wok or frying pan. Cook the main ingredient in batches until cooked through. Cook seafood until opaque and cooked through; fish should flake easily.",
+      "Add the vegetables and stir-fry until just tender. Stir soy sauce with a splash of water and add to the pan.",
+      "Return noodles to the pan and toss until hot and coated. Serve straight away."
+    ],
+    "notes": "Generated draft: check the ingredients, quantities and method against your family's recipe, then photograph the source to update this card. Household log: Sun (1 time)."
+  },
+  {
+    "id": "ravioli",
+    "title": "Ravioli",
+    "description": "A generated starting-point for ravioli, ready to personalise with your household's recipe.",
+    "category": "comfort",
+    "protein": "cheese",
+    "diet": "vegetarian",
+    "servings": 2,
+    "prepMinutes": 10,
+    "cookMinutes": 25,
+    "image": "/images/pasta.jpg",
+    "source": "collection",
+    "ingredients": [
+      {
+        "name": "cheese ravioli",
+        "quantity": 250,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "canned tomato",
+        "quantity": 400,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "mushroom",
+        "quantity": 150,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "brown onion",
+        "quantity": 1,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "garlic clove",
+        "quantity": 2,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "parmesan",
+        "quantity": 30,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "olive oil",
+        "quantity": 1,
+        "unit": "tbsp",
+        "pantry": true
+      },
+      {
+        "name": "salt",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      },
+      {
+        "name": "black pepper",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      }
+    ],
+    "steps": [
+      "Bring a large saucepan of salted water to the boil. Cook the pasta or gnocchi according to its packet, then drain, reserving a little cooking water.",
+      "Meanwhile, warm oil in a frying pan. Soften the onion and garlic, add the main ingredient and cook until done. Taste and adjust seasoning, then check that all ingredients are piping hot.",
+      "Stir in the tomato and mushrooms or other vegetables; simmer until saucy and tender. Add a splash of pasta water if needed.",
+      "Toss through the pasta, finish with parmesan, and season to taste."
+    ],
+    "notes": "Generated draft: check the ingredients, quantities and method against your family's recipe, then photograph the source to update this card. Household log: Sat (2 times)."
+  },
+  {
+    "id": "roast-chicken",
+    "title": "Roast chicken",
+    "description": "A generated starting-point for roast chicken, ready to personalise with your household's recipe.",
+    "category": "comfort",
+    "protein": "chicken",
+    "diet": "omnivore",
+    "servings": 2,
+    "prepMinutes": 15,
+    "cookMinutes": 45,
+    "image": "/images/chicken.jpg",
+    "source": "collection",
+    "ingredients": [
+      {
+        "name": "whole chicken",
+        "quantity": 1.5,
+        "unit": "kg",
+        "pantry": false
+      },
+      {
+        "name": "potato",
+        "quantity": 400,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "carrot",
+        "quantity": 2,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "green peas",
+        "quantity": 100,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "olive oil",
+        "quantity": 1,
+        "unit": "tbsp",
+        "pantry": true
+      },
+      {
+        "name": "dried rosemary",
+        "quantity": 1,
+        "unit": "tsp",
+        "pantry": true
+      },
+      {
+        "name": "salt",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      },
+      {
+        "name": "black pepper",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      }
+    ],
+    "steps": [
+      "Heat the oven to 220 C (200 C fan). Chop vegetables evenly and place them in a roasting dish with oil and seasoning.",
+      "Season the main ingredient and place it on the tray or in a separate dish. Add lemon, herbs or a sauce to suit the meal.",
+      "Roast, turning vegetables once, until tender and the main ingredient is safely cooked through. Cook chicken until the thickest piece reaches 75 C.",
+      "Rest meat for a few minutes before serving. Serve with the vegetables and any pan juices."
+    ],
+    "notes": "Generated draft: check the ingredients, quantities and method against your family's recipe, then photograph the source to update this card. Household log: Fri, Sat, Sun (3 times)."
+  },
+  {
+    "id": "salmon-caprese",
+    "title": "Salmon Caprese",
+    "description": "A generated starting-point for salmon caprese, ready to personalise with your household's recipe.",
+    "category": "comfort",
+    "protein": "fish",
+    "diet": "pescatarian",
+    "servings": 2,
+    "prepMinutes": 15,
+    "cookMinutes": 45,
+    "image": "/images/salmon.jpg",
+    "source": "collection",
+    "ingredients": [
+      {
+        "name": "salmon fillet",
+        "quantity": 350,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "potato",
+        "quantity": 400,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "carrot",
+        "quantity": 2,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "green peas",
+        "quantity": 100,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "olive oil",
+        "quantity": 1,
+        "unit": "tbsp",
+        "pantry": true
+      },
+      {
+        "name": "dried rosemary",
+        "quantity": 1,
+        "unit": "tsp",
+        "pantry": true
+      },
+      {
+        "name": "salt",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      },
+      {
+        "name": "black pepper",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      },
+      {
+        "name": "tomato",
+        "quantity": 2,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "basil",
+        "quantity": 10,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "mozzarella",
+        "quantity": 100,
+        "unit": "g",
+        "pantry": false
+      }
+    ],
+    "steps": [
+      "Heat the oven to 220 C (200 C fan). Chop vegetables evenly and place them in a roasting dish with oil and seasoning.",
+      "Season the main ingredient and place it on the tray or in a separate dish. Add lemon, herbs or a sauce to suit the meal.",
+      "Roast, turning vegetables once, until tender and the main ingredient is safely cooked through. Cook seafood until opaque and cooked through; fish should flake easily.",
+      "Rest meat for a few minutes before serving. Serve with the vegetables and any pan juices."
+    ],
+    "notes": "Generated draft: check the ingredients, quantities and method against your family's recipe, then photograph the source to update this card. Household log: Sat (1 time)."
+  },
+  {
+    "id": "salmon-with-sweet-potato",
+    "title": "Salmon with sweet potato",
+    "description": "A generated starting-point for salmon with sweet potato, ready to personalise with your household's recipe.",
+    "category": "comfort",
+    "protein": "fish",
+    "diet": "pescatarian",
+    "servings": 2,
+    "prepMinutes": 15,
+    "cookMinutes": 45,
+    "image": "/images/salmon.jpg",
+    "source": "collection",
+    "ingredients": [
+      {
+        "name": "salmon fillet",
+        "quantity": 350,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "sweet potato",
+        "quantity": 400,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "carrot",
+        "quantity": 2,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "green peas",
+        "quantity": 100,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "olive oil",
+        "quantity": 1,
+        "unit": "tbsp",
+        "pantry": true
+      },
+      {
+        "name": "dried rosemary",
+        "quantity": 1,
+        "unit": "tsp",
+        "pantry": true
+      },
+      {
+        "name": "salt",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      },
+      {
+        "name": "black pepper",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      }
+    ],
+    "steps": [
+      "Heat the oven to 220 C (200 C fan). Chop vegetables evenly and place them in a roasting dish with oil and seasoning.",
+      "Season the main ingredient and place it on the tray or in a separate dish. Add lemon, herbs or a sauce to suit the meal.",
+      "Roast, turning vegetables once, until tender and the main ingredient is safely cooked through. Cook seafood until opaque and cooked through; fish should flake easily.",
+      "Rest meat for a few minutes before serving. Serve with the vegetables and any pan juices."
+    ],
+    "notes": "Generated draft: check the ingredients, quantities and method against your family's recipe, then photograph the source to update this card. Household log: Thu (1 time)."
+  },
+  {
+    "id": "salmon-with-broccolini-and-quinoa",
+    "title": "Salmon with broccolini and quinoa",
+    "description": "A generated starting-point for salmon with broccolini and quinoa, ready to personalise with your household's recipe.",
+    "category": "comfort",
+    "protein": "fish",
+    "diet": "pescatarian",
+    "servings": 2,
+    "prepMinutes": 15,
+    "cookMinutes": 45,
+    "image": "/images/salmon.jpg",
+    "source": "collection",
+    "ingredients": [
+      {
+        "name": "salmon fillet",
+        "quantity": 350,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "potato",
+        "quantity": 400,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "carrot",
+        "quantity": 2,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "green peas",
+        "quantity": 100,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "olive oil",
+        "quantity": 1,
+        "unit": "tbsp",
+        "pantry": true
+      },
+      {
+        "name": "dried rosemary",
+        "quantity": 1,
+        "unit": "tsp",
+        "pantry": true
+      },
+      {
+        "name": "salt",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      },
+      {
+        "name": "black pepper",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      },
+      {
+        "name": "broccolini",
+        "quantity": 200,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "quinoa",
+        "quantity": 120,
+        "unit": "g",
+        "pantry": true
+      }
+    ],
+    "steps": [
+      "Heat the oven to 220 C (200 C fan). Chop vegetables evenly and place them in a roasting dish with oil and seasoning.",
+      "Season the main ingredient and place it on the tray or in a separate dish. Add lemon, herbs or a sauce to suit the meal.",
+      "Roast, turning vegetables once, until tender and the main ingredient is safely cooked through. Cook seafood until opaque and cooked through; fish should flake easily.",
+      "Rest meat for a few minutes before serving. Serve with the vegetables and any pan juices."
+    ],
+    "notes": "Generated draft: check the ingredients, quantities and method against your family's recipe, then photograph the source to update this card. Household log: Fri (1 time)."
+  },
+  {
+    "id": "sausage-bake",
+    "title": "Sausage bake",
+    "description": "A generated starting-point for sausage bake, ready to personalise with your household's recipe.",
+    "category": "comfort",
+    "protein": "pork",
+    "diet": "omnivore",
+    "servings": 2,
+    "prepMinutes": 20,
+    "cookMinutes": 45,
+    "image": "/images/roast.jpg",
+    "source": "collection",
+    "ingredients": [
+      {
+        "name": "pork sausage",
+        "quantity": 400,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "potato",
+        "quantity": 200,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "canned tomato",
+        "quantity": 400,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "mozzarella",
+        "quantity": 120,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "cheddar",
+        "quantity": 80,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "brown onion",
+        "quantity": 1,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "garlic clove",
+        "quantity": 2,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "olive oil",
+        "quantity": 1,
+        "unit": "tbsp",
+        "pantry": true
+      },
+      {
+        "name": "salt",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      },
+      {
+        "name": "black pepper",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      }
+    ],
+    "steps": [
+      "Heat the oven to 200 C (180 C fan). Prepare and chop the vegetables and main ingredients.",
+      "If using meat or seafood, cook it in a pan until done. Cook minced meat through to 75 C; use a thermometer and follow safe guidance for the cut. Soften onion and garlic in the same pan.",
+      "Layer the ingredients in a baking dish with tomato and cheese or sauce. Cover loosely with foil if the top browns too quickly.",
+      "Bake until bubbling, tender and piping hot throughout. Rest for 5 minutes before serving."
+    ],
+    "notes": "Generated draft: check the ingredients, quantities and method against your family's recipe, then photograph the source to update this card. Household log: Mon (1 time)."
+  },
+  {
+    "id": "sausage-casserole",
+    "title": "Sausage casserole",
+    "description": "A generated starting-point for sausage casserole, ready to personalise with your household's recipe.",
+    "category": "one-pot",
+    "protein": "pork",
+    "diet": "omnivore",
+    "servings": 2,
+    "prepMinutes": 15,
+    "cookMinutes": 70,
+    "image": "/images/roast.jpg",
+    "source": "collection",
+    "ingredients": [
+      {
+        "name": "pork sausage",
+        "quantity": 400,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "carrot",
+        "quantity": 2,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "potato",
+        "quantity": 300,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "vegetable stock",
+        "quantity": 400,
+        "unit": "ml",
+        "pantry": true
+      },
+      {
+        "name": "brown onion",
+        "quantity": 1,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "garlic clove",
+        "quantity": 2,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "canned tomato",
+        "quantity": 400,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "dried thyme",
+        "quantity": 1,
+        "unit": "tsp",
+        "pantry": true
+      },
+      {
+        "name": "olive oil",
+        "quantity": 1,
+        "unit": "tbsp",
+        "pantry": true
+      },
+      {
+        "name": "salt",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      },
+      {
+        "name": "black pepper",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      }
+    ],
+    "steps": [
+      "Chop the vegetables into bite-size pieces. Heat a little oil in a heavy pot and brown the main ingredient in batches if needed.",
+      "Add onion and garlic and cook until softened. Stir in the remaining vegetables, tomato and stock.",
+      "Cover and simmer gently, stirring occasionally, until the vegetables are tender and the main ingredient is cooked through. Cook minced meat through to 75 C; use a thermometer and follow safe guidance for the cut.",
+      "Taste and adjust seasoning. Serve hot, with extra vegetables or bread if desired."
+    ],
+    "notes": "Generated draft: check the ingredients, quantities and method against your family's recipe, then photograph the source to update this card. Household log: Tue, Thu, Sat (4 times)."
+  },
+  {
+    "id": "sausage-stew-with-kale",
+    "title": "Sausage stew with kale",
+    "description": "A generated starting-point for sausage stew with kale, ready to personalise with your household's recipe.",
+    "category": "one-pot",
+    "protein": "pork",
+    "diet": "omnivore",
+    "servings": 2,
+    "prepMinutes": 15,
+    "cookMinutes": 70,
+    "image": "/images/roast.jpg",
+    "source": "collection",
+    "ingredients": [
+      {
+        "name": "pork sausage",
+        "quantity": 400,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "carrot",
+        "quantity": 2,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "potato",
+        "quantity": 300,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "vegetable stock",
+        "quantity": 400,
+        "unit": "ml",
+        "pantry": true
+      },
+      {
+        "name": "brown onion",
+        "quantity": 1,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "garlic clove",
+        "quantity": 2,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "canned tomato",
+        "quantity": 400,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "dried thyme",
+        "quantity": 1,
+        "unit": "tsp",
+        "pantry": true
+      },
+      {
+        "name": "olive oil",
+        "quantity": 1,
+        "unit": "tbsp",
+        "pantry": true
+      },
+      {
+        "name": "salt",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      },
+      {
+        "name": "black pepper",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      },
+      {
+        "name": "kale",
+        "quantity": 100,
+        "unit": "g",
+        "pantry": false
+      }
+    ],
+    "steps": [
+      "Chop the vegetables into bite-size pieces. Heat a little oil in a heavy pot and brown the main ingredient in batches if needed.",
+      "Add onion and garlic and cook until softened. Stir in the remaining vegetables, tomato and stock.",
+      "Cover and simmer gently, stirring occasionally, until the vegetables are tender and the main ingredient is cooked through. Cook minced meat through to 75 C; use a thermometer and follow safe guidance for the cut.",
+      "Taste and adjust seasoning. Serve hot, with extra vegetables or bread if desired."
+    ],
+    "notes": "Generated draft: check the ingredients, quantities and method against your family's recipe, then photograph the source to update this card. Household log: Wed (1 time)."
+  },
+  {
+    "id": "sausages-mashed-potato-carrots-and-peas",
+    "title": "Sausages, mashed potato, carrots and peas",
+    "description": "A generated starting-point for sausages, mashed potato, carrots and peas, ready to personalise with your household's recipe.",
+    "category": "comfort",
+    "protein": "pork",
+    "diet": "omnivore",
+    "servings": 2,
+    "prepMinutes": 15,
+    "cookMinutes": 45,
+    "image": "/images/roast.jpg",
+    "source": "collection",
+    "ingredients": [
+      {
+        "name": "pork sausage",
+        "quantity": 400,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "potato",
+        "quantity": 400,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "carrot",
+        "quantity": 2,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "green peas",
+        "quantity": 100,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "olive oil",
+        "quantity": 1,
+        "unit": "tbsp",
+        "pantry": true
+      },
+      {
+        "name": "dried rosemary",
+        "quantity": 1,
+        "unit": "tsp",
+        "pantry": true
+      },
+      {
+        "name": "salt",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      },
+      {
+        "name": "black pepper",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      },
+      {
+        "name": "milk",
+        "quantity": 50,
+        "unit": "ml",
+        "pantry": false
+      },
+      {
+        "name": "butter",
+        "quantity": 20,
+        "unit": "g",
+        "pantry": false
+      }
+    ],
+    "steps": [
+      "Heat the oven to 220 C (200 C fan). Chop vegetables evenly and place them in a roasting dish with oil and seasoning.",
+      "Season the main ingredient and place it on the tray or in a separate dish. Add lemon, herbs or a sauce to suit the meal.",
+      "Roast, turning vegetables once, until tender and the main ingredient is safely cooked through. Cook minced meat through to 75 C; use a thermometer and follow safe guidance for the cut.",
+      "Rest meat for a few minutes before serving. Serve with the vegetables and any pan juices."
+    ],
+    "notes": "Generated draft: check the ingredients, quantities and method against your family's recipe, then photograph the source to update this card. Household log: Mon, Wed, Sat (4 times)."
+  },
+  {
+    "id": "satay-beef-with-noodles",
+    "title": "Satay beef with noodles",
+    "description": "A generated starting-point for satay beef with noodles, ready to personalise with your household's recipe.",
+    "category": "quick",
+    "protein": "beef",
+    "diet": "omnivore",
+    "servings": 2,
+    "prepMinutes": 15,
+    "cookMinutes": 20,
+    "image": "/images/beef.jpg",
+    "source": "collection",
+    "ingredients": [
+      {
+        "name": "beef strips",
+        "quantity": 350,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "egg noodles",
+        "quantity": 180,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "broccoli",
+        "quantity": 200,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "carrot",
+        "quantity": 1,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "red capsicum",
+        "quantity": 1,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "soy sauce",
+        "quantity": 2,
+        "unit": "tbsp",
+        "pantry": true
+      },
+      {
+        "name": "ginger",
+        "quantity": 10,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "garlic clove",
+        "quantity": 2,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "olive oil",
+        "quantity": 1,
+        "unit": "tbsp",
+        "pantry": true
+      },
+      {
+        "name": "peanut butter",
+        "quantity": 2,
+        "unit": "tbsp",
+        "pantry": true
+      }
+    ],
+    "steps": [
+      "Prepare and slice the vegetables and main ingredient. Cook noodles according to the packet and drain.",
+      "Heat oil in a large wok or frying pan. Cook the main ingredient in batches until cooked through. Cook minced meat through to 75 C; use a thermometer and follow safe guidance for the cut.",
+      "Add the vegetables and stir-fry until just tender. Stir soy sauce with a splash of water and add to the pan.",
+      "Return noodles to the pan and toss until hot and coated. Serve straight away."
+    ],
+    "notes": "Generated draft: check the ingredients, quantities and method against your family's recipe, then photograph the source to update this card. Household log: Fri (1 time)."
+  },
+  {
+    "id": "satay-rice-rolls",
+    "title": "Satay rice rolls",
+    "description": "A generated starting-point for satay rice rolls, ready to personalise with your household's recipe.",
+    "category": "quick",
+    "protein": "beef",
+    "diet": "omnivore",
+    "servings": 2,
+    "prepMinutes": 15,
+    "cookMinutes": 20,
+    "image": "/images/beef.jpg",
+    "source": "collection",
+    "ingredients": [
+      {
+        "name": "beef strips",
+        "quantity": 350,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "rice paper wrapper",
+        "quantity": 6,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "canned black beans",
+        "quantity": 200,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "tomato",
+        "quantity": 2,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "lettuce",
+        "quantity": 100,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "greek yoghurt",
+        "quantity": 80,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "lime",
+        "quantity": 1,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "olive oil",
+        "quantity": 1,
+        "unit": "tbsp",
+        "pantry": true
+      },
+      {
+        "name": "salt",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      },
+      {
+        "name": "peanut butter",
+        "quantity": 2,
+        "unit": "tbsp",
+        "pantry": true
+      }
+    ],
+    "steps": [
+      "Prepare the toppings and warm the tortillas or wrappers according to the packet.",
+      "Heat oil in a pan. Cook the main ingredient with the beans or vegetables and season to taste. Cook minced meat through to 75 C; use a thermometer and follow safe guidance for the cut.",
+      "Spoon the hot filling onto the wraps. Add tomato, lettuce and yoghurt or other toppings.",
+      "Fold or roll securely and serve warm, with lime wedges if available."
+    ],
+    "notes": "Generated draft: check the ingredients, quantities and method against your family's recipe, then photograph the source to update this card. Household log: Fri (1 time)."
+  },
+  {
+    "id": "spanish-omelette",
+    "title": "Spanish omelette",
+    "description": "A generated starting-point for spanish omelette, ready to personalise with your household's recipe.",
+    "category": "quick",
+    "protein": "eggs",
+    "diet": "vegetarian",
+    "servings": 2,
+    "prepMinutes": 15,
+    "cookMinutes": 20,
+    "image": "/images/eggs.jpg",
+    "source": "collection",
+    "ingredients": [
+      {
+        "name": "egg",
+        "quantity": 4,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "potato",
+        "quantity": 250,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "tomato",
+        "quantity": 2,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "milk",
+        "quantity": 40,
+        "unit": "ml",
+        "pantry": false
+      },
+      {
+        "name": "baby spinach",
+        "quantity": 60,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "brown onion",
+        "quantity": 1,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "olive oil",
+        "quantity": 1,
+        "unit": "tbsp",
+        "pantry": true
+      },
+      {
+        "name": "salt",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      },
+      {
+        "name": "black pepper",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      }
+    ],
+    "steps": [
+      "Dice the potatoes and vegetables. If using potato, simmer it for 8 minutes until almost tender, then drain.",
+      "Cook the main ingredient in a lightly oiled pan until done. Cook until the eggs are fully set. Add the vegetables and cook until softened.",
+      "Whisk the eggs with milk and a pinch of seasoning. Pour into the pan and cook gently until set, covering briefly if needed.",
+      "Check eggs are fully cooked, then serve hot with the remaining vegetables."
+    ],
+    "notes": "Generated draft: check the ingredients, quantities and method against your family's recipe, then photograph the source to update this card. Household log: Fri (1 time)."
+  },
+  {
+    "id": "steak-night",
+    "title": "Steak night",
+    "description": "A generated starting-point for steak night, ready to personalise with your household's recipe.",
+    "category": "comfort",
+    "protein": "beef",
+    "diet": "omnivore",
+    "servings": 2,
+    "prepMinutes": 15,
+    "cookMinutes": 45,
+    "image": "/images/beef.jpg",
+    "source": "collection",
+    "ingredients": [
+      {
+        "name": "beef steak",
+        "quantity": 400,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "potato",
+        "quantity": 400,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "carrot",
+        "quantity": 2,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "green peas",
+        "quantity": 100,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "olive oil",
+        "quantity": 1,
+        "unit": "tbsp",
+        "pantry": true
+      },
+      {
+        "name": "dried rosemary",
+        "quantity": 1,
+        "unit": "tsp",
+        "pantry": true
+      },
+      {
+        "name": "salt",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      },
+      {
+        "name": "black pepper",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      }
+    ],
+    "steps": [
+      "Heat the oven to 220 C (200 C fan). Chop vegetables evenly and place them in a roasting dish with oil and seasoning.",
+      "Season the main ingredient and place it on the tray or in a separate dish. Add lemon, herbs or a sauce to suit the meal.",
+      "Roast, turning vegetables once, until tender and the main ingredient is safely cooked through. Cook minced meat through to 75 C; use a thermometer and follow safe guidance for the cut.",
+      "Rest meat for a few minutes before serving. Serve with the vegetables and any pan juices."
+    ],
+    "notes": "Generated draft: check the ingredients, quantities and method against your family's recipe, then photograph the source to update this card. Household log: Thu, Fri (3 times)."
+  },
+  {
+    "id": "steak-chips-and-vegetables",
+    "title": "Steak, chips and vegetables",
+    "description": "A generated starting-point for steak, chips and vegetables, ready to personalise with your household's recipe.",
+    "category": "comfort",
+    "protein": "beef",
+    "diet": "omnivore",
+    "servings": 2,
+    "prepMinutes": 15,
+    "cookMinutes": 45,
+    "image": "/images/beef.jpg",
+    "source": "collection",
+    "ingredients": [
+      {
+        "name": "beef steak",
+        "quantity": 400,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "potato",
+        "quantity": 400,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "carrot",
+        "quantity": 2,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "green peas",
+        "quantity": 100,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "olive oil",
+        "quantity": 1,
+        "unit": "tbsp",
+        "pantry": true
+      },
+      {
+        "name": "dried rosemary",
+        "quantity": 1,
+        "unit": "tsp",
+        "pantry": true
+      },
+      {
+        "name": "salt",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      },
+      {
+        "name": "black pepper",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      }
+    ],
+    "steps": [
+      "Heat the oven to 220 C (200 C fan). Chop vegetables evenly and place them in a roasting dish with oil and seasoning.",
+      "Season the main ingredient and place it on the tray or in a separate dish. Add lemon, herbs or a sauce to suit the meal.",
+      "Roast, turning vegetables once, until tender and the main ingredient is safely cooked through. Cook minced meat through to 75 C; use a thermometer and follow safe guidance for the cut.",
+      "Rest meat for a few minutes before serving. Serve with the vegetables and any pan juices."
+    ],
+    "notes": "Generated draft: check the ingredients, quantities and method against your family's recipe, then photograph the source to update this card. Household log: Fri (1 time)."
+  },
+  {
+    "id": "sweet-potato-chilli",
+    "title": "Sweet potato chilli",
+    "description": "A generated starting-point for sweet potato chilli, ready to personalise with your household's recipe.",
+    "category": "one-pot",
+    "protein": "legumes",
+    "diet": "vegan",
+    "servings": 2,
+    "prepMinutes": 15,
+    "cookMinutes": 70,
+    "image": "/images/curry.jpg",
+    "source": "collection",
+    "ingredients": [
+      {
+        "name": "canned chickpeas",
+        "quantity": 400,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "carrot",
+        "quantity": 2,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "potato",
+        "quantity": 300,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "vegetable stock",
+        "quantity": 400,
+        "unit": "ml",
+        "pantry": true
+      },
+      {
+        "name": "brown onion",
+        "quantity": 1,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "garlic clove",
+        "quantity": 2,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "canned tomato",
+        "quantity": 400,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "dried thyme",
+        "quantity": 1,
+        "unit": "tsp",
+        "pantry": true
+      },
+      {
+        "name": "olive oil",
+        "quantity": 1,
+        "unit": "tbsp",
+        "pantry": true
+      },
+      {
+        "name": "salt",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      },
+      {
+        "name": "black pepper",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      },
+      {
+        "name": "sweet potato",
+        "quantity": 300,
+        "unit": "g",
+        "pantry": false
+      }
+    ],
+    "steps": [
+      "Chop the vegetables into bite-size pieces. Heat a little oil in a heavy pot and brown the main ingredient in batches if needed.",
+      "Add onion and garlic and cook until softened. Stir in the remaining vegetables, tomato and stock.",
+      "Cover and simmer gently, stirring occasionally, until the vegetables are tender and the main ingredient is cooked through. Taste and adjust seasoning, then check that all ingredients are piping hot.",
+      "Taste and adjust seasoning. Serve hot, with extra vegetables or bread if desired."
+    ],
+    "notes": "Generated draft: check the ingredients, quantities and method against your family's recipe, then photograph the source to update this card. Household log: Thu (1 time)."
+  },
+  {
+    "id": "tacos",
+    "title": "Tacos",
+    "description": "A generated starting-point for tacos, ready to personalise with your household's recipe.",
+    "category": "quick",
+    "protein": "beef",
+    "diet": "omnivore",
+    "servings": 2,
+    "prepMinutes": 15,
+    "cookMinutes": 20,
+    "image": "/images/beef.jpg",
+    "source": "collection",
+    "ingredients": [
+      {
+        "name": "beef mince",
+        "quantity": 350,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "tortilla",
+        "quantity": 6,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "canned black beans",
+        "quantity": 200,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "tomato",
+        "quantity": 2,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "lettuce",
+        "quantity": 100,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "greek yoghurt",
+        "quantity": 80,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "lime",
+        "quantity": 1,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "olive oil",
+        "quantity": 1,
+        "unit": "tbsp",
+        "pantry": true
+      },
+      {
+        "name": "salt",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      }
+    ],
+    "steps": [
+      "Prepare the toppings and warm the tortillas or wrappers according to the packet.",
+      "Heat oil in a pan. Cook the main ingredient with the beans or vegetables and season to taste. Cook minced meat through to 75 C; use a thermometer and follow safe guidance for the cut.",
+      "Spoon the hot filling onto the wraps. Add tomato, lettuce and yoghurt or other toppings.",
+      "Fold or roll securely and serve warm, with lime wedges if available."
+    ],
+    "notes": "Generated draft: check the ingredients, quantities and method against your family's recipe, then photograph the source to update this card. Household log: Tue, Wed, Fri (6 times)."
+  },
+  {
+    "id": "teriyaki-salmon",
+    "title": "Teriyaki salmon",
+    "description": "A generated starting-point for teriyaki salmon, ready to personalise with your household's recipe.",
+    "category": "comfort",
+    "protein": "fish",
+    "diet": "pescatarian",
+    "servings": 2,
+    "prepMinutes": 15,
+    "cookMinutes": 45,
+    "image": "/images/salmon.jpg",
+    "source": "collection",
+    "ingredients": [
+      {
+        "name": "salmon fillet",
+        "quantity": 350,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "potato",
+        "quantity": 400,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "carrot",
+        "quantity": 2,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "green peas",
+        "quantity": 100,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "olive oil",
+        "quantity": 1,
+        "unit": "tbsp",
+        "pantry": true
+      },
+      {
+        "name": "dried rosemary",
+        "quantity": 1,
+        "unit": "tsp",
+        "pantry": true
+      },
+      {
+        "name": "salt",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      },
+      {
+        "name": "black pepper",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      },
+      {
+        "name": "soy sauce",
+        "quantity": 2,
+        "unit": "tbsp",
+        "pantry": true
+      },
+      {
+        "name": "honey",
+        "quantity": 1,
+        "unit": "tbsp",
+        "pantry": true
+      }
+    ],
+    "steps": [
+      "Heat the oven to 220 C (200 C fan). Chop vegetables evenly and place them in a roasting dish with oil and seasoning.",
+      "Season the main ingredient and place it on the tray or in a separate dish. Add lemon, herbs or a sauce to suit the meal.",
+      "Roast, turning vegetables once, until tender and the main ingredient is safely cooked through. Cook seafood until opaque and cooked through; fish should flake easily.",
+      "Rest meat for a few minutes before serving. Serve with the vegetables and any pan juices."
+    ],
+    "notes": "Generated draft: check the ingredients, quantities and method against your family's recipe, then photograph the source to update this card. Household log: Mon, Sat (2 times)."
+  },
+  {
+    "id": "thai-katsu-curry",
+    "title": "Thai katsu curry",
+    "description": "A generated starting-point for thai katsu curry, ready to personalise with your household's recipe.",
+    "category": "one-pot",
+    "protein": "chicken",
+    "diet": "omnivore",
+    "servings": 2,
+    "prepMinutes": 10,
+    "cookMinutes": 25,
+    "image": "/images/chicken.jpg",
+    "source": "collection",
+    "ingredients": [
+      {
+        "name": "chicken thigh",
+        "quantity": 400,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "canned tomato",
+        "quantity": 400,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "coconut milk",
+        "quantity": 200,
+        "unit": "ml",
+        "pantry": false
+      },
+      {
+        "name": "rice",
+        "quantity": 150,
+        "unit": "g",
+        "pantry": true
+      },
+      {
+        "name": "brown onion",
+        "quantity": 1,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "garlic clove",
+        "quantity": 2,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "curry powder",
+        "quantity": 2,
+        "unit": "tsp",
+        "pantry": true
+      },
+      {
+        "name": "olive oil",
+        "quantity": 1,
+        "unit": "tbsp",
+        "pantry": true
+      },
+      {
+        "name": "salt",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      },
+      {
+        "name": "panko breadcrumbs",
+        "quantity": 50,
+        "unit": "g",
+        "pantry": true
+      },
+      {
+        "name": "Japanese curry sauce",
+        "quantity": 200,
+        "unit": "ml",
+        "pantry": false
+      }
+    ],
+    "steps": [
+      "Rinse the rice and cook it according to the packet. Prepare the vegetables and main ingredients.",
+      "Warm a little oil in a saucepan. Soften the onion, then stir in garlic and curry powder for 30 seconds.",
+      "Add the recipe's main ingredient, tomato or coconut milk, and a splash of water. Simmer gently, stirring occasionally, until tender and cooked through. Cook chicken until the thickest piece reaches 75 C.",
+      "Taste, season and serve the curry over rice. Add a squeeze of lemon or lime if available."
+    ],
+    "notes": "Generated draft: check the ingredients, quantities and method against your family's recipe, then photograph the source to update this card. Household log: Sat (1 time)."
+  },
+  {
+    "id": "tofu-noodle-stir-fry",
+    "title": "Tofu noodle stir-fry",
+    "description": "A generated starting-point for tofu noodle stir-fry, ready to personalise with your household's recipe.",
+    "category": "quick",
+    "protein": "tofu",
+    "diet": "vegan",
+    "servings": 2,
+    "prepMinutes": 15,
+    "cookMinutes": 20,
+    "image": "/images/salad.jpg",
+    "source": "collection",
+    "ingredients": [
+      {
+        "name": "firm tofu",
+        "quantity": 350,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "egg noodles",
+        "quantity": 180,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "broccoli",
+        "quantity": 200,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "carrot",
+        "quantity": 1,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "red capsicum",
+        "quantity": 1,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "soy sauce",
+        "quantity": 2,
+        "unit": "tbsp",
+        "pantry": true
+      },
+      {
+        "name": "ginger",
+        "quantity": 10,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "garlic clove",
+        "quantity": 2,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "olive oil",
+        "quantity": 1,
+        "unit": "tbsp",
+        "pantry": true
+      }
+    ],
+    "steps": [
+      "Prepare and slice the vegetables and main ingredient. Cook noodles according to the packet and drain.",
+      "Heat oil in a large wok or frying pan. Cook the main ingredient in batches until cooked through. Taste and adjust seasoning, then check that all ingredients are piping hot.",
+      "Add the vegetables and stir-fry until just tender. Stir soy sauce with a splash of water and add to the pan.",
+      "Return noodles to the pan and toss until hot and coated. Serve straight away."
+    ],
+    "notes": "Generated draft: check the ingredients, quantities and method against your family's recipe, then photograph the source to update this card. Household log: Thu, Tue (2 times)."
+  },
+  {
+    "id": "tofu-katsu-curry",
+    "title": "Tofu katsu curry",
+    "description": "A generated starting-point for tofu katsu curry, ready to personalise with your household's recipe.",
+    "category": "one-pot",
+    "protein": "tofu",
+    "diet": "vegan",
+    "servings": 2,
+    "prepMinutes": 10,
+    "cookMinutes": 25,
+    "image": "/images/salad.jpg",
+    "source": "collection",
+    "ingredients": [
+      {
+        "name": "firm tofu",
+        "quantity": 350,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "canned tomato",
+        "quantity": 400,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "coconut milk",
+        "quantity": 200,
+        "unit": "ml",
+        "pantry": false
+      },
+      {
+        "name": "rice",
+        "quantity": 150,
+        "unit": "g",
+        "pantry": true
+      },
+      {
+        "name": "brown onion",
+        "quantity": 1,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "garlic clove",
+        "quantity": 2,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "curry powder",
+        "quantity": 2,
+        "unit": "tsp",
+        "pantry": true
+      },
+      {
+        "name": "olive oil",
+        "quantity": 1,
+        "unit": "tbsp",
+        "pantry": true
+      },
+      {
+        "name": "salt",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      },
+      {
+        "name": "panko breadcrumbs",
+        "quantity": 50,
+        "unit": "g",
+        "pantry": true
+      },
+      {
+        "name": "Japanese curry sauce",
+        "quantity": 200,
+        "unit": "ml",
+        "pantry": false
+      }
+    ],
+    "steps": [
+      "Rinse the rice and cook it according to the packet. Prepare the vegetables and main ingredients.",
+      "Warm a little oil in a saucepan. Soften the onion, then stir in garlic and curry powder for 30 seconds.",
+      "Add the recipe's main ingredient, tomato or coconut milk, and a splash of water. Simmer gently, stirring occasionally, until tender and cooked through. Taste and adjust seasoning, then check that all ingredients are piping hot.",
+      "Taste, season and serve the curry over rice. Add a squeeze of lemon or lime if available."
+    ],
+    "notes": "Generated draft: check the ingredients, quantities and method against your family's recipe, then photograph the source to update this card. Household log: Wed (1 time)."
+  },
+  {
+    "id": "tofu-tacos",
+    "title": "Tofu tacos",
+    "description": "A generated starting-point for tofu tacos, ready to personalise with your household's recipe.",
+    "category": "quick",
+    "protein": "tofu",
+    "diet": "vegan",
+    "servings": 2,
+    "prepMinutes": 15,
+    "cookMinutes": 20,
+    "image": "/images/salad.jpg",
+    "source": "collection",
+    "ingredients": [
+      {
+        "name": "firm tofu",
+        "quantity": 350,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "tortilla",
+        "quantity": 6,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "canned black beans",
+        "quantity": 200,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "tomato",
+        "quantity": 2,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "lettuce",
+        "quantity": 100,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "greek yoghurt",
+        "quantity": 80,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "lime",
+        "quantity": 1,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "olive oil",
+        "quantity": 1,
+        "unit": "tbsp",
+        "pantry": true
+      },
+      {
+        "name": "salt",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      }
+    ],
+    "steps": [
+      "Prepare the toppings and warm the tortillas or wrappers according to the packet.",
+      "Heat oil in a pan. Cook the main ingredient with the beans or vegetables and season to taste. Taste and adjust seasoning, then check that all ingredients are piping hot.",
+      "Spoon the hot filling onto the wraps. Add tomato, lettuce and yoghurt or other toppings.",
+      "Fold or roll securely and serve warm, with lime wedges if available."
+    ],
+    "notes": "Generated draft: check the ingredients, quantities and method against your family's recipe, then photograph the source to update this card. Household log: Mon (1 time)."
+  },
+  {
+    "id": "tomato-dhal-with-chicken",
+    "title": "Tomato dhal with chicken",
+    "description": "A generated starting-point for tomato dhal with chicken, ready to personalise with your household's recipe.",
+    "category": "one-pot",
+    "protein": "chicken",
+    "diet": "omnivore",
+    "servings": 2,
+    "prepMinutes": 10,
+    "cookMinutes": 25,
+    "image": "/images/chicken.jpg",
+    "source": "collection",
+    "ingredients": [
+      {
+        "name": "chicken thigh",
+        "quantity": 400,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "red lentils",
+        "quantity": 200,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "coconut milk",
+        "quantity": 200,
+        "unit": "ml",
+        "pantry": false
+      },
+      {
+        "name": "rice",
+        "quantity": 150,
+        "unit": "g",
+        "pantry": true
+      },
+      {
+        "name": "brown onion",
+        "quantity": 1,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "garlic clove",
+        "quantity": 2,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "curry powder",
+        "quantity": 2,
+        "unit": "tsp",
+        "pantry": true
+      },
+      {
+        "name": "olive oil",
+        "quantity": 1,
+        "unit": "tbsp",
+        "pantry": true
+      },
+      {
+        "name": "salt",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      }
+    ],
+    "steps": [
+      "Rinse the rice and cook it according to the packet. Prepare the vegetables and main ingredients.",
+      "Warm a little oil in a saucepan. Soften the onion, then stir in garlic and curry powder for 30 seconds.",
+      "Add the recipe's main ingredient, tomato or coconut milk, and a splash of water. Simmer gently, stirring occasionally, until tender and cooked through. Cook chicken until the thickest piece reaches 75 C.",
+      "Taste, season and serve the curry over rice. Add a squeeze of lemon or lime if available."
+    ],
+    "notes": "Generated draft: check the ingredients, quantities and method against your family's recipe, then photograph the source to update this card. Household log: Sun (1 time)."
+  },
+  {
+    "id": "tomato-and-halloumi-bake",
+    "title": "Tomato and halloumi bake",
+    "description": "A generated starting-point for tomato and halloumi bake, ready to personalise with your household's recipe.",
+    "category": "comfort",
+    "protein": "cheese",
+    "diet": "vegetarian",
+    "servings": 2,
+    "prepMinutes": 20,
+    "cookMinutes": 45,
+    "image": "/images/pasta.jpg",
+    "source": "collection",
+    "ingredients": [
+      {
+        "name": "halloumi",
+        "quantity": 225,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "potato",
+        "quantity": 200,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "canned tomato",
+        "quantity": 400,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "mozzarella",
+        "quantity": 120,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "cheddar",
+        "quantity": 80,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "brown onion",
+        "quantity": 1,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "garlic clove",
+        "quantity": 2,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "olive oil",
+        "quantity": 1,
+        "unit": "tbsp",
+        "pantry": true
+      },
+      {
+        "name": "salt",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      },
+      {
+        "name": "black pepper",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      }
+    ],
+    "steps": [
+      "Heat the oven to 200 C (180 C fan). Prepare and chop the vegetables and main ingredients.",
+      "If using meat or seafood, cook it in a pan until done. Taste and adjust seasoning, then check that all ingredients are piping hot. Soften onion and garlic in the same pan.",
+      "Layer the ingredients in a baking dish with tomato and cheese or sauce. Cover loosely with foil if the top browns too quickly.",
+      "Bake until bubbling, tender and piping hot throughout. Rest for 5 minutes before serving."
+    ],
+    "notes": "Generated draft: check the ingredients, quantities and method against your family's recipe, then photograph the source to update this card. Household log: Sat (1 time)."
+  },
+  {
+    "id": "tomatoes-eggs-and-chorizo",
+    "title": "Tomatoes, eggs and chorizo",
+    "description": "A generated starting-point for tomatoes, eggs and chorizo, ready to personalise with your household's recipe.",
+    "category": "quick",
+    "protein": "eggs",
+    "diet": "vegetarian",
+    "servings": 2,
+    "prepMinutes": 15,
+    "cookMinutes": 20,
+    "image": "/images/eggs.jpg",
+    "source": "collection",
+    "ingredients": [
+      {
+        "name": "egg",
+        "quantity": 4,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "potato",
+        "quantity": 250,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "tomato",
+        "quantity": 2,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "milk",
+        "quantity": 40,
+        "unit": "ml",
+        "pantry": false
+      },
+      {
+        "name": "baby spinach",
+        "quantity": 60,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "brown onion",
+        "quantity": 1,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "olive oil",
+        "quantity": 1,
+        "unit": "tbsp",
+        "pantry": true
+      },
+      {
+        "name": "salt",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      },
+      {
+        "name": "black pepper",
+        "quantity": 1,
+        "unit": "pinch",
+        "pantry": true
+      },
+      {
+        "name": "chorizo",
+        "quantity": 100,
+        "unit": "g",
+        "pantry": false
+      }
+    ],
+    "steps": [
+      "Dice the potatoes and vegetables. If using potato, simmer it for 8 minutes until almost tender, then drain.",
+      "Cook the main ingredient in a lightly oiled pan until done. Cook until the eggs are fully set. Add the vegetables and cook until softened.",
+      "Whisk the eggs with milk and a pinch of seasoning. Pour into the pan and cook gently until set, covering briefly if needed.",
+      "Check eggs are fully cooked, then serve hot with the remaining vegetables."
+    ],
+    "notes": "Generated draft: check the ingredients, quantities and method against your family's recipe, then photograph the source to update this card. Household log: Wed (1 time)."
+  },
+  {
+    "id": "vietnamese-chicken-noodles",
+    "title": "Vietnamese chicken noodles",
+    "description": "A generated starting-point for vietnamese chicken noodles, ready to personalise with your household's recipe.",
+    "category": "quick",
+    "protein": "chicken",
+    "diet": "omnivore",
+    "servings": 2,
+    "prepMinutes": 15,
+    "cookMinutes": 20,
+    "image": "/images/chicken.jpg",
+    "source": "collection",
+    "ingredients": [
+      {
+        "name": "chicken thigh",
+        "quantity": 400,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "egg noodles",
+        "quantity": 180,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "broccoli",
+        "quantity": 200,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "carrot",
+        "quantity": 1,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "red capsicum",
+        "quantity": 1,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "soy sauce",
+        "quantity": 2,
+        "unit": "tbsp",
+        "pantry": true
+      },
+      {
+        "name": "ginger",
+        "quantity": 10,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "garlic clove",
+        "quantity": 2,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "olive oil",
+        "quantity": 1,
+        "unit": "tbsp",
+        "pantry": true
+      }
+    ],
+    "steps": [
+      "Prepare and slice the vegetables and main ingredient. Cook noodles according to the packet and drain.",
+      "Heat oil in a large wok or frying pan. Cook the main ingredient in batches until cooked through. Cook chicken until the thickest piece reaches 75 C.",
+      "Add the vegetables and stir-fry until just tender. Stir soy sauce with a splash of water and add to the pan.",
+      "Return noodles to the pan and toss until hot and coated. Serve straight away."
+    ],
+    "notes": "Generated draft: check the ingredients, quantities and method against your family's recipe, then photograph the source to update this card. Household log: Sat (1 time)."
+  },
+  {
+    "id": "veggie-pad-see-ew",
+    "title": "Veggie pad see ew",
+    "description": "A generated starting-point for veggie pad see ew, ready to personalise with your household's recipe.",
+    "category": "quick",
+    "protein": "tofu",
+    "diet": "vegan",
+    "servings": 2,
+    "prepMinutes": 15,
+    "cookMinutes": 20,
+    "image": "/images/salad.jpg",
+    "source": "collection",
+    "ingredients": [
+      {
+        "name": "firm tofu",
+        "quantity": 350,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "wide rice noodles",
+        "quantity": 180,
+        "unit": "g",
+        "pantry": true
+      },
+      {
+        "name": "broccoli",
+        "quantity": 200,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "carrot",
+        "quantity": 1,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "red capsicum",
+        "quantity": 1,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "soy sauce",
+        "quantity": 2,
+        "unit": "tbsp",
+        "pantry": true
+      },
+      {
+        "name": "ginger",
+        "quantity": 10,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "garlic clove",
+        "quantity": 2,
+        "unit": "piece",
+        "pantry": false
+      },
+      {
+        "name": "olive oil",
+        "quantity": 1,
+        "unit": "tbsp",
+        "pantry": true
+      },
+      {
+        "name": "dark soy sauce",
+        "quantity": 1,
+        "unit": "tbsp",
+        "pantry": true
+      },
+      {
+        "name": "egg",
+        "quantity": 1,
+        "unit": "piece",
+        "pantry": false
+      }
+    ],
+    "steps": [
+      "Prepare and slice the vegetables and main ingredient. Cook noodles according to the packet and drain.",
+      "Heat oil in a large wok or frying pan. Cook the main ingredient in batches until cooked through. Taste and adjust seasoning, then check that all ingredients are piping hot.",
+      "Add the vegetables and stir-fry until just tender. Stir soy sauce with a splash of water and add to the pan.",
+      "Return noodles to the pan and toss until hot and coated. Serve straight away."
+    ],
+    "notes": "Generated draft: check the ingredients, quantities and method against your family's recipe, then photograph the source to update this card. Household log: Fri (1 time)."
+  },
+  {
+    "id": "leftovers-l-os",
+    "title": "Leftovers (L/Os)",
+    "description": "A generated starting-point for leftovers (l/os), ready to personalise with your household's recipe.",
+    "category": "quick",
+    "protein": "other",
+    "diet": "omnivore",
+    "servings": 2,
+    "prepMinutes": 10,
+    "cookMinutes": 10,
+    "image": "/images/eggs.jpg",
+    "source": "collection",
+    "ingredients": [
+      {
+        "name": "mixed cooked leftovers",
+        "quantity": 400,
+        "unit": "g",
+        "pantry": true
+      },
+      {
+        "name": "mixed salad leaves",
+        "quantity": 100,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "cooked rice",
+        "quantity": 150,
+        "unit": "g",
+        "pantry": false
+      },
+      {
+        "name": "olive oil",
+        "quantity": 1,
+        "unit": "tbsp",
+        "pantry": true
+      },
+      {
+        "name": "lemon",
+        "quantity": 1,
+        "unit": "piece",
+        "pantry": false
+      }
+    ],
+    "steps": [
+      "Check that leftovers have been chilled safely and are still within their storage time. Reheat cooked food until piping hot.",
+      "Warm rice or other leftovers thoroughly, stirring so they heat evenly. Do not reheat rice more than once.",
+      "Arrange the warmed leftovers with fresh salad leaves. Dress with lemon and a little oil.",
+      "Serve promptly; discard anything that has been left at room temperature too long."
+    ],
+    "notes": "Generated draft: check the ingredients, quantities and method against your family's recipe, then photograph the source to update this card. Household log: Mon, Tue, Fri (5 times)."
+  }
+]
