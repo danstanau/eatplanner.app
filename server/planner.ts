@@ -23,6 +23,10 @@ export const planningSchema = z.object({
   rules: rulesSchema,
   revision: z.number().int().min(0).optional(),
 });
+export const batchPlanningSchema = planningSchema.omit({ revision: true }).extend({
+  startWeek: weekKeySchema,
+  count: z.number().int().min(2).max(12),
+});
 export const shoppingItemSchema = z.object({
   name: z.string(), quantity: z.number(), unit: z.string(), pantry: z.boolean(),
 });

@@ -41,7 +41,9 @@ photo search, set
 ## The weekly flow
 
 1. **Pick a week.** Weeks start on Monday. Open an existing week or choose any
-   date to jump to its week.
+   date to jump to its week. When starting a fresh week, you can plan up to 12
+   consecutive weeks at once using the same cooking nights and house rules.
+   Existing weeks are never replaced by a multi-week plan.
 2. **Choose cooking nights.** Toggle individual days, or quick-pick 3, 5 or 7
    dinners. Set household size, diet and total preparation/cooking time.
 3. **Set your house rules.** Require a different primary protein for every

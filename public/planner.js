@@ -153,7 +153,7 @@ function renderWeeks() {
     grid.append(card);
   });
   view.replaceChildren(hero, h("section", { className: "weeks-section" },
-    h("div", { className: "section-bar" }, h("div", {}, h("p", { className: "eyebrow", text: "YOUR KITCHEN CALENDAR" }), h("h2", { text: "One week at a time." })), field("Jump to a week", datePicker)), grid));
+    h("div", { className: "section-bar" }, h("div", {}, h("p", { className: "eyebrow", text: "YOUR KITCHEN CALENDAR" }), h("h2", { text: "Your weeks, your rhythm." })), field("Jump to a week", datePicker)), grid));
 }
 
 async function openWeek(key) {
@@ -174,6 +174,7 @@ function planningForm() {
   const people = h("input", { type: "number", min: 1, max: 12, value: existing?.people ?? 2, required: true });
   const diet = select({ anything: "A bit of everything", vegetarian: "Vegetarian", vegan: "Vegan", pescatarian: "Pescatarian" }, existing?.rules.diet ?? "anything");
   const time = select({ 20: "20 minutes", 30: "30 minutes", 45: "45 minutes", 60: "60 minutes", 90: "90 minutes", 180: "Any time (up to 3 hours)" }, existing?.rules.maxMinutes ?? 60);
+  const weeksCount = select(Object.fromEntries(Array.from({ length: 12 }, (_, index) => [index + 1, `${index + 1} ${index === 0 ? "week" : "weeks"}`])), 1);
   const different = h("input", { type: "checkbox", checked: existing?.rules.differentProteins ?? true });
   const overlap = h("input", { type: "checkbox", checked: existing?.rules.overlapIngredients ?? true });
   const dayList = h("div", { className: "day-picker", role: "group", "aria-label": "Days needing dinner" });
@@ -181,10 +182,15 @@ function planningForm() {
   const submit = h("button", { type: "submit", className: "button", text: "Start planning" });
   function updateDays() {
     count.textContent = `${selected.size} ${selected.size === 1 ? "dinner" : "dinners"} to look forward to`;
-    submit.textContent = `${existing ? "Replan" : "Start planning"} ${selected.size} ${selected.size === 1 ? "dinner" : "dinners"} \u2192`;
+    submit.textContent = existing
+      ? `Replan ${selected.size} ${selected.size === 1 ? "dinner" : "dinners"} \u2192`
+      : Number(weeksCount.value) === 1
+        ? `Start planning ${selected.size} ${selected.size === 1 ? "dinner" : "dinners"} \u2192`
+        : `Plan ${weeksCount.value} weeks \u2192`;
     submit.disabled = selected.size === 0;
     [...dayList.children].forEach((item, index) => { item.setAttribute("aria-pressed", String(selected.has(index))); });
   }
+  weeksCount.addEventListener("change", updateDays);
   DAYS.forEach((day, index) => {
     dayList.append(button("", () => {
       if (selected.has(index)) selected.delete(index); else selected.add(index);
@@ -202,7 +208,8 @@ function planningForm() {
   const form = h("form", { className: "planning-form" },
     h("div", { className: "form-section" }, h("p", { className: "eyebrow", text: "01 / MAKE ROOM AT THE TABLE" }),
       h("h2", { text: "Which nights are we cooking?" }), h("p", { className: "muted", text: "Tap the days you need dinner. Leave space for leftovers and nights out." }),
-      dayList, h("div", { className: "day-picker-footer" }, count, quickPick)),
+      dayList, h("div", { className: "day-picker-footer" }, count, quickPick),
+      existing ? null : field("Plan ahead", weeksCount, "Use these cooking nights and house rules for each week.")),
     h("div", { className: "form-section" }, h("p", { className: "eyebrow", text: "02 / A FEW HOUSE RULES" }),
       h("div", { className: "form-grid" }, field("People at the table", people), field("How we eat", diet), field("Total time per meal", time)),
       h("label", { className: "check-field" }, different, h("span", {}, h("strong", { text: "A different protein each dinner" }), h("small", { text: "No repeated primary protein in the week. Includes tofu, beans, eggs and cheese." }))),
@@ -211,14 +218,18 @@ function planningForm() {
   form.addEventListener("submit", (event) => {
     event.preventDefault();
     run(async () => {
-      const next = await api(`/weeks/${key}/plan`, {
+      const planning = {
         days: [...selected], people: Number(people.value),
         rules: { differentProteins: different.checked, overlapIngredients: overlap.checked, maxMinutes: Number(time.value), diet: diet.value },
         revision: existing?.revision,
-      });
+      };
+      const count = existing ? 1 : Number(weeksCount.value);
+      const next = count === 1
+        ? await api(`/weeks/${key}/plan`, planning)
+        : (await api("/weeks/plan", { ...planning, startWeek: key, count }))[0];
       if (modalContent.contains(form)) modal.close();
       if (state.view === "week" && state.weekKey === key) { state.week = next; renderWeek(); }
-      notify("Your draft is ready. Swap anything you don't fancy.");
+      notify(count === 1 ? "Your draft is ready. Swap anything you don't fancy." : `Your next ${count} weeks are ready. Swap anything you don't fancy.`);
     }, submit);
   });
   updateDays();

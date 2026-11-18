@@ -66,6 +66,23 @@ test("weekly HTTP workflow persists recipes, swaps and locks, and safely imports
   });
   assert.equal(planned.status, 200);
   let week: Week = await planned.json();
+  const multiWeekPlan = await post("/weeks/plan", {
+    startWeek: "2026-11-23", count: 3, days: [0, 2, 4], people: 4,
+    rules: { differentProteins: true, overlapIngredients: true, maxMinutes: 60, diet: "anything" },
+  });
+  assert.equal(multiWeekPlan.status, 200);
+  const createdWeeks: Week[] = await multiWeekPlan.json();
+  assert.deepEqual(createdWeeks.map((created) => created.week), ["2026-11-23", "2026-11-30", "2026-12-07"]);
+  assert.ok(createdWeeks.every((created) => created.meals.length === 3));
+  assert.equal((await post("/weeks/2026-12-21/plan", {
+    days: [0], people: 2, rules: week.rules,
+  })).status, 200);
+  const collision = await post("/weeks/plan", {
+    startWeek: "2026-12-14", count: 3, days: [0, 2, 4], people: 4, rules: week.rules,
+  });
+  assert.equal(collision.status, 409);
+  assert.equal(await (await fetch(`${base}/weeks/2026-12-14`)).json(), null);
+  assert.equal(await (await fetch(`${base}/weeks/2026-12-28`)).json(), null);
   const choices = await (await fetch(`${base}${key}/alternatives/0`)).json();
   const swapped = await post(`${key}/swap`, { revision: week.revision, day: 0, recipeId: choices[0].id });
   assert.equal(swapped.status, 200);

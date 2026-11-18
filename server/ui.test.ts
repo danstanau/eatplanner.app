@@ -100,8 +100,13 @@ test("UI completes week selection, swaps, moves, confirmation, cooking, sharing 
   document.querySelectorAll(".day-toggle")[0].click();
   assert.match(document.querySelector(".selection-count")?.textContent ?? "", /4 dinners/);
   findButton("3 dinners").click();
-  findButton("Start planning 3").click();
+  const weeksCount = document.querySelector(".planning-form .field select");
+  assert.ok(weeksCount);
+  weeksCount.value = "3";
+  weeksCount.dispatchEvent(new browser.Event("change", { bubbles: true }));
+  findButton("Plan 3 weeks").click();
   await waitFor(() => document.querySelectorAll(".recipe-open").length === 3);
+  assert.equal(Object.keys((await store.read()).weeks).length, 3);
   const firstTitle = document.querySelector(".recipe-open h3")?.textContent;
   findButton("Swap").click();
   await waitFor(() => document.querySelectorAll(".swap-choice").length > 0);

@@ -4,7 +4,7 @@ import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import { preferencesSchema, type MealPlan, type Preferences } from "./plan.js";
 import { extractionSchema, newRecipeSchema, photoSchema, recipeImageSearchSchema, type Extraction, type ImageCredit, type Photo, type RecipeImageSearch } from "./recipes.js";
-import { alternatives, AppError, assertEditable, daySchema, moveMeal, planningSchema, planWeek, shoppingList, swapMeal, weekKeySchema, type Week } from "./planner.js";
+import { alternatives, AppError, assertEditable, batchPlanningSchema, daySchema, moveMeal, planningSchema, planWeek, shoppingList, swapMeal, weekKeySchema, type Week } from "./planner.js";
 import { Store } from "./store.js";
 
 interface Services {
@@ -114,6 +114,22 @@ export function createApp(services: Services, store = new Store()) {
   app.get("/api/weeks/:week", async (request, response) => {
     const key = weekKeySchema.parse(request.params.week);
     response.json((await store.read()).weeks[key] ?? null);
+  });
+  app.post("/api/weeks/plan", async (request, response) => {
+    const input = batchPlanningSchema.parse(request.body);
+    response.json(await store.update((state) => {
+      const start = new Date(`${input.startWeek}T00:00:00Z`);
+      const keys = Array.from({ length: input.count }, (_, index) => {
+        const week = new Date(start);
+        week.setUTCDate(week.getUTCDate() + index * 7);
+        return week.toISOString().slice(0, 10);
+      });
+      const existing = keys.find((key) => state.weeks[key]);
+      if (existing) throw new AppError(409, `The week starting ${existing} already has a plan. Choose another start week or plan fewer weeks.`);
+      const weeks = keys.map((key) => planWeek(key, input, state.recipes));
+      weeks.forEach((week) => { state.weeks[week.week] = week; });
+      return weeks;
+    }));
   });
   app.post("/api/weeks/:week/plan", async (request, response) => {
     const key = weekKeySchema.parse(request.params.week);
