@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { once } from "node:events";
+import { readFile } from "node:fs/promises";
 import { request as httpRequest } from "node:http";
 import test from "node:test";
 import { createApp } from "./app.js";
@@ -42,6 +43,19 @@ test("HTTP routes validate input, isolate failures, and prevent duplicate genera
   assert.equal((await post({ ...preferences, days: 99 })).status, 400);
   assert.equal((await post(preferences, { Origin: "https://another-site.example" })).status, 403);
   assert.equal((await post(preferences, { "Content-Type": "text/plain" })).status, 415);
+  const phonePhoto = await readFile(new URL("./fixtures/phone.heic", import.meta.url));
+  const conversion = await fetch(`${base}/api/recipes/convert-heic`, {
+    method: "POST", headers: { "Content-Type": "application/octet-stream" }, body: phonePhoto,
+  });
+  assert.equal(conversion.status, 200);
+  assert.equal(conversion.headers.get("content-type"), "image/jpeg");
+  assert.deepEqual(Buffer.from(await conversion.arrayBuffer()).subarray(0, 3), Buffer.from([0xff, 0xd8, 0xff]));
+  assert.equal((await fetch(`${base}/api/recipes/convert-heic`, {
+    method: "POST", headers: { "Content-Type": "application/octet-stream" }, body: "not an image",
+  })).status, 400);
+  assert.equal((await fetch(`${base}/api/recipes/convert-heic`, {
+    method: "POST", headers: { "Content-Type": "application/octet-stream", Origin: "https://another-site.example" }, body: phonePhoto,
+  })).status, 403);
   assert.equal((await fetch(`${base}/api/plan`, {
     method: "POST", headers: { "Content-Type": "application/json" }, body: "{",
   })).status, 400);

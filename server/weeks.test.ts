@@ -123,7 +123,12 @@ test("weekly HTTP workflow persists recipes, swaps and locks, and safely imports
   assert.equal(added.status, 201);
   const recipe = recipeSchema.parse(await added.json());
   assert.equal(recipe.source, "personal");
+  assert.equal((await new Store(path).read()).recipes.length, seed.recipes.length + 1);
   assert.equal((await new Store(path).read()).recipes.at(-1)?.title, "My reviewed recipe");
+  const another = await post("/recipes", { ...content, title: "Another family recipe", image: "/images/chicken.jpg" });
+  assert.equal(another.status, 201);
+  assert.equal((await new Store(path).read()).recipes.length, seed.recipes.length + 2);
+  assert.deepEqual((await new Store(path).read()).recipes.slice(-2).map((item) => item.title), ["My reviewed recipe", "Another family recipe"]);
   assert.equal((await post("/recipes", { ...content, image: "https://untrusted.example/tracker.jpg" })).status, 400);
   const summaries = await (await fetch(base + "/weeks")).json();
   assert.equal(summaries[0].count, 3);

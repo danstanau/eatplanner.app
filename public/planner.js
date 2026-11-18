@@ -114,7 +114,7 @@ function select(options, value) {
   return node;
 }
 function openModal(...content) {
-  modalContent.replaceChildren(...content);
+  modalContent.replaceChildren(...content.filter((item) => item !== null && item !== undefined));
   if (!modal.open) modal.showModal();
   modal.scrollTop = 0;
 }
@@ -427,16 +427,45 @@ function shoppingPanel(week) {
   }
   include.addEventListener("change", render);
   render();
+  const copyStatus = h("p", { className: "muted", role: "status", "aria-live": "polite" });
+  async function copyList(openWoolworths = false) {
+    let copied = false;
+    if (navigator.clipboard?.writeText) {
+      try {
+        await navigator.clipboard.writeText(text.value);
+        copied = true;
+      } catch (error) { console.error("Clipboard access failed:", error); }
+    }
+    if (!copied) {
+      text.focus();
+      text.select();
+      text.setSelectionRange(0, text.value.length);
+      try { copied = document.execCommand?.("copy") === true; }
+      catch (error) { console.error("Clipboard fallback failed:", error); }
+    }
+    if (!copied) {
+      copyStatus.textContent = "Your browser couldn't copy automatically. The ingredients are selected: press and hold the text, then tap Copy. Open Woolworths after copying.";
+      return;
+    }
+    copyStatus.textContent = "Ingredients copied. In Woolworths, press and hold a list-entry or search field and choose Paste.";
+    if (openWoolworths) window.location.assign("https://www.woolworths.com.au/");
+  }
   return h("section", { className: "shopping-panel", id: "shopping" },
     h("div", { className: "section-bar" }, h("div", {}, h("p", { className: "eyebrow", text: "ONE LIST. ONE LESS TRIP." }), h("h2", { text: "A little list for the shops." })),
-      button("Copy shopping list", async () => {
-        try { await navigator.clipboard.writeText(text.value); notify("Shopping list copied. Paste it into your Woolworths list."); }
-        catch (error) { console.error(error); text.focus(); text.select(); notify("Automatic copy isn't available. The list is selected: copy it manually.", true); }
-      }, "button")),
+      button("Copy shopping list", () => copyList(), "button")),
     h("p", { className: "muted", text: `Combined and scaled for ${week.people} people. Quantities are recipe amounts, not supermarket pack sizes. Pantry items are included unless you untick them.` }),
     h("label", { className: "check-field compact" }, include, h("span", { text: "Include pantry staples" })),
-    h("div", { className: "shopping-layout" }, h("div", {}, progress, checklist), h("div", {}, h("h3", { text: "Ready to copy & paste" }), text,
-      h("p", { className: "fineprint", text: "Paste into a Woolworths shopping list wherever your app supports it. Review product matches and quantities yourself; this does not add items directly to a cart." }))));
+    h("div", { className: "shopping-layout" }, h("div", {}, progress, checklist), h("div", {},
+      h("h3", { text: "Take your ingredients to Woolworths" }),
+      h("ol", { className: "shopping-instructions" },
+        h("li", { text: "Choose whether to include pantry staples, then copy your ingredients." }),
+        h("li", { text: "Open Woolworths and choose or create a shopping list. Press and hold the item-entry field, then tap Paste if supported." }),
+        h("li", { text: "If your version doesn't accept a whole list, use these ingredients in product search individually. Check matches, pack sizes and quantities before adding products." })),
+      h("div", { className: "shopping-copy-actions" },
+        button("Copy & open Woolworths", () => copyList(true)),
+        h("a", { className: "button secondary", href: "https://www.woolworths.com.au/", text: "Open Woolworths" })),
+      copyStatus, text,
+      h("p", { className: "fineprint", text: "The Woolworths link may open the installed app if your phone allows it; otherwise it opens the website. Nothing is pasted or added to your cart automatically." }))));
 }
 
 function showRecipes(updateUrl = true) {
@@ -602,11 +631,29 @@ async function shareWeek() {
 }
 
 async function preparePhoto(file) {
-  if (!file || !file.type.startsWith("image/")) throw new Error("Choose a photo of a recipe.");
+  const isHeic = file && (/^image\/hei[cf](?:-sequence)?$/i.test(file.type) || /\.hei[cf]$/i.test(file.name));
+  if (!file || (!file.type.startsWith("image/") && !isHeic)) throw new Error("Choose an image file.");
   if (file.size > 15_000_000) throw new Error("Choose a photo smaller than 15 MB.");
   let bitmap;
   try { bitmap = await createImageBitmap(file); }
-  catch (error) { console.error(error); throw new Error("This photo format couldn't be opened. Try a JPEG, PNG or WebP photo."); }
+  catch (error) {
+    if (!isHeic) {
+      console.error(error);
+      throw new Error("This photo format couldn't be opened. Try a JPEG, PNG, WebP or HEIC photo.");
+    }
+    const response = await fetch("/api/recipes/convert-heic", {
+      method: "POST",
+      headers: { "Content-Type": "application/octet-stream" },
+      body: file,
+      signal: AbortSignal.timeout(150_000),
+    });
+    if (!response.ok) {
+      const result = await response.json();
+      throw new Error(result.error || `Photo conversion failed (${response.status}).`);
+    }
+    try { bitmap = await createImageBitmap(await response.blob()); }
+    catch (conversionError) { console.error(conversionError); throw new Error("The converted photo couldn't be opened."); }
+  }
   try {
     const scale = Math.min(1, 1600 / Math.max(bitmap.width, bitmap.height));
     const canvas = document.createElement("canvas");
@@ -617,7 +664,7 @@ async function preparePhoto(file) {
     context.fillStyle = "#ffffff"; context.fillRect(0, 0, canvas.width, canvas.height);
     context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
     const image = canvas.toDataURL("image/jpeg", 0.88);
-    if (image.length > 2_900_000) throw new Error("This photo is still too large. Crop to just the recipe and try again.");
+    if (image.length > 2_900_000) throw new Error("This photo is still too large. Crop it and try again.");
     return image;
   } finally { bitmap.close(); }
 }
@@ -644,9 +691,12 @@ function addRecipeDialog(existing, updateUrl = true) {
   const notes = h("textarea", { rows: 2, maxLength: 1500, placeholder: "Source, tips, substitutions or anything to double-check", value: existing?.notes ?? "" });
   const warnings = h("div", { className: "import-warnings", role: "status", hidden: true });
   const reviewed = h("input", { type: "checkbox", required: true });
-  const preview = h("img", { className: "upload-preview", alt: "The recipe photo you selected", hidden: true });
-  const file = h("input", { type: "file", accept: "image/*", capture: "environment", "aria-label": "Take or choose a recipe photo" });
-  const status = h("p", { className: "muted", role: "status" });
+  const recipePreview = h("img", { className: "upload-preview", alt: "Selected recipe page", hidden: true });
+  const recipeFile = h("input", { type: "file", accept: "image/*,.heic,.heif", "aria-label": "Choose or take a photo of the recipe page" });
+  const recipeStatus = h("p", { className: "muted upload-status", role: "status" });
+  const imagePreview = h("img", { className: "upload-preview", alt: "Recipe cover photo", src: image, hidden: !existing });
+  const imageFile = h("input", { type: "file", accept: "image/*,.heic,.heif", "aria-label": "Choose or take a photo of the finished dish" });
+  const imageStatus = h("p", { className: "muted upload-status", role: "status" });
   const photoCredit = h("p", { className: "fineprint photo-credit", hidden: true });
   let imageCredit = hasImageCredit(existing?.imageCredit) ? existing.imageCredit : undefined;
   const excludedPhotoSources = new Set(typeof imageCredit?.sourceUrl === "string" ? [imageCredit.sourceUrl] : []);
@@ -657,14 +707,20 @@ function addRecipeDialog(existing, updateUrl = true) {
     photoCredit.hidden = false;
   };
   showPhotoCredit();
+  function updatePhotoControls() {
+    const busy = preparing || extracting || findingImage;
+    recipeFile.disabled = busy;
+    imageFile.disabled = busy;
+    extract.disabled = busy || !prepared;
+    findImage.disabled = busy;
+    save.disabled = busy;
+  }
   const extract = button("Read recipe with Copilot", async () => {
     if (!prepared) throw new Error("Take or choose a photo first.");
     extracting = true;
-    file.disabled = true;
-    findImage.disabled = true;
-    save.disabled = true;
+    updatePhotoControls();
     reviewed.checked = false;
-    status.textContent = "Reading your recipe. This can take up to two minutes...";
+    recipeStatus.textContent = "Reading your recipe. This can take up to two minutes...";
     try {
       const result = await api("/recipes/extract", { data: prepared.split(",")[1], mimeType: "image/jpeg" });
       if (!result.recipe) throw new Error("No readable recipe was found. Try a clearer photo.");
@@ -678,21 +734,19 @@ function addRecipeDialog(existing, updateUrl = true) {
         h("ul", {}, ...result.warnings.map((warning) => h("li", { text: warning }))),
         h("p", { text: "Compare quantities, units, dietary labels and method with your photo before saving." }));
       warnings.hidden = false;
-      status.textContent = "Read successfully. Check the editable card below before saving.";
+      recipeStatus.textContent = "Read successfully. Check the editable card below before saving.";
     } catch (error) {
-      status.textContent = "Photo import failed. You can try again or enter the recipe manually.";
+      recipeStatus.textContent = "Photo import failed. You can try again or enter the recipe manually.";
       throw error;
-    } finally { extracting = false; file.disabled = false; findImage.disabled = false; save.disabled = false; }
+    } finally { extracting = false; updatePhotoControls(); }
   }, "button secondary");
   extract.disabled = true;
   let findingImage = false;
   const findImage = button("Find a photo with Copilot", async () => {
     if (findingImage) return;
     findingImage = true;
-    file.disabled = true;
-    extract.disabled = true;
-    save.disabled = true;
-    status.textContent = "Searching and visually checking food photos for a recipe match with no people. This can take up to two minutes...";
+    updatePhotoControls();
+    imageStatus.textContent = "Searching and checking food photos. This can take up to two minutes...";
     try {
       if (typeof imageCredit?.sourceUrl === "string") excludedPhotoSources.add(imageCredit.sourceUrl);
       const result = await api("/recipes/find-image", {
@@ -705,46 +759,63 @@ function addRecipeDialog(existing, updateUrl = true) {
       image = result.image;
       imageCredit = result.imageCredit;
       if (typeof imageCredit?.sourceUrl === "string") excludedPhotoSources.add(imageCredit.sourceUrl);
-      preview.src = image;
-      preview.hidden = false;
+      imagePreview.src = image;
+      imagePreview.hidden = false;
       showPhotoCredit();
-      status.textContent = "Photo found. It will be saved with this recipe when you update the card.";
+      imageStatus.textContent = "Photo found. It will be saved with this recipe.";
     } catch (error) {
-      status.textContent = "Photo search failed. Your current image is unchanged.";
+      imageStatus.textContent = "Photo search failed. Your current image is unchanged.";
       throw error;
     } finally {
       findingImage = false;
-      file.disabled = false;
-      extract.disabled = !prepared;
-      save.disabled = false;
+      updatePhotoControls();
     }
   }, "button secondary");
-  file.addEventListener("change", () => run(async () => {
-    prepared = undefined; image = "/images/pasta.jpg"; imageCredit = undefined;
-    extract.disabled = true; preview.hidden = true; reviewed.checked = false;
-    showPhotoCredit();
-    const chosen = file.files?.[0];
+  recipeFile.addEventListener("change", () => run(async () => {
+    const chosen = recipeFile.files?.[0];
     if (!chosen) return;
     preparing = true;
-    findImage.disabled = true;
-    save.disabled = true;
-    status.textContent = "Preparing photo...";
+    updatePhotoControls();
+    recipeStatus.textContent = "Preparing recipe photo...";
     try {
       prepared = await preparePhoto(chosen);
-      image = prepared; preview.src = prepared; preview.hidden = false;
-      extract.disabled = false;
-      status.textContent = "Ready. Only press Read recipe if you want to send this photo to Copilot.";
+      recipePreview.src = prepared;
+      recipePreview.hidden = false;
+      reviewed.checked = false;
+      recipeStatus.textContent = "Ready to read. Your photo is only sent to Copilot when you press Read recipe.";
     } catch (error) {
-      status.textContent = "Couldn't prepare the photo. Try a different image.";
+      recipeStatus.textContent = "Couldn't prepare the recipe photo. Your previous selection is unchanged.";
       throw error;
-    } finally { preparing = false; findImage.disabled = false; save.disabled = extracting; }
-  }, file));
+    } finally { preparing = false; updatePhotoControls(); }
+  }));
+  imageFile.addEventListener("change", () => run(async () => {
+    const chosen = imageFile.files?.[0];
+    if (!chosen) return;
+    preparing = true;
+    updatePhotoControls();
+    imageStatus.textContent = "Preparing dish photo...";
+    try {
+      image = await preparePhoto(chosen);
+      imageCredit = undefined;
+      imagePreview.src = image;
+      imagePreview.hidden = false;
+      showPhotoCredit();
+      imageStatus.textContent = "Dish photo ready. It will be saved with this recipe.";
+    } catch (error) {
+      imageStatus.textContent = "Couldn't prepare the dish photo. Your current image is unchanged.";
+      throw error;
+    } finally { preparing = false; updatePhotoControls(); }
+  }));
   const save = h("button", { type: "submit", className: "button", text: existing ? "Update this recipe \u2192" : "Save to my collection \u2192" });
   const form = h("form", { className: "recipe-form" },
-    h("div", { className: "upload-box" }, h("h3", { text: existing ? "Update this card from your recipe." : "From a cookbook, a note, or your camera." }),
-      h("p", { className: "muted", text: "Photograph the ingredients and method. Or skip the photo and type your own recipe below." }),
-      file, preview, photoCredit, extract, findImage, status,
-      h("p", { className: "fineprint", text: "Reading a photo or finding a photo sends recipe details to GitHub Copilot and uses your allowance. A Copilot login is required. Photo search uses Openverse and only saves public-domain images. Photos you import are resized locally first. Only import recipes you have permission to use." })),
+    h("div", { className: "recipe-photo-options" },
+      h("section", { className: "upload-box" }, h("h3", { text: "Recipe page" }),
+        h("p", { className: "muted", text: "Choose an image or take a photo of the ingredients and method, or enter them manually below." }),
+        recipeFile, recipePreview, extract, recipeStatus),
+      h("section", { className: "upload-box" }, h("h3", { text: "Dish photo" }),
+        h("p", { className: "muted", text: "Choose an image or take a photo of the finished dish. This is separate from the recipe page." }),
+        imageFile, imagePreview, photoCredit, findImage, imageStatus)),
+    h("p", { className: "fineprint recipe-photo-note", text: "Reading a recipe photo or finding a dish photo uses GitHub Copilot and your allowance. Images are resized locally. Only import recipes you have permission to use." }),
     warnings, field("Recipe name", title), field("A little description", description),
     h("div", { className: "form-grid" }, field("Category", category), field("Primary protein", protein), field("Diet", diet)),
     h("div", { className: "form-grid" }, field("Servings", servings), field("Prep minutes", prep), field("Cook minutes", cook)),

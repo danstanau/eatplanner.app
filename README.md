@@ -92,7 +92,13 @@ score. Equal scores are randomised.
 ```
 
 Paste them into a Woolworths shopping list wherever your app version supports
-pasting. Check product matches, pack sizes and quantities yourself. **There is no
+pasting: choose or create a list, press and hold the item-entry field, then choose
+**Paste**. If bulk paste is unavailable, search for ingredients individually.
+**Copy & open Woolworths** copies first, then follows the official Woolworths
+website link. Your phone may open the installed app based on its link settings;
+otherwise it opens the website. Automatic copying uses a fallback on local HTTP
+connections; if blocked, the text is selected with manual-copy instructions and
+you stay on this page. Check product matches, pack sizes and quantities yourself. **There is no
 direct cart integration** and the app does not collect Woolworths credentials.
 It does not scrape or automate private supermarket endpoints.
 
@@ -102,11 +108,20 @@ The starter library includes **80 household meal cards** with generated draft
 ingredients, steps, categories, primary protein, diet, servings, prep/cooking
 times, notes and locally served food photography.
 
-Use **Add recipe** to type a recipe manually or take/select a photo of its
-ingredients and method. The browser resizes the photo, then sends it to Copilot
+Use **Add recipe** to type a recipe manually or choose an image file or take a
+photo of its ingredients and method. The browser resizes the photo, then sends it to Copilot
 only when you press **Read recipe with Copilot**. The transcription fills an
 editable form and reports ambiguities. Nothing enters your library until you
 review the details, tick the review checkbox and save.
+Your recipes are added alongside the starter cards in the local household
+collection. This updates only the gitignored `data/household.json`; the shipped
+starter file stays unchanged.
+
+The separate **Dish photo** section lets you choose an image file, take a photo
+of the finished dish, or search for a suitable image. The recipe-page photo is
+only used for transcription, not as the dish photo. JPEG, PNG, WebP and phone
+HEIC/HEIF photos are supported. If your browser cannot open a HEIC/HEIF photo,
+it is sent to this server for conversion before resizing; it is not saved there.
 
 When editing a recipe, choose **Find a photo with Copilot** to turn its details
 into a search phrase and look for a matching photo. When `UNSPLASH_ACCESS_KEY`

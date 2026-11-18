@@ -100,6 +100,7 @@ export async function extractRecipe(photo: Photo) {
         "Allowed units: g, kg, ml, l, tsp, tbsp, piece, pinch. A piece can be an egg, garlic clove or slice of bread; put that in the ingredient name.",
         "This app uses Australian tablespoons (20 ml) and teaspoons (5 ml). If the source uses 15 ml tablespoons, convert those amounts to ml to preserve them. Flag any uncertain source unit conversions in warnings.",
         "Choose the best primary protein group and category from the schema. Classify diet conservatively.",
+        "If the page omits metadata such as a description, servings, prep/cook times, category, primary protein or diet, infer a conservative value from the readable recipe and report that assumption in warnings. Never invent ingredients, quantities or method steps; flag unreadable details for review.",
         "Use notes for source information, ingredient preparation, and ambiguities. Include warnings for any unreadable text, converted units, inferred servings or inferred timings.",
         "Never silently guess an unreadable quantity; explain it in warnings and require user review.",
         "Pantry staples such as oil, spices, rice and pasta should have pantry=true.",

@@ -1,6 +1,7 @@
 import express, { type ErrorRequestHandler } from "express";
 import { fileURLToPath } from "node:url";
 import { randomUUID } from "node:crypto";
+import convertHeic from "heic-convert";
 import { z } from "zod";
 import { preferencesSchema, type MealPlan, type Preferences } from "./plan.js";
 import { extractionSchema, newRecipeSchema, photoSchema, recipeImageSearchSchema, type Extraction, type ImageCredit, type Photo, type RecipeImageSearch } from "./recipes.js";
@@ -48,12 +49,35 @@ export function createApp(services: Services, store = new Store(), options: { al
         response.status(403).json({ error: "Changes must be requested from this app." });
         return;
       }
-      if (!request.is("application/json")) {
-        response.status(415).json({ error: "Send data as application/json." });
+      const isHeicConversion = request.path === "/recipes/convert-heic";
+      if (!request.is(isHeicConversion ? "application/octet-stream" : "application/json")) {
+        response.status(415).json({ error: isHeicConversion ? "Send the image as binary data." : "Send data as application/json." });
         return;
       }
     }
     next();
+  });
+  let convertingHeic = false;
+  app.post("/api/recipes/convert-heic", express.raw({ type: "application/octet-stream", limit: 15_000_000 }), async (request, response) => {
+    const bytes: unknown = request.body;
+    if (!Buffer.isBuffer(bytes) || bytes.length < 12 || bytes.toString("ascii", 4, 8) !== "ftyp" ||
+      !["heic", "heix", "hevc", "hevx", "mif1", "msf1"].includes(bytes.toString("ascii", 8, 12))) {
+      throw new AppError(400, "Choose a valid HEIC or HEIF image.");
+    }
+    if (convertingHeic) throw new AppError(429, "Another phone photo is being prepared. Please wait.");
+    convertingHeic = true;
+    try {
+      let jpeg: Uint8Array;
+      try {
+        jpeg = await convertHeic({ buffer: bytes, format: "JPEG", quality: 0.88 });
+      } catch (error) {
+        console.error("[eatplanner.app] HEIC conversion failed:", error instanceof Error ? error.message : "Unexpected error");
+        throw new AppError(422, "This HEIC photo couldn't be opened. Try another photo or export it as JPEG.");
+      }
+      response.type("image/jpeg").send(Buffer.from(jpeg));
+    } finally {
+      convertingHeic = false;
+    }
   });
   app.use(express.json({ limit: "4mb" }));
   app.get("/api/status", async (_request, response) => {

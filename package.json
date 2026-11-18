@@ -18,10 +18,12 @@
   "dependencies": {
     "@microsoft/copilot-sdk": "2.0.0",
     "express": "^5.1.0",
+    "heic-convert": "^2.1.0",
     "zod": "^4.1.0"
   },
   "devDependencies": {
     "@types/express": "^5.0.0",
+    "@types/heic-convert": "^2.1.1",
     "@types/node": "^26.0.0",
     "happy-dom": "^21.0.4",
     "tsx": "^4.20.0",
