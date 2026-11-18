@@ -117,6 +117,10 @@ test("UI completes week selection, swaps, moves, confirmation, cooking, sharing 
   await waitFor(() => document.querySelector("#shopping"));
   assert.equal(document.querySelectorAll(".meal-actions").length, 0);
   assert.ok(document.querySelector(".shopping-text")?.value.includes("\n"));
+  const firstShoppingItem = document.querySelector("#shopping .shopping-checklist input[type=checkbox]");
+  assert.ok(firstShoppingItem);
+  firstShoppingItem.click();
+  assert.match(document.querySelector(".shopping-progress")?.textContent ?? "", /^1 of \d+ items checked$/);
   assert.equal((await store.read()).weeks[Object.keys((await store.read()).weeks)[0]].status, "confirmed");
 
   document.querySelector(".recipe-open")?.click();
