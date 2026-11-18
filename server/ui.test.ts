@@ -47,7 +47,16 @@ test("UI completes week selection, swaps, moves, confirmation, cooking, sharing 
   const originalTimeout = globalThis.setTimeout;
   const globals = {
     document, window: browser, navigator: browser.navigator, localStorage: browser.localStorage,
-    fetch: (url: string, init?: RequestInit) => originalFetch(new URL(url, base), init),
+    fetch: async (url: string, init?: RequestInit) => {
+      const response = await originalFetch(new URL(url, base), init);
+      if (new URL(url, base).pathname !== "/api/recipes" || (init?.method && init.method !== "GET")) return response;
+      const recipes = await response.json() as Array<{ id: string; imageCredit?: unknown }>;
+      const brisket = recipes.find((recipe) => recipe.id === "beef-brisket");
+      if (brisket) brisket.imageCredit = {
+        creator: null, sourceUrl: "https://example.com/photo", license: "CC0", licenseUrl: "https://example.com/license",
+      };
+      return new Response(JSON.stringify(recipes), { status: response.status });
+    },
     createImageBitmap: async () => ({ width: 1200, height: 900, close() {} }),
     setTimeout: (callback: () => void, timeout: number) => {
       const timer = originalTimeout(callback, timeout);
@@ -160,6 +169,13 @@ test("UI completes week selection, swaps, moves, confirmation, cooking, sharing 
 
   document.querySelector("#nav-recipes")?.click();
   assert.equal(document.querySelectorAll(".collection-card").length, initialRecipes);
+  const brisketCard = [...document.querySelectorAll(".collection-card")].find((card) => card.querySelector("h3")?.textContent === "Beef brisket");
+  assert.ok(brisketCard);
+  brisketCard.click();
+  assert.doesNotMatch(document.querySelector("#modal-content")?.textContent ?? "", /\bnull\b/);
+  assert.equal(document.querySelector(".photo-credit"), null);
+  document.querySelector("#close-modal")?.click();
+  await waitFor(() => !document.querySelector("dialog")?.open && document.querySelectorAll(".collection-card").length === initialRecipes);
   document.querySelector("#add-recipe")?.click();
   assert.equal(new URL(browser.location.href).searchParams.get("edit"), "new");
   assert.ok(document.querySelector(".recipe-form"), document.querySelector("#modal-content")?.textContent);

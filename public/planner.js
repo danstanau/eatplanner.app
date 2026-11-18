@@ -90,6 +90,9 @@ function heading(kicker, title, description) {
     description ? h("p", { className: "lede", text: description }) : null);
 }
 function tag(text, extra = "") { return h("span", { className: `tag ${extra}`, text }); }
+function hasImageCredit(credit) {
+  return credit && ["creator", "sourceUrl", "license", "licenseUrl"].every((key) => typeof credit[key] === "string" && credit[key].trim());
+}
 function field(label, input, help) {
   return h("label", { className: "field" }, h("span", { text: label }), input, help ? h("small", { text: help }) : null);
 }
@@ -520,7 +523,7 @@ function showRecipe(recipe, servings = recipe.servings, weekKey, day, updateUrl 
   const allSteps = h("details", { className: "all-steps" }, h("summary", { text: "See the whole method" }),
     h("ol", {}, ...recipe.steps.map((text) => h("li", { text }))));
   openModal(h("img", { className: "recipe-hero", src: recipe.image, alt: recipe.title }),
-    recipe.imageCredit ? h("p", { className: "fineprint photo-credit" }, "Photo by ",
+    hasImageCredit(recipe.imageCredit) ? h("p", { className: "fineprint photo-credit" }, "Photo by ",
       h("a", { href: recipe.imageCredit.sourceUrl, target: "_blank", rel: "noreferrer", text: recipe.imageCredit.creator }),
       ` · ${recipe.imageCredit.license} `, h("a", { href: recipe.imageCredit.licenseUrl, target: "_blank", rel: "noreferrer", text: "licence" })) : null,
     h("div", { className: "recipe-intro" }, h("p", { className: "eyebrow", text: `${CATEGORIES[recipe.category]} / ${PROTEINS[recipe.protein]}` }),
@@ -635,9 +638,9 @@ function addRecipeDialog(existing, updateUrl = true) {
   const file = h("input", { type: "file", accept: "image/*", capture: "environment", "aria-label": "Take or choose a recipe photo" });
   const status = h("p", { className: "muted", role: "status" });
   const photoCredit = h("p", { className: "fineprint photo-credit", hidden: true });
-  let imageCredit = existing?.imageCredit;
+  let imageCredit = hasImageCredit(existing?.imageCredit) ? existing.imageCredit : undefined;
   const showPhotoCredit = () => {
-    if (!imageCredit) { photoCredit.hidden = true; photoCredit.replaceChildren(); return; }
+    if (!hasImageCredit(imageCredit)) { photoCredit.hidden = true; photoCredit.replaceChildren(); return; }
     photoCredit.replaceChildren("Photo by ", h("a", { href: imageCredit.sourceUrl, target: "_blank", rel: "noreferrer", text: imageCredit.creator }),
       ` · ${imageCredit.license} `, h("a", { href: imageCredit.licenseUrl, target: "_blank", rel: "noreferrer", text: "licence" }));
     photoCredit.hidden = false;
