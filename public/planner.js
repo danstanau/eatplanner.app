@@ -584,7 +584,7 @@ function addRecipeDialog(existing) {
     file.disabled = true;
     extract.disabled = true;
     save.disabled = true;
-    status.textContent = "Searching for a public-domain food photo. This can take up to a minute...";
+    status.textContent = "Searching and visually checking food photos for a recipe match with no people. This can take up to two minutes...";
     try {
       const result = await api("/recipes/find-image", {
         title: title.value,
