@@ -19,6 +19,7 @@ const SHARE_PALETTE = {
 let toastTimer;
 let loadSequence = 0;
 let shareUrl;
+let restoringRoute = false;
 
 function h(tag, options = {}, ...children) {
   const node = document.createElement(tag);
@@ -104,9 +105,58 @@ function openModal(...content) {
   if (!modal.open) modal.showModal();
   modal.scrollTop = 0;
 }
-document.querySelector("#close-modal").addEventListener("click", () => modal.close());
-modal.addEventListener("click", (event) => { if (event.target === modal) modal.close(); });
-modal.addEventListener("close", () => { if (shareUrl) { URL.revokeObjectURL(shareUrl); shareUrl = undefined; } });
+function readRoute() {
+  const params = new URLSearchParams(window.location.search);
+  const view = params.get("view");
+  if (view === "week" && /^\d{4}-\d{2}-\d{2}$/.test(params.get("week") ?? "")) {
+    return {
+      view, week: params.get("week"), recipe: params.get("recipe"), day: params.get("day"),
+      edit: params.get("edit"), q: params.get("q"), category: params.get("category"), protein: params.get("protein"),
+    };
+  }
+  if (view === "recipes") {
+    return {
+      view, recipe: params.get("recipe"), edit: params.get("edit"), q: params.get("q"),
+      category: params.get("category"), protein: params.get("protein"),
+    };
+  }
+  return { view: "weeks" };
+}
+function writeRoute(route, replace = false) {
+  const params = new URLSearchParams();
+  params.set("view", route.view);
+  for (const key of ["week", "recipe", "day", "edit", "q", "category", "protein"]) {
+    const value = route[key];
+    if (value !== undefined && value !== null && value !== "") params.set(key, String(value));
+  }
+  const query = params.toString();
+  const url = `${window.location.pathname}${query ? `?${query}` : ""}${window.location.hash}`;
+  if (url === `${window.location.pathname}${window.location.search}${window.location.hash}` && window.history.state?.plannerRoute) return;
+  const hasParent = replace ? Boolean(window.history.state?.plannerHasParent) : true;
+  window.history[replace ? "replaceState" : "pushState"]({ plannerRoute: true, plannerHasParent: hasParent }, "", url);
+}
+function dismissRouteModal() {
+  const route = readRoute();
+  if (!route.recipe && !route.edit) return false;
+  if (window.history.state?.plannerHasParent) {
+    window.history.back();
+  } else {
+    writeRoute({ ...route, recipe: undefined, day: undefined, edit: undefined }, true);
+    if (modal.open) modal.close();
+    run(restoreRoute);
+  }
+  return true;
+}
+document.querySelector("#close-modal").addEventListener("click", () => {
+  if (!dismissRouteModal()) modal.close();
+});
+modal.addEventListener("click", (event) => {
+  if (event.target === modal && !dismissRouteModal()) modal.close();
+});
+modal.addEventListener("close", () => {
+  if (shareUrl) { URL.revokeObjectURL(shareUrl); shareUrl = undefined; }
+  if (!restoringRoute) dismissRouteModal();
+});
 
 function setNavigation() {
   const weeks = document.querySelector("#nav-weeks");
@@ -116,7 +166,9 @@ function setNavigation() {
   weeks.setAttribute("aria-current", state.view !== "recipes" ? "page" : "false");
   recipes.setAttribute("aria-current", state.view === "recipes" ? "page" : "false");
 }
-async function showWeeks() {
+async function showWeeks(updateUrl = true) {
+  if (updateUrl) writeRoute({ view: "weeks" });
+  if (modal.open) modal.close();
   const sequence = ++loadSequence;
   state.view = "weeks";
   setNavigation();
@@ -156,7 +208,9 @@ function renderWeeks() {
     h("div", { className: "section-bar" }, h("div", {}, h("p", { className: "eyebrow", text: "YOUR KITCHEN CALENDAR" }), h("h2", { text: "Your weeks, your rhythm." })), field("Jump to a week", datePicker)), grid));
 }
 
-async function openWeek(key) {
+async function openWeek(key, updateUrl = true) {
+  if (updateUrl) writeRoute({ view: "week", week: key });
+  if (modal.open) modal.close();
   const sequence = ++loadSequence;
   state.view = "week";
   state.weekKey = key;
@@ -238,7 +292,7 @@ function planningForm() {
 function renderWeek() {
   const week = state.week;
   const locked = week?.status === "confirmed";
-  const actions = h("div", { className: "action-row" }, button("\u2190 All weeks", showWeeks, "text-button"));
+  const actions = h("div", { className: "action-row" }, button("\u2190 All weeks", () => showWeeks(), "text-button"));
   if (week) actions.append(button("Refresh", () => openWeek(state.weekKey), "text-button"), button("Share week \u2197", shareWeek, "button secondary small"));
   const title = heading(locked ? "DINNER IS SORTED" : "A LITTLE FORWARD THINKING", weekLabel(state.weekKey), week ? `${week.meals.length} dinners \u00b7 ${week.people} people \u00b7 ${locked ? "Confirmed and locked in" : "A draft to make your own"}` : "Choose the nights. Set a few rules. Find your weeknight rhythm.");
   if (!week) {
@@ -368,14 +422,20 @@ function shoppingPanel(week) {
       h("p", { className: "fineprint", text: "Paste into a Woolworths shopping list wherever your app supports it. Review product matches and quantities yourself; this does not add items directly to a cart." }))));
 }
 
-function showRecipes() {
+function showRecipes(updateUrl = true) {
+  const previous = readRoute();
+  if (updateUrl) {
+    writeRoute({ view: "recipes", q: previous.q, category: previous.category, protein: previous.protein });
+  }
+  if (modal.open) modal.close();
   ++loadSequence;
   state.view = "recipes";
   setNavigation();
-  const search = h("input", { type: "search", placeholder: "Find a recipe or ingredient...", "aria-label": "Search recipes" });
-  const category = select({ all: "Every category", ...CATEGORIES }, "all");
+  const route = readRoute();
+  const search = h("input", { type: "search", placeholder: "Find a recipe or ingredient...", "aria-label": "Search recipes", value: route.q ?? "" });
+  const category = select({ all: "Every category", ...CATEGORIES }, route.category ?? "all");
   category.setAttribute("aria-label", "Filter recipes by category");
-  const protein = select({ all: "Every protein", ...PROTEINS }, "all");
+  const protein = select({ all: "Every protein", ...PROTEINS }, route.protein ?? "all");
   protein.setAttribute("aria-label", "Filter recipes by protein");
   const grid = h("div", { className: "collection-grid" });
   const count = h("p", { className: "muted", role: "status", "aria-live": "polite" });
@@ -394,16 +454,32 @@ function showRecipes() {
     }));
     if (!filtered.length) grid.append(h("p", { className: "notice", text: "No recipes match yet. Try another filter or add one of your own." }));
   }
-  search.addEventListener("input", filter);
-  category.addEventListener("change", filter);
-  protein.addEventListener("change", filter);
+  function updateFilters() {
+    writeRoute({
+      view: "recipes",
+      q: search.value.trim() || undefined,
+      category: category.value === "all" ? undefined : category.value,
+      protein: protein.value === "all" ? undefined : protein.value,
+    }, true);
+    filter();
+  }
+  search.addEventListener("input", updateFilters);
+  category.addEventListener("change", updateFilters);
+  protein.addEventListener("change", updateFilters);
   view.replaceChildren(heading("THE THINGS WE LOVE TO COOK", "Your recipe collection.", "A growing book of everyday favourites. Good ingredients, clear steps, and something for every kind of evening."),
     h("div", { className: "collection-toolbar" }, search, category, protein), count, grid,
     h("p", { className: "fineprint collection-note", text: "Photography is serving inspiration and may not depict the exact recipe. Always check ingredient labels for allergens and follow safe food-handling guidance." }));
   filter();
 }
 
-function showRecipe(recipe, servings = recipe.servings, weekKey, day) {
+function showRecipe(recipe, servings = recipe.servings, weekKey, day, updateUrl = true) {
+  if (updateUrl) {
+    const current = readRoute();
+    writeRoute({
+      ...current, view: weekKey === undefined ? "recipes" : "week",
+      week: weekKey, recipe: recipe.id, day: day === undefined ? undefined : String(day), edit: undefined,
+    });
+  }
   const ingredientList = h("div", { className: "recipe-ingredients" });
   recipe.ingredients.forEach((item) => ingredientList.append(h("label", { className: "shopping-item" }, h("input", { type: "checkbox" }), h("span", { text: ingredientLine(item, servings / recipe.servings) }))));
   let step = 0;
@@ -529,7 +605,11 @@ async function preparePhoto(file) {
     return image;
   } finally { bitmap.close(); }
 }
-function addRecipeDialog(existing) {
+function addRecipeDialog(existing, updateUrl = true) {
+  if (updateUrl) {
+    const current = readRoute();
+    writeRoute({ ...current, view: current.view === "week" ? "week" : "recipes", edit: existing ? "1" : "new" });
+  }
   let image = existing?.image ?? "/images/pasta.jpg";
   let prepared;
   let preparing = false;
@@ -680,9 +760,59 @@ document.querySelector("#nav-weeks").addEventListener("click", () => run(showWee
 document.querySelector("#nav-recipes").addEventListener("click", showRecipes);
 document.querySelector("#add-recipe").addEventListener("click", () => addRecipeDialog());
 
+let restoreSequence = 0;
+async function restoreRoute() {
+  const sequence = ++restoreSequence;
+  const route = readRoute();
+  restoringRoute = true;
+  try { if (modal.open) modal.close(); }
+  finally { restoringRoute = false; }
+
+  if (route.view === "week") {
+    await openWeek(route.week, false);
+    if (sequence !== restoreSequence || state.view !== "week" || state.weekKey !== route.week) return;
+    if (route.edit === "new") {
+      addRecipeDialog(undefined, false);
+      return;
+    }
+    if (route.recipe) {
+      const meal = state.week?.meals.find((item) => item.recipe.id === route.recipe && (route.day === null || item.day === Number(route.day)));
+      if (meal) {
+        showRecipe(meal.recipe, state.week.people, state.week.week, meal.day, false);
+        if (route.edit === "1") addRecipeDialog(meal.recipe, false);
+        return;
+      }
+    }
+    if (route.recipe || route.edit) writeRoute({ view: "week", week: route.week }, true);
+    return;
+  }
+
+  if (route.view === "recipes") {
+    showRecipes(false);
+    if (route.edit === "new") {
+      addRecipeDialog(undefined, false);
+      return;
+    }
+    if (route.recipe) {
+      const recipe = state.recipes.find((item) => item.id === route.recipe);
+      if (recipe) {
+        showRecipe(recipe, recipe.servings, undefined, undefined, false);
+        if (route.edit === "1") addRecipeDialog(recipe, false);
+        return;
+      }
+      writeRoute({ view: "recipes", q: route.q, category: route.category, protein: route.protein }, true);
+    }
+    return;
+  }
+
+  writeRoute({ view: "weeks" }, true);
+  await showWeeks(false);
+}
+window.addEventListener("popstate", () => run(restoreRoute));
+
 async function initialise() {
   state.recipes = await api("/recipes");
-  if (state.view === "recipes") showRecipes(); else await showWeeks();
+  await restoreRoute();
 }
 run(async () => {
   try { await initialise(); }

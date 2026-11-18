@@ -95,6 +95,8 @@ test("UI completes week selection, swaps, moves, confirmation, cooking, sharing 
   await import("../public/planner.js");
   await waitFor(() => document.querySelectorAll(".week-card").length === 10);
   findButton("Plan this week").click();
+  assert.equal(new URL(browser.location.href).searchParams.get("view"), "week");
+  assert.ok(new URL(browser.location.href).searchParams.get("week"));
   await waitFor(() => document.querySelectorAll(".day-toggle").length === 7);
   assert.match(document.querySelector(".selection-count")?.textContent ?? "", /5 dinners/);
   document.querySelectorAll(".day-toggle")[0].click();
@@ -128,11 +130,21 @@ test("UI completes week selection, swaps, moves, confirmation, cooking, sharing 
   assert.match(document.querySelector(".shopping-progress")?.textContent ?? "", /^1 of \d+ items checked$/);
   assert.equal((await store.read()).weeks[Object.keys((await store.read()).weeks)[0]].status, "confirmed");
 
+  const originalMealCard = document.querySelector(".recipe-open");
+  originalMealCard?.click();
+  assert.ok(new URL(browser.location.href).searchParams.get("recipe"));
+  findButton("Edit recipe / update from photo").click();
+  assert.equal(new URL(browser.location.href).searchParams.get("edit"), "1");
+  browser.history.back();
+  await waitFor(() => new URL(browser.location.href).searchParams.has("recipe") && !new URL(browser.location.href).searchParams.has("edit") && Boolean(document.querySelector(".recipe-layout")));
+  browser.history.back();
+  await waitFor(() => !document.querySelector("dialog")?.open && new URL(browser.location.href).searchParams.get("view") === "week" && document.querySelector(".recipe-open") !== originalMealCard);
   document.querySelector(".recipe-open")?.click();
   assert.match(document.querySelector(".cook-mode .eyebrow")?.textContent ?? "", /STEP 1/);
   findButton("Next step").click();
   assert.match(document.querySelector(".cook-mode .eyebrow")?.textContent ?? "", /STEP 2/);
   document.querySelector("#close-modal")?.click();
+  await waitFor(() => !document.querySelector("dialog")?.open && Boolean([...document.querySelectorAll("button")].find((item) => item.textContent?.includes("Share week"))));
   findButton("Share week").click();
   await waitFor(() => document.querySelector(".share-preview"));
   assert.ok(document.querySelector("a[download]")?.getAttribute("download")?.endsWith(".png"));
@@ -140,6 +152,7 @@ test("UI completes week selection, swaps, moves, confirmation, cooking, sharing 
   assert.ok(drawing.includes("MONDAY"));
   assert.ok(drawing.includes("SUNDAY"));
   document.querySelector("#close-modal")?.click();
+  await waitFor(() => !document.querySelector("dialog")?.open && Boolean([...document.querySelectorAll("button")].find((item) => item.textContent?.includes("All weeks"))));
   findButton("All weeks").click();
   await waitFor(() => document.querySelector(".week-card.current"));
   const dayMarks = [...document.querySelectorAll(".week-card.current .mini-days span")].map((item, index) => item.classList.contains("filled") ? index : -1).filter((index) => index >= 0);
