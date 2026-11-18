@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { once } from "node:events";
+import { request as httpRequest } from "node:http";
 import test from "node:test";
 import { createApp } from "./app.js";
 import type { MealPlan } from "./plan.js";
@@ -65,4 +66,37 @@ test("HTTP routes validate input, isolate failures, and prevent duplicate genera
   release(plan);
   assert.equal(duplicate.status, 429);
   assert.equal((await pending).status, 200);
+});
+
+test("network-host API requests require explicit opt-in", async (t) => {
+  const services = {
+    extractRecipe: async () => { throw new Error("Not used by this test"); },
+    findRecipeImage: async () => { throw new Error("Not used by this test"); },
+    getStatus: async () => ({ authenticated: true, model: "auto" }),
+    generatePlan: async () => plan,
+  };
+  for (const allowNetworkAccess of [false, true]) {
+    const server = createApp(services, undefined, { allowNetworkAccess }).listen(0, "127.0.0.1");
+    await once(server, "listening");
+    t.after(() => new Promise<void>((resolve, reject) => {
+      server.close((error) => error ? reject(error) : resolve());
+      server.closeIdleConnections();
+    }));
+    const address = server.address();
+    assert.ok(address && typeof address !== "string");
+    const status = await new Promise<number>((resolve, reject) => {
+      const request = httpRequest({
+        host: "127.0.0.1",
+        port: address.port,
+        path: "/api/status",
+        headers: { Host: `192.168.4.33:${address.port}` },
+      }, (response) => {
+        response.resume();
+        response.on("end", () => resolve(response.statusCode ?? 0));
+      });
+      request.on("error", reject);
+      request.end();
+    });
+    assert.equal(status, allowNetworkAccess ? 200 : 403);
+  }
 });

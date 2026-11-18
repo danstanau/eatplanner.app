@@ -5,9 +5,15 @@ const port = Number(process.env.PORT ?? 3000);
 if (!Number.isInteger(port) || port < 1 || port > 65535) {
   throw new Error("PORT must be an integer between 1 and 65535.");
 }
+const host = process.env.HOST ?? "127.0.0.1";
+const allowNetworkAccess = process.env.ALLOW_NETWORK_ACCESS === "true";
 
-const server = createApp({ extractRecipe, findRecipeImage, generatePlan, getStatus }).listen(port, "127.0.0.1", () => {
-  console.log(`eatplanner.app is ready at http://127.0.0.1:${port}`);
+const server = createApp(
+  { extractRecipe, findRecipeImage, generatePlan, getStatus },
+  undefined,
+  { allowNetworkAccess },
+).listen(port, host, () => {
+  console.log(`eatplanner.app is ready at http://${host}:${port}`);
 });
 
 let stopping = false;

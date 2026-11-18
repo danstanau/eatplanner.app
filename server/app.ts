@@ -21,7 +21,7 @@ function requireWeek(weeks: Record<string, Week>, key: string): Week {
   return week;
 }
 
-export function createApp(services: Services, store = new Store()) {
+export function createApp(services: Services, store = new Store(), options: { allowNetworkAccess?: boolean } = {}) {
   const app = express();
   app.disable("x-powered-by");
   app.use((_request, response, next) => {
@@ -38,7 +38,7 @@ export function createApp(services: Services, store = new Store()) {
   });
   app.use("/api", (request, response, next) => {
     const hostname = request.hostname;
-    if (!["127.0.0.1", "localhost", "[::1]"].includes(hostname)) {
+    if (!options.allowNetworkAccess && !["127.0.0.1", "localhost", "[::1]"].includes(hostname)) {
       response.status(403).json({ error: "Use this app through its local address." });
       return;
     }

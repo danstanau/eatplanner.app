@@ -192,6 +192,28 @@ npm run build  # Compile server into dist/
 npm start      # Run compiled server; keep public/ and data/ alongside dist/
 ```
 
+## Releases
+
+From a clean, up-to-date `main` branch, run one of:
+
+```sh
+npm run release -- patch       # 0.1.0 -> 0.1.1
+npm run release -- minor       # 0.1.0 -> 0.2.0
+npm run release -- major       # 0.1.0 -> 1.0.0
+npm run release -- 1.2.3       # Set an explicit version
+```
+
+The command runs the tests and build, updates `package.json` and the lockfile,
+commits the version, creates an annotated `vX.Y.Z` tag, and atomically pushes
+the commit and tag to `origin`. A GitHub Actions workflow then re-runs the
+checks and creates a GitHub Release with generated notes. The workflow requires
+the repository's default `GITHUB_TOKEN` permissions; no release secret is
+needed.
+
+This project is intentionally a local-only app, not a public hosted service.
+The release workflow does not deploy it to a server; choose a hosting target
+and add access controls before setting up public deployment.
+
 ## Privacy and limits
 
 - The server binds to loopback only. This is a personal local app, **not an

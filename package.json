@@ -12,7 +12,8 @@
     "build": "tsc",
     "start": "node --env-file-if-exists=.env dist/index.js",
     "test": "tsx --test server/*.test.ts",
-    "check": "tsc --noEmit"
+    "check": "tsc --noEmit",
+    "release": "node scripts/release.js"
   },
   "dependencies": {
     "@microsoft/copilot-sdk": "2.0.0",
