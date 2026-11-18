@@ -6,7 +6,7 @@ transcription.
 
 ## Run locally
 
-Requires Node.js **22.12+** (or 20.19+) and npm.
+Requires Node.js **26** and npm. If you use nvm, run `nvm use` to select the project's Node version.
 
 ```sh
 npm install
