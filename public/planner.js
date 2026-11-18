@@ -400,6 +400,9 @@ function showRecipe(recipe, servings = recipe.servings, weekKey, day) {
   const allSteps = h("details", { className: "all-steps" }, h("summary", { text: "See the whole method" }),
     h("ol", {}, ...recipe.steps.map((text) => h("li", { text }))));
   openModal(h("img", { className: "recipe-hero", src: recipe.image, alt: recipe.title }),
+    recipe.imageCredit ? h("p", { className: "fineprint photo-credit" }, "Photo by ",
+      h("a", { href: recipe.imageCredit.sourceUrl, target: "_blank", rel: "noreferrer", text: recipe.imageCredit.creator }),
+      ` · ${recipe.imageCredit.license} `, h("a", { href: recipe.imageCredit.licenseUrl, target: "_blank", rel: "noreferrer", text: "licence" })) : null,
     h("div", { className: "recipe-intro" }, h("p", { className: "eyebrow", text: `${CATEGORIES[recipe.category]} / ${PROTEINS[recipe.protein]}` }),
       h("h2", { id: "modal-title", text: recipe.title }), h("p", { className: "muted", text: recipe.description }),
       h("div", { className: "recipe-stats" }, tag(`${servings} servings`), tag(`${recipe.prepMinutes} min prep`), tag(`${recipe.cookMinutes} min cook`), tag(recipe.diet)),
@@ -505,10 +508,20 @@ function addRecipeDialog(existing) {
   const preview = h("img", { className: "upload-preview", alt: "The recipe photo you selected", hidden: true });
   const file = h("input", { type: "file", accept: "image/*", capture: "environment", "aria-label": "Take or choose a recipe photo" });
   const status = h("p", { className: "muted", role: "status" });
+  const photoCredit = h("p", { className: "fineprint photo-credit", hidden: true });
+  let imageCredit = existing?.imageCredit;
+  const showPhotoCredit = () => {
+    if (!imageCredit) { photoCredit.hidden = true; photoCredit.replaceChildren(); return; }
+    photoCredit.replaceChildren("Photo by ", h("a", { href: imageCredit.sourceUrl, target: "_blank", rel: "noreferrer", text: imageCredit.creator }),
+      ` · ${imageCredit.license} `, h("a", { href: imageCredit.licenseUrl, target: "_blank", rel: "noreferrer", text: "licence" }));
+    photoCredit.hidden = false;
+  };
+  showPhotoCredit();
   const extract = button("Read recipe with Copilot", async () => {
     if (!prepared) throw new Error("Take or choose a photo first.");
     extracting = true;
     file.disabled = true;
+    findImage.disabled = true;
     save.disabled = true;
     reviewed.checked = false;
     status.textContent = "Reading your recipe. This can take up to two minutes...";
@@ -529,15 +542,48 @@ function addRecipeDialog(existing) {
     } catch (error) {
       status.textContent = "Photo import failed. You can try again or enter the recipe manually.";
       throw error;
-    } finally { extracting = false; file.disabled = false; save.disabled = false; }
+    } finally { extracting = false; file.disabled = false; findImage.disabled = false; save.disabled = false; }
   }, "button secondary");
   extract.disabled = true;
+  let findingImage = false;
+  const findImage = button("Find a photo with Copilot", async () => {
+    if (findingImage) return;
+    findingImage = true;
+    file.disabled = true;
+    extract.disabled = true;
+    save.disabled = true;
+    status.textContent = "Searching for a public-domain food photo. This can take up to a minute...";
+    try {
+      const result = await api("/recipes/find-image", {
+        title: title.value,
+        description: description.value,
+        protein: protein.value,
+        ingredients: ingredients.value.split("\n").map((line) => line.split("|")[2]?.trim()).filter(Boolean),
+      });
+      image = result.image;
+      imageCredit = result.imageCredit;
+      preview.src = image;
+      preview.hidden = false;
+      showPhotoCredit();
+      status.textContent = "Photo found. It will be saved with this recipe when you update the card.";
+    } catch (error) {
+      status.textContent = "Photo search failed. Your current image is unchanged.";
+      throw error;
+    } finally {
+      findingImage = false;
+      file.disabled = false;
+      extract.disabled = !prepared;
+      save.disabled = false;
+    }
+  }, "button secondary");
   file.addEventListener("change", () => run(async () => {
-    prepared = undefined; image = "/images/pasta.jpg";
+    prepared = undefined; image = "/images/pasta.jpg"; imageCredit = undefined;
     extract.disabled = true; preview.hidden = true; reviewed.checked = false;
+    showPhotoCredit();
     const chosen = file.files?.[0];
     if (!chosen) return;
     preparing = true;
+    findImage.disabled = true;
     save.disabled = true;
     status.textContent = "Preparing photo...";
     try {
@@ -548,14 +594,14 @@ function addRecipeDialog(existing) {
     } catch (error) {
       status.textContent = "Couldn't prepare the photo. Try a different image.";
       throw error;
-    } finally { preparing = false; save.disabled = extracting; }
+    } finally { preparing = false; findImage.disabled = false; save.disabled = extracting; }
   }, file));
   const save = h("button", { type: "submit", className: "button", text: existing ? "Update this recipe \u2192" : "Save to my collection \u2192" });
   const form = h("form", { className: "recipe-form" },
     h("div", { className: "upload-box" }, h("h3", { text: existing ? "Update this card from your recipe." : "From a cookbook, a note, or your camera." }),
       h("p", { className: "muted", text: "Photograph the ingredients and method. Or skip the photo and type your own recipe below." }),
-      file, preview, extract, status,
-      h("p", { className: "fineprint", text: "Reading a photo sends it to GitHub Copilot and uses your allowance. A vision-capable model and copilot login are required. Photos are resized locally first. Only import recipes you have permission to use." })),
+      file, preview, photoCredit, extract, findImage, status,
+      h("p", { className: "fineprint", text: "Reading a photo or finding a photo sends recipe details to GitHub Copilot and uses your allowance. A Copilot login is required. Photo search uses Openverse and only saves public-domain images. Photos you import are resized locally first. Only import recipes you have permission to use." })),
     warnings, field("Recipe name", title), field("A little description", description),
     h("div", { className: "form-grid" }, field("Category", category), field("Primary protein", protein), field("Diet", diet)),
     h("div", { className: "form-grid" }, field("Servings", servings), field("Prep minutes", prep), field("Cook minutes", cook)),
@@ -571,7 +617,7 @@ function addRecipeDialog(existing) {
         title: title.value, description: description.value, category: category.value, protein: protein.value, diet: diet.value,
         servings: Number(servings.value), prepMinutes: Number(prep.value), cookMinutes: Number(cook.value),
         ingredients: parseIngredientLines(ingredients.value), steps: steps.value.split("\n").map((line) => line.trim()).filter(Boolean),
-        notes: notes.value, image,
+        notes: notes.value, image, imageCredit,
       };
       const recipe = await api(existing ? `/recipes/${encodeURIComponent(existing.id)}` : "/recipes", content, existing ? "PUT" : undefined);
       if (existing) {

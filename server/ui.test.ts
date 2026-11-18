@@ -19,6 +19,15 @@ test("UI completes week selection, swaps, moves, confirmation, cooking, sharing 
     generatePlan: async () => { throw new Error("Not used by weekly planning"); },
     getStatus: async () => ({ authenticated: false, model: "auto" }),
     extractRecipe: async () => ({ recipe: content, warnings: ["Double-check the servings."] }),
+    findRecipeImage: async () => ({
+      image: "/images/chicken.jpg",
+      imageCredit: {
+        creator: "Example photographer",
+        sourceUrl: "https://example.com/photo",
+        license: "CC0",
+        licenseUrl: "https://creativecommons.org/publicdomain/zero/1.0/",
+      },
+    }),
   }, store).listen(0, "127.0.0.1");
   await once(server, "listening");
   t.after(() => new Promise<void>((resolve, reject) => {
@@ -189,4 +198,19 @@ test("UI completes week selection, swaps, moves, confirmation, cooking, sharing 
   assert.equal((await store.read()).recipes.length, initialRecipes + 2);
   assert.equal(updated?.id, imported.id);
   assert.equal(updated?.description, "Updated from the photographed family recipe.");
+
+  Array.from(document.querySelectorAll(".collection-card")).at(-1)?.click();
+  findButton("Edit recipe / update from photo").click();
+  findButton("Find a photo with Copilot").click();
+  await waitFor(() => document.querySelector(".recipe-form .upload-box .muted[role=status]")?.textContent?.includes("Photo found"));
+  assert.ok((document.querySelector(".upload-preview")?.getAttribute("src") ?? "").endsWith("/images/chicken.jpg"));
+  assert.match(document.querySelector(".recipe-form .photo-credit")?.textContent ?? "", /Example photographer/);
+  const imageReviewed = document.querySelector(".recipe-form > .check-field input");
+  assert.ok(imageReviewed);
+  imageReviewed.checked = true;
+  findButton("Update this recipe").click();
+  await waitFor(() => !document.querySelector("dialog")?.open);
+  const imageUpdated = (await store.read()).recipes.at(-1);
+  assert.equal(imageUpdated?.image, "/images/chicken.jpg");
+  assert.equal(imageUpdated?.imageCredit?.creator, "Example photographer");
 });

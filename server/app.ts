@@ -3,7 +3,7 @@ import { fileURLToPath } from "node:url";
 import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import { preferencesSchema, type MealPlan, type Preferences } from "./plan.js";
-import { extractionSchema, newRecipeSchema, photoSchema, type Extraction, type Photo } from "./recipes.js";
+import { extractionSchema, newRecipeSchema, photoSchema, recipeImageSearchSchema, type Extraction, type ImageCredit, type Photo, type RecipeImageSearch } from "./recipes.js";
 import { alternatives, AppError, assertEditable, daySchema, moveMeal, planningSchema, planWeek, shoppingList, swapMeal, weekKeySchema, type Week } from "./planner.js";
 import { Store } from "./store.js";
 
@@ -11,6 +11,7 @@ interface Services {
   generatePlan: (preferences: Preferences) => Promise<MealPlan>;
   getStatus: () => Promise<{ authenticated: boolean; model: string }>;
   extractRecipe: (photo: Photo) => Promise<Extraction>;
+  findRecipeImage: (recipe: RecipeImageSearch) => Promise<{ image: string; imageCredit: ImageCredit }>;
 }
 
 const revisionSchema = z.object({ revision: z.number().int().min(1) });
@@ -69,6 +70,17 @@ export function createApp(services: Services, store = new Store()) {
       return recipe;
     }));
   });
+  let recipePhotoTask = false;
+  app.post("/api/recipes/find-image", async (request, response) => {
+    const recipe = recipeImageSearchSchema.parse(request.body);
+    if (recipePhotoTask) throw new AppError(429, "Another recipe photo task is running. Please wait.");
+    recipePhotoTask = true;
+    try {
+      response.json(await services.findRecipeImage(recipe));
+    } finally {
+      recipePhotoTask = false;
+    }
+  });
   app.put("/api/recipes/:id", async (request, response) => {
     const content = newRecipeSchema.parse(request.body);
     response.json(await store.update((state) => {
@@ -79,17 +91,16 @@ export function createApp(services: Services, store = new Store()) {
       return recipe;
     }));
   });
-  let importing = false;
   app.post("/api/recipes/extract", async (request, response) => {
     const photo = photoSchema.parse(request.body);
-    if (importing) throw new AppError(429, "A recipe is already being read. Please wait.");
-    importing = true;
+    if (recipePhotoTask) throw new AppError(429, "Another recipe photo task is running. Please wait.");
+    recipePhotoTask = true;
     try {
       const extraction = extractionSchema.parse(await services.extractRecipe(photo));
       if (!extraction.recipe) throw new AppError(422, extraction.warnings.join(" ") || "No readable recipe was found. Try a clearer photo of the ingredients and method.");
       response.json(extraction);
     } finally {
-      importing = false;
+      recipePhotoTask = false;
     }
   });
   app.get("/api/weeks", async (_request, response) => {
@@ -224,7 +235,7 @@ export function createApp(services: Services, store = new Store()) {
       return;
     }
     response.status(502).json({
-      error: "The request could not be completed. For photo imports, check copilot login, your allowance and a vision-capable model. See the server terminal for details.",
+      error: "The request could not be completed. For photo imports or image search, check Copilot login, your allowance and service availability. See the server terminal for details.",
     });
   };
   app.use(handleError);

@@ -17,6 +17,7 @@ test("weekly HTTP workflow persists recipes, swaps and locks, and safely imports
   const seed = await store.read();
   const { id: _id, source: _source, image: _image, ...content } = seed.recipes[0];
   let photoCalls = 0;
+  let imageSearch: unknown;
   let unreadable = false;
   const server = createApp({
     generatePlan: async () => { throw new Error("Weekly planning must not call a model."); },
@@ -24,6 +25,18 @@ test("weekly HTTP workflow persists recipes, swaps and locks, and safely imports
     extractRecipe: async () => {
       photoCalls++;
       return { recipe: unreadable ? null : content, warnings: [unreadable ? "No readable recipe was found." : "Check the servings."] };
+    },
+    findRecipeImage: async (recipe) => {
+      imageSearch = recipe;
+      return {
+        image: "/images/chicken.jpg",
+        imageCredit: {
+          creator: "Example photographer",
+          sourceUrl: "https://example.com/photo",
+          license: "CC0",
+          licenseUrl: "https://creativecommons.org/publicdomain/zero/1.0/",
+        },
+      };
     },
   }, store).listen(0, "127.0.0.1");
   await once(server, "listening");
@@ -37,6 +50,13 @@ test("weekly HTTP workflow persists recipes, swaps and locks, and safely imports
   const post = (path: string, body: unknown) => fetch(`${base}${path}`, {
     method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
   });
+  const invalidImageSearch = await post("/recipes/find-image", { title: "", description: "", protein: "", ingredients: [] });
+  assert.equal(invalidImageSearch.status, 400);
+  const imageSearchBody = { title: "Chicken curry", description: "A quick curry", protein: "chicken", ingredients: ["chicken thigh", "coconut milk"] };
+  const foundImage = await post("/recipes/find-image", imageSearchBody);
+  assert.equal(foundImage.status, 200);
+  assert.deepEqual(imageSearch, imageSearchBody);
+  assert.equal((await foundImage.json()).imageCredit.creator, "Example photographer");
   const key = "/weeks/2026-11-16";
   assert.equal(await (await fetch(base + key)).json(), null);
   assert.equal((await fetch(base + "/weeks/2026-11-17")).status, 400);

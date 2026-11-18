@@ -93,6 +93,12 @@ only when you press **Read recipe with Copilot**. The transcription fills an
 editable form and reports ambiguities. Nothing enters your library until you
 review the details, tick the review checkbox and save.
 
+When editing a recipe, choose **Find a photo with Copilot** to turn its details
+into a search phrase and look for a matching CC0 photo in Openverse. The photo
+appears in the editor for review and is saved only when you update the recipe;
+its creator and licence are shown with the recipe. This sends recipe details to
+Copilot and Openverse. Openverse's anonymous search allowance applies.
+
 Ingredient editor format:
 
 ```text
@@ -173,16 +179,19 @@ npm start      # Run compiled server; keep public/ and data/ alongside dist/
   model calls. Photos and their contents are sent to GitHub Copilot and its model
   provider. Copilot may retain local session data in its normal data directory.
 - Monitor your Copilot allowance and configure additional-usage controls on
-  GitHub. This app does not enforce a monetary spending cap. One photo extraction
-  runs at a time; failed requests can still consume credits.
+  GitHub. This app does not enforce a monetary spending cap. One photo task
+  (extraction or search) runs at a time; failed requests can still consume
+  credits.
 - Always independently check allergens, ingredient labels and food-safety
   guidance. Dietary categories and cooking times are not medical or safety
   guarantees. Shopping quantities are requirements, not rounded product packs.
 
 ## Photography
 
-Downloaded from Unsplash and served locally, with no third-party image requests
-from the app. See the [Unsplash licence](https://unsplash.com/license).
+Bundled photos are downloaded from Unsplash and served locally. Normal browsing
+does not make third-party image requests; using the photo-search button sends a
+search to Openverse and downloads the chosen CC0 image on the server. See the
+[Unsplash licence](https://unsplash.com/license).
 
 | Local photo | Source |
 | --- | --- |

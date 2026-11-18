@@ -16,6 +16,7 @@ test("HTTP routes validate input, isolate failures, and prevent duplicate genera
   let generate = async () => plan;
   const server = createApp({
     extractRecipe: async () => { throw new Error("Not used by this test"); },
+    findRecipeImage: async () => { throw new Error("Not used by this test"); },
     getStatus: async () => ({ authenticated: true, model: "auto" }),
     generatePlan: async () => { calls++; return generate(); },
   }).listen(0, "127.0.0.1");

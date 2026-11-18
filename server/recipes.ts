@@ -30,7 +30,17 @@ export const recipeImageSchema = z.string().max(3_000_000).refine(
   "Use a bundled photo or a JPEG, PNG or WebP image.",
 );
 
-export const newRecipeSchema = recipeContentSchema.extend({ image: recipeImageSchema });
+export const imageCreditSchema = z.object({
+  creator: z.string().trim().min(1).max(200),
+  sourceUrl: z.string().url().max(2000).refine((value) => value.startsWith("https://")),
+  license: z.string().trim().min(1).max(100),
+  licenseUrl: z.string().url().max(2000).refine((value) => value.startsWith("https://")),
+});
+
+export const newRecipeSchema = recipeContentSchema.extend({
+  image: recipeImageSchema,
+  imageCredit: imageCreditSchema.optional(),
+});
 export const recipeSchema = newRecipeSchema.extend({
   id: z.string().min(1).max(120),
   source: z.enum(["collection", "personal"]),
@@ -38,6 +48,13 @@ export const recipeSchema = newRecipeSchema.extend({
 export const extractionSchema = z.object({
   recipe: recipeContentSchema.nullable(),
   warnings: z.array(z.string().max(500)).max(25),
+});
+
+export const recipeImageSearchSchema = z.object({
+  title: z.string().trim().min(1).max(100),
+  description: z.string().trim().max(400),
+  protein: z.string().trim().max(30),
+  ingredients: z.array(z.string().trim().min(1).max(100)).max(40),
 });
 
 export const photoSchema = z.object({
@@ -55,6 +72,8 @@ export const photoSchema = z.object({
 
 export type Recipe = z.infer<typeof recipeSchema>;
 export type RecipeContent = z.infer<typeof recipeContentSchema>;
+export type ImageCredit = z.infer<typeof imageCreditSchema>;
 export type Ingredient = z.infer<typeof ingredientSchema>;
 export type Photo = z.infer<typeof photoSchema>;
 export type Extraction = z.infer<typeof extractionSchema>;
+export type RecipeImageSearch = z.infer<typeof recipeImageSearchSchema>;
