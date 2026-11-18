@@ -43,6 +43,56 @@ To prefer Unsplash for photo search, create an API app at
 The key stays on the server. Without it, photo search uses Openverse and
 Wikimedia Commons.
 
+## Shared household login and hosting
+
+The built-in login uses one shared username and password for everyone in your
+household. No external authentication service is needed. To enable it, run:
+
+```sh
+npm run auth:setup
+```
+
+Enter a username, the URL you will use to access the app, and a password of at
+least 12 characters. Password entry is hidden. The command saves the username,
+a randomly salted scrypt password hash, and `APP_ORIGIN` in the gitignored
+`.env` file; it never saves the plaintext password. Restart the server after
+setup. Use the same command to change credentials; restarting also signs out
+existing sessions.
+
+The planner, recipes, local photos and all planning/photo/AI APIs require login
+when configured. **Sign out** ends the current browser session. Sessions expire
+after seven days, are kept only in server memory, and end when the server
+restarts. Use one server process; no session database is required. Cookies are
+HTTP-only and SameSite=Strict, with Secure cookies for HTTPS. Login attempts are
+limited to ten per 15 minutes per connecting IP address (including successful
+logins). Behind a reverse proxy this limit is shared by clients of that proxy;
+the app deliberately does not trust forwarded IP headers.
+
+For hosting, put a TLS reverse proxy in front of the Node server and configure:
+
+```dotenv
+NODE_ENV=production
+APP_ORIGIN=https://meals.example.com
+ALLOW_NETWORK_ACCESS=true
+```
+
+`HOUSEHOLD_USERNAME` and `HOUSEHOLD_PASSWORD_HASH` are supplied by the setup
+command. Production startup fails if any login setting is missing, the hash is
+invalid, or the public URL is not HTTPS. Build with `npm run build`, then run
+`npm start`. Keep Node bound to loopback when the proxy is on the same host;
+set `HOST=0.0.0.0` only when your hosting platform requires it, and prevent direct
+public access to Node's HTTP port. The proxy should preserve the original
+request path and must not cache app responses. `APP_ORIGIN` is the canonical
+browser origin used for same-origin checks, so TLS termination needs no
+`trust proxy` setting.
+
+For phone testing on your LAN, you can instead use an HTTP URL such as
+`http://192.168.4.33:3000`, with `HOST=0.0.0.0` and
+`ALLOW_NETWORK_ACCESS=true`. This is development-only: HTTP sends passwords and
+session cookies unencrypted. Without any login settings, non-production local
+development remains accessible without login; do not expose that mode online.
+Persist and back up `data/household.json` on your host, and keep `.env` private.
+
 ## The weekly flow
 
 1. **Pick a week.** Weeks start on Monday. Open an existing week or choose any
@@ -219,6 +269,7 @@ multi-process database.
 
 ```sh
 npm run dev     # Watch the server
+npm run auth:setup # Configure shared household credentials and app URL
 npm run check   # Type-check server
 npm test       # Rule, HTTP, storage and UI tests; no paid AI calls
 npm run build  # Compile server into dist/
@@ -243,18 +294,17 @@ checks and creates a GitHub Release with generated notes. The workflow requires
 the repository's default `GITHUB_TOKEN` permissions; no release secret is
 needed.
 
-This project is intentionally a local-only app, not a public hosted service.
-The release workflow does not deploy it to a server; choose a hosting target
-and add access controls before setting up public deployment.
+The release workflow does not deploy to a server. Choose a hosting target,
+configure the household login and HTTPS as described above, and persist the
+household data file before setting up public deployment.
 
 ## Privacy and limits
 
-- The server binds to loopback only. This is a personal local app, **not an
-  authenticated public service**. Do not expose it through a public proxy or
-  change the binding without adding access control, TLS and spending controls.
-- Access from another phone/computer is not configured. Camera capture and
-  native sharing depend on device/browser support. File upload, editable recipe
-  entry and PNG download are the alternatives.
+- The server binds to loopback by default. Online hosting requires household
+  login, HTTPS and spending controls; see the hosting instructions above.
+- Access from another phone/computer requires the explicit network opt-in.
+  Camera capture and native sharing depend on device/browser support. File
+  upload, editable recipe entry and PNG download are the alternatives.
 - Only photo transcription and the retained original AI generation API make
   model calls. Photos and their contents are sent to GitHub Copilot and its model
   provider. Copilot may retain local session data in its normal data directory.

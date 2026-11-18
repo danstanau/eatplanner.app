@@ -13,6 +13,7 @@
     "start": "node --env-file-if-exists=.env dist/index.js",
     "test": "tsx --test server/*.test.ts",
     "check": "tsc --noEmit",
+    "auth:setup": "tsx scripts/setup-auth.ts",
     "release": "node scripts/release.js"
   },
   "dependencies": {

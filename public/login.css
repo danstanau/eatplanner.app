@@ -1,0 +1,8 @@
+main { max-width: 460px; min-height: auto; margin: 8vh auto; padding: 28px; }
+.brand { margin-bottom: 32px; }
+h1 { font-size: 36px; }
+main > p { color: var(--muted); margin-bottom: 28px; }
+.field { font-size: 16px; }
+input:not([type=checkbox]) { min-height: 48px; font-size: 16px; }
+.button { width: 100%; min-height: 48px; font-size: 16px; }
+#login-error { color: var(--terracotta); }

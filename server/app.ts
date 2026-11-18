@@ -7,6 +7,7 @@ import { preferencesSchema, type MealPlan, type Preferences } from "./plan.js";
 import { extractionSchema, newRecipeSchema, photoSchema, recipeImageSearchSchema, type Extraction, type ImageCredit, type Photo, type RecipeImageSearch } from "./recipes.js";
 import { alternatives, AppError, assertEditable, batchPlanningSchema, daySchema, moveMeal, planningSchema, planWeek, shoppingList, swapMeal, weekKeySchema, type Week } from "./planner.js";
 import { Store } from "./store.js";
+import { householdAuth, type AuthConfig } from "./auth.js";
 
 interface Services {
   generatePlan: (preferences: Preferences) => Promise<MealPlan>;
@@ -22,7 +23,7 @@ function requireWeek(weeks: Record<string, Week>, key: string): Week {
   return week;
 }
 
-export function createApp(services: Services, store = new Store(), options: { allowNetworkAccess?: boolean } = {}) {
+export function createApp(services: Services, store = new Store(), options: { allowNetworkAccess?: boolean; auth?: AuthConfig } = {}) {
   const app = express();
   app.disable("x-powered-by");
   app.use((_request, response, next) => {
@@ -33,6 +34,7 @@ export function createApp(services: Services, store = new Store(), options: { al
     });
     next();
   });
+  app.use(householdAuth(options.auth));
   app.use("/api", (_request, response, next) => {
     response.set("Cache-Control", "no-store");
     next();
@@ -45,7 +47,7 @@ export function createApp(services: Services, store = new Store(), options: { al
     }
     if (!["GET", "HEAD"].includes(request.method)) {
       const origin = request.get("origin");
-      if (origin && origin !== `${request.protocol}://${request.get("host")}`) {
+      if (origin && origin !== (options.auth?.publicOrigin ?? `${request.protocol}://${request.get("host")}`)) {
         response.status(403).json({ error: "Changes must be requested from this app." });
         return;
       }
@@ -242,7 +244,7 @@ export function createApp(services: Services, store = new Store(), options: { al
   app.post("/api/plan", async (request, response) => {
     // JSON-only, same-origin requests prevent other sites from spending your credits.
     const origin = request.get("origin");
-    if (origin && origin !== `${request.protocol}://${request.get("host")}`) {
+    if (origin && origin !== (options.auth?.publicOrigin ?? `${request.protocol}://${request.get("host")}`)) {
       response.status(403).json({ error: "Meal plans must be requested from this app." });
       return;
     }
@@ -271,7 +273,9 @@ export function createApp(services: Services, store = new Store(), options: { al
   });
   app.use(express.static(fileURLToPath(new URL("../public/", import.meta.url))));
   const handleError: ErrorRequestHandler = (error: unknown, _request, response, _next) => {
-    console.error("[eatplanner.app]", error instanceof Error ? error.message : "Unexpected error");
+    console.error("[eatplanner.app]", error instanceof SyntaxError && "body" in error
+      ? "The request contains invalid JSON."
+      : error instanceof Error ? error.message : "Unexpected error");
     if (error instanceof AppError) {
       response.status(error.status).json({ error: error.message });
       return;

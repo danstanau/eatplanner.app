@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Sign in - eatplanner.app</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="stylesheet" href="/base.css">
+    <link rel="stylesheet" href="/design.css">
+    <link rel="stylesheet" href="/login.css">
+    <script type="module" src="/login.js"></script>
+  </head>
+  <body>
+    <main>
+      <a class="brand" href="/">eatplanner<span>.app</span></a>
+      <h1>Welcome to your kitchen.</h1>
+      <p>Sign in with your shared household login.</p>
+      <form id="login">
+        <label class="field">Username<input name="username" autocomplete="username" required maxlength="200"></label>
+        <label class="field">Password<input name="password" type="password" autocomplete="current-password" required maxlength="1024"></label>
+        <p id="login-error" role="alert" hidden></p>
+        <button class="button" type="submit">Sign in</button>
+      </form>
+    </main>
+  </body>
+</html>

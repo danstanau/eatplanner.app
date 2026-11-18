@@ -119,6 +119,7 @@ test("UI completes week selection, swaps, moves, confirmation, cooking, sharing 
   await import("../public/planner.js");
   assert.equal(document.querySelector("#add-recipe")?.parentElement?.tagName, "NAV");
   await waitFor(() => document.querySelectorAll(".week-card").length === 10);
+  assert.equal(document.querySelector("#sign-out")?.hasAttribute("hidden"), true);
   findButton("Plan this week").click();
   assert.equal(new URL(browser.location.href).searchParams.get("view"), "week");
   assert.ok(new URL(browser.location.href).searchParams.get("week"));

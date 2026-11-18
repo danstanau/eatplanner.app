@@ -76,6 +76,9 @@ async function api(path, body, method) {
     signal: AbortSignal.timeout(150_000),
   });
   const value = await response.json();
+  if (response.status === 401) {
+    window.location.assign(`/login?next=${encodeURIComponent(window.location.pathname + window.location.search)}`);
+  }
   if (!response.ok) {
     const details = value.details?.fieldErrors;
     const message = details ? Object.entries(details).map(([field, errors]) => `${field}: ${errors.join(", ")}`).join("; ") : "";
@@ -896,6 +899,10 @@ function addRecipeDialog(existing, updateUrl = true) {
 document.querySelector("#nav-weeks").addEventListener("click", () => run(showWeeks));
 document.querySelector("#nav-recipes").addEventListener("click", () => showRecipes());
 document.querySelector("#add-recipe").addEventListener("click", () => addRecipeDialog());
+document.querySelector("#sign-out").addEventListener("click", (event) => run(async () => {
+  await api("/auth/logout", {});
+  window.location.assign("/login");
+}, event.currentTarget));
 
 let restoreSequence = 0;
 async function restoreRoute() {
@@ -946,6 +953,8 @@ async function restoreRoute() {
 window.addEventListener("popstate", () => run(restoreRoute));
 
 async function initialise() {
+  const session = await api("/auth/session");
+  document.querySelector("#sign-out").hidden = !session.enabled;
   state.recipes = await api("/recipes");
   await restoreRoute();
 }
