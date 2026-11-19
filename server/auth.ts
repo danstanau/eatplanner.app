@@ -1,11 +1,27 @@
 import { createHash, randomBytes, scrypt, timingSafeEqual } from "node:crypto";
 import express, { type Request } from "express";
 import { fileURLToPath } from "node:url";
+import { Households } from "./households.js";
+import { MAIN_HOUSEHOLD_ID } from "./recipes.js";
 
 export interface AuthConfig {
   username: string;
   passwordHash: string;
   publicOrigin: string;
+}
+
+export interface AuthIdentity {
+  id: string;
+  name: string;
+  isAdmin: boolean;
+}
+
+declare global {
+  namespace Express {
+    interface Locals {
+      identity?: AuthIdentity;
+    }
+  }
 }
 
 function derivePassword(password: string, salt: string): Promise<Buffer> {
@@ -44,9 +60,9 @@ export function readAuthConfig(env: NodeJS.ProcessEnv = process.env): AuthConfig
 
 const digest = (value: string) => createHash("sha256").update(value).digest();
 
-export function householdAuth(config?: AuthConfig) {
+export function householdAuth(config?: AuthConfig, households = new Households()) {
   const router = express.Router();
-  const sessions = new Map<string, number>();
+  const sessions = new Map<string, { expires: number; identity: AuthIdentity; passwordHash: string }>();
   const attempts = new Map<string, { count: number; expires: number }>();
   const sessionLifetime = 7 * 24 * 60 * 60 * 1000;
   const attemptWindow = 15 * 60 * 1000;
@@ -59,14 +75,10 @@ export function householdAuth(config?: AuthConfig) {
       .find((part) => part.startsWith(`${cookieName}=`))?.slice(cookieName.length + 1);
     return token && /^[A-Za-z0-9_-]{43}$/.test(token) ? digest(token).toString("hex") : undefined;
   }
-  function authenticated(request: Request) {
-    const key = sessionKey(request);
-    return key !== undefined && (sessions.get(key) ?? 0) > Date.now();
-  }
-  router.use((request, response, next) => {
+  router.use(async (request, response, next) => {
     response.set("Cache-Control", "no-store");
     const now = Date.now();
-    for (const [key, expires] of sessions) if (expires <= now) sessions.delete(key);
+    for (const [key, session] of sessions) if (session.expires <= now) sessions.delete(key);
     for (const [key, attempt] of attempts) if (attempt.expires <= now) attempts.delete(key);
     if (config && secure) response.set("Strict-Transport-Security", "max-age=31536000");
     if (config && !["GET", "HEAD"].includes(request.method)) {
@@ -75,10 +87,22 @@ export function householdAuth(config?: AuthConfig) {
         return;
       }
     }
+    const key = sessionKey(request);
+    const session = key ? sessions.get(key) : undefined;
+    if (session && key) {
+      if (session.identity.isAdmin) response.locals.identity = session.identity;
+      else {
+        const household = await households.findById(session.identity.id);
+        if (household && household.passwordHash === session.passwordHash) {
+          response.locals.identity = { id: household.id, name: household.name, isAdmin: false };
+        } else sessions.delete(key);
+      }
+    }
     next();
   });
-  router.get("/api/auth/session", (request, response) => {
-    response.json({ enabled: Boolean(config), authenticated: !config || authenticated(request) });
+  router.get("/api/auth/session", (_request, response) => {
+    const user = response.locals.identity;
+    response.json({ enabled: Boolean(config), authenticated: !config || Boolean(user), ...(user ? { user } : {}) });
   });
   router.post("/api/auth/login", express.json({ limit: "4kb" }), async (request, response) => {
     if (!config) {
@@ -99,9 +123,12 @@ export function householdAuth(config?: AuthConfig) {
       response.status(400).json({ error: "Enter your household username and password." });
       return;
     }
-    const [, salt, expected] = config.passwordHash.split("$");
+    const isAdmin = timingSafeEqual(digest(username.trim().toLowerCase()), digest(config.username.toLowerCase()));
+    const household = isAdmin ? undefined : await households.findByName(username);
+    const passwordHash = household?.passwordHash ?? config.passwordHash;
+    const [, salt, expected] = passwordHash.split("$");
     const key = await derivePassword(password, salt);
-    if (!timingSafeEqual(key, Buffer.from(expected, "hex")) || !timingSafeEqual(digest(username), digest(config.username))) {
+    if (!timingSafeEqual(key, Buffer.from(expected, "hex")) || (!isAdmin && !household)) {
       response.status(401).json({ error: "Incorrect username or password." });
       return;
     }
@@ -112,7 +139,10 @@ export function householdAuth(config?: AuthConfig) {
       if (oldest !== undefined) sessions.delete(oldest);
     }
     const token = randomBytes(32).toString("base64url");
-    sessions.set(digest(token).toString("hex"), Date.now() + sessionLifetime);
+    const identity: AuthIdentity = household
+      ? { id: household.id, name: household.name, isAdmin: false }
+      : { id: MAIN_HOUSEHOLD_ID, name: config.username, isAdmin: true };
+    sessions.set(digest(token).toString("hex"), { expires: Date.now() + sessionLifetime, identity, passwordHash });
     response.cookie(cookieName, token, { ...cookieOptions, maxAge: sessionLifetime });
     response.json({ authenticated: true });
   });
@@ -131,12 +161,12 @@ export function householdAuth(config?: AuthConfig) {
         return;
       }
     }
-    if (!config || authenticated(request)) { response.redirect("/"); return; }
+    if (!config || response.locals.identity) { response.redirect("/"); return; }
     response.sendFile(fileURLToPath(new URL("../public/login.html", import.meta.url)));
   });
   router.use((request, response, next) => {
-    const publicFiles = ["/login.js", "/login.css", "/login-preview.svg", "/base.css", "/fonts/bricolage-grotesque.woff2", "/favicon.svg", "/apple-touch-icon.png"];
-    if (!config || authenticated(request) || publicFiles.includes(request.path)) { next(); return; }
+    const publicFiles = ["/login.js", "/login.css", "/login-preview.svg", "/theme.js", "/base.css", "/fonts/bricolage-grotesque.woff2", "/favicon.svg", "/apple-touch-icon.png"];
+    if (!config || response.locals.identity || publicFiles.includes(request.path)) { next(); return; }
     if (request.path.startsWith("/api/")) {
       response.status(401).json({ error: "Please sign in to your household." });
     } else {

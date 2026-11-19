@@ -11,8 +11,9 @@ Everything else stays quiet.
 
 - **Colour**: enamel `#F4F6F5` page, white surfaces, navy ink `#131C3A`, rim
   blue `#1B3FA0` for actions and selection, yolk `#F6B92B` for today and
-  drafts, beetroot `#A4244B` for errors. Dark mode swaps the tokens in
-  `base.css`; yolk stays.
+  drafts, beetroot `#A4244B` for errors. Light and dark colors share tokens in
+  `base.css`; yolk stays. The Appearance picker follows the system by default
+  and remembers manual overrides in the browser across planner and sign-in.
 - **Type**: one family, Bricolage Grotesque (SIL OFL), self-hosted in
   `public/fonts/`. Its width axis does the work: condensed and heavy for day
   names and headings, normal width for reading. Sentence case throughout.
@@ -27,6 +28,11 @@ Everything else stays quiet.
 - **Sign-in**: an opaque form floats over a softened, static example week
   (`login-preview.svg`). The backdrop is decorative, non-interactive and uses
   fictional meals; it never loads household data or private photos.
+- **Admin**: only the super admin sees the gear beside sign-out. Household
+  names sit in a simple list with separate rename and password-reset actions.
+  Add, rename and reset forms use the existing dialog and field components.
+- **Recipe details**: editable recipes show a pencil beside the dialog close
+  button, leaving the recipe description and cooking instructions uncluttered.
 - Tokens live at the top of `base.css` (shared with the sign-in page);
   `planner.css` holds the screens. Component rules reference tokens only.
 - Controls use at least 16px text and 44px targets, with a visible focus ring.

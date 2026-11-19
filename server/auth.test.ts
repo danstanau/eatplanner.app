@@ -42,7 +42,7 @@ test("household login protects private pages and APIs, rotates sessions and sign
     assert.ok(response.headers.get("location")?.startsWith("/login?next="));
     assert.equal(response.headers.get("cache-control"), "no-store");
   }
-  for (const path of ["/login", "/login.js", "/base.css", "/fonts/bricolage-grotesque.woff2", "/login.css", "/login-preview.svg", "/favicon.svg", "/apple-touch-icon.png"]) {
+  for (const path of ["/login", "/login.js", "/theme.js", "/base.css", "/fonts/bricolage-grotesque.woff2", "/login.css", "/login-preview.svg", "/favicon.svg", "/apple-touch-icon.png"]) {
     assert.equal((await fetch(base + path)).status, 200);
   }
   assert.deepEqual(await (await fetch(`${base}/api/auth/session`)).json(), { enabled: true, authenticated: false });
@@ -192,7 +192,7 @@ test("interactive setup stores only a password hash and preserves other environm
   });
   t.after(() => { if (child.exitCode === null) child.kill(); });
   const prompts = [
-    ["Household name [stanfield]: ", ""],
+    ["Super admin name [stanfield]: ", ""],
     ["App URL (e.g. https://meals.example.com): ", "https://meals.example.test"],
     ["Household password (6+ characters, hidden): ", "test12"],
     ["Repeat password: ", "test12"],

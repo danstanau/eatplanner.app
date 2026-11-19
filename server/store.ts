@@ -2,7 +2,7 @@ import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { z } from "zod";
-import { recipeSchema, type Recipe } from "./recipes.js";
+import { MAIN_HOUSEHOLD_ID, recipeSchema, type Recipe } from "./recipes.js";
 import { weekKeySchema, weekSchema, type Week } from "./planner.js";
 
 const stateSchema = z.object({
@@ -17,6 +17,7 @@ export class Store {
   constructor(
     private path = fileURLToPath(new URL("../data/household.json", import.meta.url)),
     private seedPath = fileURLToPath(new URL("../data/recipes.json", import.meta.url)),
+    private householdId = MAIN_HOUSEHOLD_ID,
   ) {}
 
   private async load(): Promise<State> {
@@ -27,12 +28,26 @@ export class Store {
       if (!(error instanceof Error && "code" in error && error.code === "ENOENT")) throw error;
       this.state = { recipes: z.array(recipeSchema).parse(JSON.parse(await readFile(this.seedPath, "utf8"))), weeks: {} };
     }
+    // Older files kept ownership implicitly in the file that held the recipe.
+    for (const recipe of this.state.recipes) this.fillOwner(recipe);
+    for (const week of Object.values(this.state.weeks)) {
+      for (const meal of week.meals) this.fillOwner(meal.recipe);
+    }
     return this.state;
+  }
+
+  private fillOwner(recipe: Recipe) {
+    if (recipe.source === "personal") recipe.householdId ??= this.householdId;
   }
 
   async read(): Promise<State> {
     await this.queue;
     return structuredClone(await this.load());
+  }
+
+  async readRecipes(): Promise<Recipe[]> {
+    await this.queue;
+    return structuredClone((await this.load()).recipes);
   }
 
   update<T>(change: (state: State) => T): Promise<T> {

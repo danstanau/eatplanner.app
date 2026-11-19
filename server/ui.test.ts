@@ -56,6 +56,10 @@ test("UI completes week selection, swaps, moves, confirmation, cooking, sharing 
   const globals = {
     document, window: browser, navigator: browser.navigator, localStorage: browser.localStorage,
     fetch: async (url: string, init?: RequestInit) => {
+      if (url === "/api/recipes?scope=other-households") return Response.json([{
+        ...content, id: "shared-recipe", source: "personal", title: "Shared dinner",
+        image: "/images/chicken.jpg", householdId: "00000000-0000-4000-8000-000000000001",
+      }]);
       if (new URL(url, base).pathname === "/api/recipes/convert-heic") {
         convertedPhonePhotos++;
         return new Response(Buffer.from(photo, "base64"), { headers: { "Content-Type": "image/jpeg" } });
@@ -109,6 +113,12 @@ test("UI completes week selection, swaps, moves, confirmation, cooking, sharing 
     assert.ok(control, `Button "${text}" is present`);
     return control;
   };
+  const editRecipe = () => {
+    const control = document.querySelector<HTMLButtonElement>('#edit-recipe[aria-label="Edit recipe"]:not([hidden])');
+    assert.ok(control);
+    assert.equal(control.parentElement, document.querySelector("#close-modal")?.parentElement);
+    control.click();
+  };
   const editor = (label: string) => {
     const field = [...document.querySelectorAll(".recipe-form .field")].find((item) => item.querySelector("span")?.textContent === label);
     const control = field?.querySelector("input, textarea, select");
@@ -120,10 +130,14 @@ test("UI completes week selection, swaps, moves, confirmation, cooking, sharing 
   assert.equal(document.querySelector("#add-recipe")?.parentElement?.tagName, "NAV");
   await waitFor(() => document.querySelectorAll(".week-card").length === 6);
   assert.equal(document.querySelector("#sign-out")?.hasAttribute("hidden"), true);
+  assert.equal(document.querySelector("#nav-admin")?.hasAttribute("hidden"), true);
   findButton("Plan this week").click();
   assert.equal(new URL(browser.location.href).searchParams.get("view"), "week");
   assert.ok(new URL(browser.location.href).searchParams.get("week"));
   await waitFor(() => document.querySelectorAll(".day-toggle").length === 7);
+  const planRecipeSource = [...document.querySelectorAll(".planning-form .field")]
+    .find((field) => field.querySelector("span")?.textContent === "Recipe source")?.querySelector("select");
+  assert.equal(planRecipeSource?.value, "starter-and-household");
   const planningCount = (label: string) => {
     const input = [...document.querySelectorAll(".planning-form .field")]
       .find((field) => field.querySelector("span")?.textContent === label)?.querySelector("input");
@@ -241,8 +255,9 @@ test("UI completes week selection, swaps, moves, confirmation, cooking, sharing 
   await waitFor(() => !document.querySelector(".meal-completion"));
   assert.match(document.querySelector(".recipe-open .card-link")?.textContent ?? "", /Let's cook/);
   assert.ok(!(await store.read()).weeks[Object.keys((await store.read()).weeks)[0]].meals.some((meal) => meal.cooked));
-  findButton("Edit recipe / update from photo").click();
+  editRecipe();
   assert.equal(new URL(browser.location.href).searchParams.get("edit"), "1");
+  assert.equal(document.querySelector<HTMLButtonElement>("#edit-recipe")?.hidden, true);
   browser.history.back();
   await waitFor(() => new URL(browser.location.href).searchParams.has("recipe") && !new URL(browser.location.href).searchParams.has("edit") && Boolean(document.querySelector(".recipe-layout")));
   browser.history.back();
@@ -251,6 +266,19 @@ test("UI completes week selection, swaps, moves, confirmation, cooking, sharing 
   assert.match(document.querySelector(".cook-mode .eyebrow")?.textContent ?? "", /Step 1/);
   findButton("Next step").click();
   assert.match(document.querySelector(".cook-mode .eyebrow")?.textContent ?? "", /Step 2/);
+  const singleStep = document.querySelector<HTMLElement>(".single-step");
+  const allSteps = document.querySelector<HTMLDetailsElement>(".all-steps");
+  assert.ok(singleStep && allSteps);
+  allSteps.querySelector("summary")?.click();
+  await waitFor(() => singleStep.hidden);
+  assert.equal(allSteps.open, true);
+  assert.equal(allSteps.querySelector("summary")?.textContent, "Back to step-by-step");
+  assert.ok(allSteps.querySelectorAll("li").length > 1);
+  allSteps.querySelector("summary")?.click();
+  await waitFor(() => !singleStep.hidden);
+  assert.equal(allSteps.open, false);
+  assert.equal(allSteps.querySelector("summary")?.textContent, "See the whole method");
+  assert.match(singleStep.querySelector(".eyebrow")?.textContent ?? "", /Step 2/);
   document.querySelector("#close-modal")?.click();
   await waitFor(() => !document.querySelector("dialog")?.open && Boolean([...document.querySelectorAll("button")].find((item) => item.textContent?.includes("Share week"))));
   findButton("Share week").click();
@@ -267,6 +295,27 @@ test("UI completes week selection, swaps, moves, confirmation, cooking, sharing 
   assert.deepEqual(dayMarks, [1, 2, 6]);
 
   document.querySelector("#nav-recipes")?.click();
+  assert.equal(document.querySelectorAll(".collection-card").length, initialRecipes);
+  const recipeSource = document.querySelector<HTMLSelectElement>('.collection-toolbar [aria-label="Recipe source"]');
+  assert.ok(recipeSource);
+  assert.equal(recipeSource.value, "starter-and-household");
+  recipeSource.value = "household";
+  recipeSource.dispatchEvent(new browser.Event("change"));
+  assert.equal(document.querySelectorAll(".collection-card").length, 0);
+  assert.equal(new URL(browser.location.href).searchParams.get("scope"), "household");
+  recipeSource.value = "other-households";
+  recipeSource.dispatchEvent(new browser.Event("change"));
+  await waitFor(() => document.querySelector(".collection-card h3")?.textContent === "Shared dinner");
+  document.querySelector(".collection-card")?.click();
+  assert.equal(document.querySelector("#modal-title")?.textContent, "Shared dinner");
+  assert.equal(document.querySelector<HTMLButtonElement>("#edit-recipe")?.hidden, true);
+  document.querySelector("#close-modal")?.click();
+  await waitFor(() => !document.querySelector("dialog")?.open && document.querySelector(".collection-card h3")?.textContent === "Shared dinner");
+  const restoredSource = document.querySelector<HTMLSelectElement>('.collection-toolbar [aria-label="Recipe source"]');
+  assert.ok(restoredSource);
+  assert.equal(restoredSource.value, "other-households");
+  restoredSource.value = "starter-and-household";
+  restoredSource.dispatchEvent(new browser.Event("change"));
   assert.equal(document.querySelectorAll(".collection-card").length, initialRecipes);
   const recipeLayout = document.querySelector('[aria-label="Recipe card layout"]');
   assert.ok(recipeLayout);
@@ -340,7 +389,7 @@ test("UI completes week selection, swaps, moves, confirmation, cooking, sharing 
   assert.equal(imported.image, "/images/pasta.jpg", "the recipe page is not used as the dish photo");
 
   Array.from(document.querySelectorAll(".collection-card")).at(-1)?.click();
-  findButton("Edit recipe / update from photo").click();
+  editRecipe();
   assert.equal(new URL(browser.location.href).searchParams.get("recipe"), imported.id);
   assert.equal(new URL(browser.location.href).searchParams.get("edit"), "1");
   const previousEditor = document.querySelector(".recipe-form");
@@ -350,7 +399,7 @@ test("UI completes week selection, swaps, moves, confirmation, cooking, sharing 
   assert.equal(editor("Recipe name").value, imported.title);
   document.querySelector("#close-modal")?.click();
   await waitFor(() => new URL(browser.location.href).searchParams.get("recipe") === imported.id && !new URL(browser.location.href).searchParams.has("edit") && Boolean(document.querySelector(".recipe-layout")));
-  findButton("Edit recipe / update from photo").click();
+  editRecipe();
   await waitFor(() => Boolean(document.querySelector(".recipe-form")));
   const updateUpload = document.querySelector<HTMLInputElement>('input[aria-label="Choose or take a photo of the recipe page"]');
   assert.ok(updateUpload);
@@ -372,7 +421,7 @@ test("UI completes week selection, swaps, moves, confirmation, cooking, sharing 
   assert.equal(updated?.image, imported.image, "reading a recipe page leaves the existing cover unchanged");
 
   Array.from(document.querySelectorAll(".collection-card")).at(-1)?.click();
-  findButton("Edit recipe / update from photo").click();
+  editRecipe();
   findButton("Find a photo with Copilot").click();
   await waitFor(() => document.querySelectorAll(".recipe-form .upload-status")[1]?.textContent?.includes("Photo found"));
   assert.ok((document.querySelector('img[alt="Recipe cover photo"]')?.getAttribute("src") ?? "").endsWith("/images/chicken.jpg"));
@@ -394,7 +443,7 @@ test("UI completes week selection, swaps, moves, confirmation, cooking, sharing 
   assert.equal(imageUpdated?.imageCredit?.creator, "Example photographer");
 
   Array.from(document.querySelectorAll(".collection-card")).at(-1)?.click();
-  findButton("Edit recipe / update from photo").click();
+  editRecipe();
   const coverFile = document.querySelector<HTMLInputElement>('input[aria-label="Choose or take a photo of the finished dish"]');
   assert.ok(coverFile);
   Object.defineProperty(coverFile, "files", { configurable: true, value: [new browser.File(["photo"], "dish.heic", { type: "image/heic" })] });

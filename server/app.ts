@@ -1,13 +1,14 @@
-import express, { type ErrorRequestHandler } from "express";
+import express, { type ErrorRequestHandler, type Response } from "express";
 import { fileURLToPath } from "node:url";
 import { randomUUID } from "node:crypto";
 import convertHeic from "heic-convert";
 import { z } from "zod";
 import { preferencesSchema, type MealPlan, type Preferences } from "./plan.js";
-import { extractionSchema, newRecipeSchema, photoSchema, recipeImageSearchSchema, type Extraction, type ImageCredit, type Photo, type RecipeImageSearch } from "./recipes.js";
+import { DEFAULT_RECIPE_SCOPE, MAIN_HOUSEHOLD_ID, extractionSchema, newRecipeSchema, photoSchema, recipeImageSearchSchema, recipeScopeSchema, type Extraction, type ImageCredit, type Photo, type Recipe, type RecipeImageSearch, type RecipeScope } from "./recipes.js";
 import { alternatives, AppError, assertEditable, batchPlanningSchema, daySchema, moveMeal, planningSchema, planWeek, shoppingList, swapMeal, weekKeySchema, type Week } from "./planner.js";
 import { Store } from "./store.js";
-import { householdAuth, type AuthConfig } from "./auth.js";
+import { hashPassword, householdAuth, type AuthConfig } from "./auth.js";
+import { Households, householdNameSchema, passwordSchema } from "./households.js";
 
 interface Services {
   generatePlan: (preferences: Preferences) => Promise<MealPlan>;
@@ -17,14 +18,41 @@ interface Services {
 }
 
 const revisionSchema = z.object({ revision: z.number().int().min(1) });
+function recipePool(local: Recipe[], shared: Recipe[], scope: RecipeScope) {
+  if (scope === "household") return local.filter((recipe) => recipe.source === "personal");
+  if (scope === "other-households") return shared;
+  return scope === "all" ? [...local, ...shared] : local;
+}
 function requireWeek(weeks: Record<string, Week>, key: string): Week {
   const week = weeks[key];
   if (!week) throw new AppError(404, "This week has not been planned yet.");
   return week;
 }
 
-export function createApp(services: Services, store = new Store(), options: { allowNetworkAccess?: boolean; auth?: AuthConfig } = {}) {
+export function createApp(services: Services, store = new Store(), options: { allowNetworkAccess?: boolean; auth?: AuthConfig; households?: Households } = {}) {
   const app = express();
+  const households = options.households ?? new Households();
+  const householdId = (response: Response) => response.locals.identity?.id ?? MAIN_HOUSEHOLD_ID;
+  async function sharedRecipes(response: Response, scope: RecipeScope) {
+    if (!options.auth || (scope !== "all" && scope !== "other-households")) return [];
+    const ownId = householdId(response);
+    const sources = [MAIN_HOUSEHOLD_ID, ...(await households.list()).map(({ id }) => id)].filter((id) => id !== ownId);
+    return (await Promise.all(sources.map(async (id) => {
+      const recipes = await (id === MAIN_HOUSEHOLD_ID ? store : households.store(id)).readRecipes();
+      return recipes.filter((recipe) => recipe.source === "personal" && recipe.householdId === id);
+    }))).flat();
+  }
+  function storeFor(response: Response): Store {
+    if (!options.auth) return store;
+    const identity = response.locals.identity;
+    if (!identity) throw new AppError(401, "Please sign in to your household.");
+    return identity.isAdmin ? store : households.store(identity.id);
+  }
+  function requireAdmin(response: Response) {
+    const identity = response.locals.identity;
+    if (!identity?.isAdmin) throw new AppError(403, "Only the super admin can manage households.");
+    return identity;
+  }
   app.disable("x-powered-by");
   app.use((_request, response, next) => {
     response.set({
@@ -34,7 +62,7 @@ export function createApp(services: Services, store = new Store(), options: { al
     });
     next();
   });
-  app.use(householdAuth(options.auth));
+  app.use(householdAuth(options.auth, households));
   app.use("/api", (_request, response, next) => {
     response.set("Cache-Control", "no-store");
     next();
@@ -82,16 +110,43 @@ export function createApp(services: Services, store = new Store(), options: { al
     }
   });
   app.use(express.json({ limit: "4mb" }));
+  app.use("/api/admin", (_request, response, next) => {
+    requireAdmin(response);
+    next();
+  });
+  app.get("/api/admin/households", async (_request, response) => {
+    response.json((await households.list()).map(({ id, name }) => ({ id, name })));
+  });
+  app.post("/api/admin/households", async (request, response) => {
+    const input = z.object({ name: householdNameSchema, password: passwordSchema }).strict().parse(request.body);
+    const household = await households.save({
+      name: input.name, passwordHash: await hashPassword(input.password),
+    }, requireAdmin(response).name);
+    response.status(201).json({ id: household.id, name: household.name });
+  });
+  app.patch("/api/admin/households/:id", async (request, response) => {
+    const id = z.uuid().parse(request.params.id);
+    const input = z.object({ name: householdNameSchema.optional(), password: passwordSchema.optional() }).strict()
+      .refine((value) => value.name !== undefined || value.password !== undefined, "Enter a name or a new password.")
+      .parse(request.body);
+    const household = await households.save({
+      id, name: input.name,
+      passwordHash: input.password === undefined ? undefined : await hashPassword(input.password),
+    }, requireAdmin(response).name);
+    response.json({ id: household.id, name: household.name });
+  });
   app.get("/api/status", async (_request, response) => {
     response.json(await services.getStatus());
   });
-  app.get("/api/recipes", async (_request, response) => {
-    response.json((await store.read()).recipes);
+  app.get("/api/recipes", async (request, response) => {
+    const scope = recipeScopeSchema.optional().parse(request.query.scope) ?? DEFAULT_RECIPE_SCOPE;
+    const recipes = await storeFor(response).readRecipes();
+    response.json(recipePool(recipes, await sharedRecipes(response, scope), scope));
   });
   app.post("/api/recipes", async (request, response) => {
     const content = newRecipeSchema.parse(request.body);
-    const recipe = { ...content, id: randomUUID(), source: "personal" as const };
-    response.status(201).json(await store.update((state) => {
+    const recipe = { ...content, id: randomUUID(), source: "personal" as const, householdId: householdId(response) };
+    response.status(201).json(await storeFor(response).update((state) => {
       state.recipes.push(recipe);
       return recipe;
     }));
@@ -109,10 +164,11 @@ export function createApp(services: Services, store = new Store(), options: { al
   });
   app.put("/api/recipes/:id", async (request, response) => {
     const content = newRecipeSchema.parse(request.body);
-    response.json(await store.update((state) => {
+    response.json(await storeFor(response).update((state) => {
       const index = state.recipes.findIndex((recipe) => recipe.id === request.params.id);
       if (index < 0) throw new AppError(404, "This recipe is no longer in your collection.");
-      const recipe = { ...content, id: state.recipes[index].id, source: state.recipes[index].source };
+      const { id, source, householdId: owner } = state.recipes[index];
+      const recipe = { ...content, id, source, ...(owner ? { householdId: owner } : {}) };
       state.recipes[index] = recipe;
       return recipe;
     }));
@@ -130,7 +186,7 @@ export function createApp(services: Services, store = new Store(), options: { al
     }
   });
   app.get("/api/weeks", async (_request, response) => {
-    const { weeks } = await store.read();
+    const { weeks } = await storeFor(response).read();
     response.json(Object.values(weeks).map((week) => ({
       week: week.week, status: week.status, count: week.meals.length,
       days: week.meals.map((meal) => meal.day),
@@ -140,11 +196,13 @@ export function createApp(services: Services, store = new Store(), options: { al
   });
   app.get("/api/weeks/:week", async (request, response) => {
     const key = weekKeySchema.parse(request.params.week);
-    response.json((await store.read()).weeks[key] ?? null);
+    response.json((await storeFor(response).read()).weeks[key] ?? null);
   });
   app.post("/api/weeks/plan", async (request, response) => {
     const input = batchPlanningSchema.parse(request.body);
-    response.json(await store.update((state) => {
+    const scope = input.rules.recipeScope ?? DEFAULT_RECIPE_SCOPE;
+    const shared = await sharedRecipes(response, scope);
+    response.json(await storeFor(response).update((state) => {
       const start = new Date(`${input.startWeek}T00:00:00Z`);
       const keys = Array.from({ length: input.count }, (_, index) => {
         const week = new Date(start);
@@ -153,7 +211,8 @@ export function createApp(services: Services, store = new Store(), options: { al
       });
       const existing = keys.find((key) => state.weeks[key]);
       if (existing) throw new AppError(409, `The week starting ${existing} already has a plan. Choose another start week or plan fewer weeks.`);
-      const weeks = keys.map((key) => planWeek(key, input, state.recipes));
+      const pool = recipePool(state.recipes, shared, scope);
+      const weeks = keys.map((key) => planWeek(key, input, pool));
       weeks.forEach((week) => { state.weeks[week.week] = week; });
       return weeks;
     }));
@@ -161,11 +220,13 @@ export function createApp(services: Services, store = new Store(), options: { al
   app.post("/api/weeks/:week/plan", async (request, response) => {
     const key = weekKeySchema.parse(request.params.week);
     const input = planningSchema.parse(request.body);
-    response.json(await store.update((state) => {
+    const scope = input.rules.recipeScope ?? DEFAULT_RECIPE_SCOPE;
+    const shared = await sharedRecipes(response, scope);
+    response.json(await storeFor(response).update((state) => {
       const current = state.weeks[key];
       if (current) assertEditable(current, input.revision ?? 0);
       else if (input.revision) throw new AppError(409, "This week no longer exists. Reload before planning.");
-      const next = planWeek(key, input, state.recipes);
+      const next = planWeek(key, input, recipePool(state.recipes, shared, scope));
       next.revision = (current?.revision ?? 0) + 1;
       state.weeks[key] = next;
       return next;
@@ -174,16 +235,23 @@ export function createApp(services: Services, store = new Store(), options: { al
   app.get("/api/weeks/:week/alternatives/:day", async (request, response) => {
     const key = weekKeySchema.parse(request.params.week);
     const day = daySchema.parse(Number(request.params.day));
-    const state = await store.read();
-    response.json(alternatives(requireWeek(state.weeks, key), day, state.recipes));
+    const state = await storeFor(response).read();
+    const week = requireWeek(state.weeks, key);
+    const scope = week.rules.recipeScope ?? DEFAULT_RECIPE_SCOPE;
+    response.json(alternatives(week, day, recipePool(state.recipes, await sharedRecipes(response, scope), scope)));
   });
   app.post("/api/weeks/:week/swap", async (request, response) => {
     const key = weekKeySchema.parse(request.params.week);
     const input = revisionSchema.extend({ day: daySchema, recipeId: z.string().optional() }).parse(request.body);
-    response.json(await store.update((state) => {
+    const own = storeFor(response);
+    const current = requireWeek((await own.read()).weeks, key);
+    assertEditable(current, input.revision);
+    const scope = current.rules.recipeScope ?? DEFAULT_RECIPE_SCOPE;
+    const shared = await sharedRecipes(response, scope);
+    response.json(await own.update((state) => {
       const week = requireWeek(state.weeks, key);
       assertEditable(week, input.revision);
-      swapMeal(week, input.day, state.recipes, input.recipeId);
+      swapMeal(week, input.day, recipePool(state.recipes, shared, scope), input.recipeId);
       week.revision++;
       return week;
     }));
@@ -193,7 +261,7 @@ export function createApp(services: Services, store = new Store(), options: { al
     const input = z.object({
       day: daySchema, recipeId: z.string().min(1).max(120), cooked: z.boolean(),
     }).parse(request.body);
-    response.json(await store.update((state) => {
+    response.json(await storeFor(response).update((state) => {
       const week = requireWeek(state.weeks, key);
       const meal = week.meals.find((item) => item.day === input.day);
       if (!meal) throw new AppError(404, "There is no meal on that day.");
@@ -205,7 +273,7 @@ export function createApp(services: Services, store = new Store(), options: { al
   app.post("/api/weeks/:week/move", async (request, response) => {
     const key = weekKeySchema.parse(request.params.week);
     const input = revisionSchema.extend({ from: daySchema, to: daySchema }).parse(request.body);
-    response.json(await store.update((state) => {
+    response.json(await storeFor(response).update((state) => {
       const week = requireWeek(state.weeks, key);
       assertEditable(week, input.revision);
       moveMeal(week, input.from, input.to);
@@ -216,7 +284,7 @@ export function createApp(services: Services, store = new Store(), options: { al
   app.post("/api/weeks/:week/confirm", async (request, response) => {
     const key = weekKeySchema.parse(request.params.week);
     const input = revisionSchema.parse(request.body);
-    response.json(await store.update((state) => {
+    response.json(await storeFor(response).update((state) => {
       const week = requireWeek(state.weeks, key);
       assertEditable(week, input.revision);
       week.status = "confirmed";
@@ -229,7 +297,7 @@ export function createApp(services: Services, store = new Store(), options: { al
   app.post("/api/weeks/:week/unlock", async (request, response) => {
     const key = weekKeySchema.parse(request.params.week);
     const input = revisionSchema.parse(request.body);
-    response.json(await store.update((state) => {
+    response.json(await storeFor(response).update((state) => {
       const week = requireWeek(state.weeks, key);
       if (week.revision !== input.revision) throw new AppError(409, "This week changed. Reload before unlocking.");
       if (week.status !== "confirmed") throw new AppError(409, "This week is already a draft.");

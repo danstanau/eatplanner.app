@@ -3,8 +3,17 @@ import { DAYS, CATEGORIES, PROTEINS, today, addDays, mondayFor, dateLabel, weekL
 const view = document.querySelector("#view");
 const modal = document.querySelector("#modal");
 const modalContent = document.querySelector("#modal-content");
+const closeModalButton = document.querySelector("#close-modal");
+const editRecipeButton = document.querySelector("#edit-recipe");
 const toast = document.querySelector("#toast");
-const state = { view: "weeks", recipes: [], summaries: [], weekKey: mondayFor(today()), week: null };
+const state = { view: "weeks", recipes: [], summaries: [], weekKey: mondayFor(today()), week: null, user: null };
+const DEFAULT_RECIPE_SCOPE = "starter-and-household";
+const RECIPE_SCOPES = {
+  [DEFAULT_RECIPE_SCOPE]: "Starter recipes + my household",
+  household: "My household only",
+  "other-households": "Other households only",
+  all: "All recipes",
+};
 const SHARE_PALETTE = { enamel: "#f4f6f5", white: "#ffffff", blue: "#1b3fa0", ink: "#131c3a", muted: "#4a5470", line: "#d3d9e4" };
 let toastTimer;
 let loadSequence = 0;
@@ -83,6 +92,13 @@ function heading(title, description) {
     description ? h("p", { className: "lede", text: description }) : null);
 }
 function dinners(count) { return `${count} ${count === 1 ? "dinner" : "dinners"}`; }
+function householdStorageKey(suffix) {
+  const household = state.user && !state.user.isAdmin ? `household:${state.user.id}:` : "";
+  return `eatplanner.app:${household}${suffix}`;
+}
+function canEditRecipe(recipe) {
+  return !recipe.householdId || recipe.householdId === (state.user?.id ?? "1");
+}
 function tag(text, extra = "") { return h("span", { className: `tag ${extra}`, text }); }
 function hasImageCredit(credit) {
   return credit &&
@@ -108,6 +124,9 @@ function select(options, value) {
   return node;
 }
 function openModal(...content) {
+  if (document.activeElement === editRecipeButton) closeModalButton.focus();
+  editRecipeButton.hidden = true;
+  editRecipeButton.onclick = null;
   modalContent.replaceChildren(...content.filter((item) => item !== null && item !== undefined));
   if (!modal.open) modal.showModal();
   modal.scrollTop = 0;
@@ -115,6 +134,7 @@ function openModal(...content) {
 function readRoute() {
   const params = new URLSearchParams(window.location.search);
   const view = params.get("view");
+  if (view === "admin") return { view };
   if (view === "week" && /^\d{4}-\d{2}-\d{2}$/.test(params.get("week") ?? "")) {
     return {
       view, week: params.get("week"), recipe: params.get("recipe"), day: params.get("day"),
@@ -125,6 +145,7 @@ function readRoute() {
     return {
       view, recipe: params.get("recipe"), edit: params.get("edit"), q: params.get("q"),
       category: params.get("category"), protein: params.get("protein"),
+      scope: Object.hasOwn(RECIPE_SCOPES, params.get("scope")) ? params.get("scope") : undefined,
     };
   }
   return { view: "weeks" };
@@ -132,7 +153,7 @@ function readRoute() {
 function writeRoute(route, replace = false) {
   const params = new URLSearchParams();
   params.set("view", route.view);
-  for (const key of ["week", "recipe", "day", "edit", "q", "category", "protein"]) {
+  for (const key of ["week", "recipe", "day", "edit", "q", "category", "protein", "scope"]) {
     const value = route[key];
     if (value !== undefined && value !== null && value !== "") params.set(key, String(value));
   }
@@ -156,7 +177,7 @@ function dismissRouteModal() {
   }
   return true;
 }
-document.querySelector("#close-modal").addEventListener("click", () => {
+closeModalButton.addEventListener("click", () => {
   if (!dismissRouteModal()) modal.close();
 });
 modal.addEventListener("click", (event) => {
@@ -172,10 +193,73 @@ modal.addEventListener("close", () => {
 function setNavigation() {
   const weeks = document.querySelector("#nav-weeks");
   const recipes = document.querySelector("#nav-recipes");
-  weeks.classList.toggle("active", state.view !== "recipes");
+  const isWeeks = state.view === "weeks" || state.view === "week";
+  weeks.classList.toggle("active", isWeeks);
   recipes.classList.toggle("active", state.view === "recipes");
-  weeks.setAttribute("aria-current", state.view !== "recipes" ? "page" : "false");
+  weeks.setAttribute("aria-current", isWeeks ? "page" : "false");
   recipes.setAttribute("aria-current", state.view === "recipes" ? "page" : "false");
+  document.querySelector("#nav-admin").setAttribute("aria-current", state.view === "admin" ? "page" : "false");
+}
+
+async function showAdmin(updateUrl = true) {
+  if (updateUrl) writeRoute({ view: "admin" });
+  if (modal.open) modal.close();
+  const sequence = ++loadSequence;
+  state.view = "admin";
+  setNavigation();
+  if (!state.user?.isAdmin) {
+    view.replaceChildren(heading("Admin access required", "Only the super admin can manage households."),
+      button("Back to your planner", () => showWeeks()));
+    return;
+  }
+  view.replaceChildren(loadingState("Loading households..."));
+  const households = await api("/admin/households");
+  if (state.view !== "admin" || sequence !== loadSequence) return;
+  const list = h("div", { className: "household-list" });
+  for (const household of households) {
+    list.append(h("div", { className: "household-row" },
+      h("h3", { text: household.name }),
+      h("div", { className: "action-row" },
+        button("Change name", () => householdDialog(household, "name"), "button secondary small"),
+        button("Reset password", () => householdDialog(household, "password"), "button secondary small"))));
+  }
+  view.replaceChildren(
+    h("div", { className: "section-bar" }, heading("Households", "Each household has its own login, recipes and meal plans."),
+      button("Add household", () => householdDialog())),
+    h("p", { className: "notice", text: `Signed in as super admin: ${state.user.name}. Your own planner is unchanged. Manage this login through the server’s .env settings.` }),
+    households.length ? list : h("p", { className: "admin-empty", text: "No additional households yet. Add a household and share its name and password with its members." }));
+}
+
+function householdDialog(household, mode) {
+  const creating = !household;
+  const title = creating ? "Add household" : mode === "name" ? "Change household name" : "Reset household password";
+  const name = creating || mode === "name"
+    ? h("input", { name: "name", value: household?.name ?? "", required: true, maxLength: 200, autocomplete: "off" })
+    : null;
+  const password = creating || mode === "password"
+    ? h("input", { name: "password", type: "password", required: true, minLength: 6, maxLength: 1024, autocomplete: "new-password" })
+    : null;
+  const submit = h("button", { type: "submit", className: "button", text: creating ? "Add household" : mode === "name" ? "Save name" : "Reset password" });
+  const form = h("form", { className: "household-form" },
+    name ? field("Household name", name, "Members use this name to sign in. Names must be unique.") : null,
+    password ? field(creating ? "Password" : "New password", password, "At least 6 characters. Share it only with household members.") : null,
+    !creating && password ? h("p", { className: "notice", text: "Resetting the password signs out everyone in this household." }) : null,
+    submit);
+  form.addEventListener("submit", (event) => {
+    event.preventDefault();
+    run(async () => {
+      const body = {};
+      if (name) body.name = name.value.trim();
+      if (password) body.password = password.value;
+      await api(creating ? "/admin/households" : `/admin/households/${household.id}`, body, creating ? "POST" : "PATCH");
+      if (password) password.value = "";
+      modal.close();
+      await showAdmin(false);
+      notify(creating ? "Household added." : mode === "name" ? "Household name saved." : "Household password reset.");
+    }, submit);
+  });
+  openModal(h("h2", { id: "modal-title", text: title }),
+    household ? h("p", { className: "lede", text: household.name }) : null, form);
 }
 async function showWeeks(updateUrl = true) {
   if (updateUrl) writeRoute({ view: "weeks" });
@@ -266,6 +350,7 @@ function planningForm() {
   const children = h("input", { type: "number", inputMode: "numeric", min: 0, max: 12, step: 1, value: existing?.children ?? 0, required: true });
   const diet = select({ anything: "A bit of everything", vegetarian: "Vegetarian", vegan: "Vegan", pescatarian: "Pescatarian" }, existing?.rules.diet ?? "anything");
   const time = select({ 20: "20 minutes", 30: "30 minutes", 45: "45 minutes", 60: "60 minutes", 90: "90 minutes", 180: "Any time (up to 3 hours)" }, existing?.rules.maxMinutes ?? 60);
+  const recipeScope = select(RECIPE_SCOPES, existing?.rules.recipeScope ?? DEFAULT_RECIPE_SCOPE);
   const weeksCount = select(Object.fromEntries(Array.from({ length: 12 }, (_, index) => [index + 1, `${index + 1} ${index === 0 ? "week" : "weeks"}`])), 1);
   const different = h("input", { type: "checkbox", checked: existing?.rules.differentProteins ?? true });
   const overlap = h("input", { type: "checkbox", checked: existing?.rules.overlapIngredients ?? true });
@@ -304,16 +389,17 @@ function planningForm() {
       h("div", { className: "form-grid" }, field("Adults", adults), field("Children", children)),
       h("p", { className: "muted", text: "Plan for 1 to 12 people in total. Each adult and child counts as one serving; adjust portions to suit your household." }),
       h("div", { className: "form-grid" }, field("How we eat", diet), field("Total time per meal", time)),
+      field("Recipe source", recipeScope),
       h("label", { className: "check-field" }, different, h("span", {}, h("strong", { text: "A different protein each dinner" }), h("small", { text: "No repeated primary protein in the week. Includes tofu, beans, eggs and cheese." }))),
       h("label", { className: "check-field" }, overlap, h("span", {}, h("strong", { text: "Some overlapping ingredients" }), h("small", { text: "Favour shared fresh ingredients, for a shorter shopping list and less waste." })))),
-    h("div", { className: "form-bottom" }, h("p", { className: "muted", text: "Dinners are picked from your recipes. This uses no Copilot allowance." }), submit));
+    h("div", { className: "form-bottom" }, h("p", { className: "muted", text: "Planning uses the selected recipes and no Copilot allowance." }), submit));
   form.addEventListener("submit", (event) => {
     event.preventDefault();
     run(async () => {
       const planning = {
         days: [...selected], people: Number(adults.value) + Number(children.value),
         adults: Number(adults.value), children: Number(children.value),
-        rules: { differentProteins: different.checked, overlapIngredients: overlap.checked, maxMinutes: Number(time.value), diet: diet.value },
+        rules: { differentProteins: different.checked, overlapIngredients: overlap.checked, maxMinutes: Number(time.value), diet: diet.value, recipeScope: recipeScope.value },
         revision: existing?.revision,
       };
       const count = existing ? 1 : Number(weeksCount.value);
@@ -415,7 +501,7 @@ async function swapDialog(day) {
     list.append(choice);
   });
   openModal(h("h2", { id: "modal-title", text: `Swap ${DAYS[day]}'s dinner` }),
-    h("p", { className: "muted", text: "Every option follows this week's diet, time and protein rules." }),
+    h("p", { className: "muted", text: "Every option follows this week's recipe source, diet, time and protein rules." }),
     recipes.length ? button("Pick one for me", () => replace(undefined), "button secondary") : h("p", { className: "notice", text: "No other recipe fits this week's rules. Change the planning rules or add a recipe." }), list);
 }
 
@@ -426,12 +512,12 @@ function shoppingPanel(week) {
   const text = h("textarea", { className: "shopping-text", rows: 12, readOnly: true, "aria-label": "Combined shopping list for copying" });
   const checklist = h("div", { className: "shopping-checklist" });
   const progress = h("p", { className: "shopping-progress", role: "status", "aria-live": "polite" });
-  const storageKey = `eatplanner.app:checked:${week.week}:${week.revision}`;
-  const legacyStorageKey = `mealplan.ai:checked:${week.week}:${week.revision}`;
+  const storageKey = householdStorageKey(`checked:${week.week}:${week.revision}`);
+  const legacyStorageKey = !state.user || state.user.isAdmin ? `mealplan.ai:checked:${week.week}:${week.revision}` : null;
   let checked = new Set();
   try {
     const saved = localStorage.getItem(storageKey);
-    const stored = JSON.parse(saved ?? localStorage.getItem(legacyStorageKey) ?? "[]");
+    const stored = JSON.parse(saved ?? (legacyStorageKey ? localStorage.getItem(legacyStorageKey) : null) ?? "[]");
     if (!Array.isArray(stored) || stored.some((item) => typeof item !== "string")) throw new Error("Invalid saved checklist.");
     checked = new Set(stored);
     if (saved === null && stored.length) localStorage.setItem(storageKey, JSON.stringify(stored));
@@ -516,13 +602,13 @@ function shoppingPanel(week) {
         h("a", { href: "https://www.woolworths.com.au/shop/services/olive", text: "Woolworths Olive help" })))));
 }
 
-function showRecipes(updateUrl = true) {
+async function showRecipes(updateUrl = true) {
   const previous = readRoute();
   if (updateUrl) {
-    writeRoute({ view: "recipes", q: previous.q, category: previous.category, protein: previous.protein });
+    writeRoute({ view: "recipes", q: previous.q, category: previous.category, protein: previous.protein, scope: previous.scope });
   }
   if (modal.open) modal.close();
-  ++loadSequence;
+  const sequence = ++loadSequence;
   state.view = "recipes";
   setNavigation();
   const route = readRoute();
@@ -531,6 +617,8 @@ function showRecipes(updateUrl = true) {
   category.setAttribute("aria-label", "Filter recipes by category");
   const protein = select({ all: "Every protein", ...PROTEINS }, route.protein ?? "all");
   protein.setAttribute("aria-label", "Filter recipes by protein");
+  const scope = select(RECIPE_SCOPES, route.scope ?? DEFAULT_RECIPE_SCOPE);
+  scope.setAttribute("aria-label", "Recipe source");
   const grid = h("div", { className: "collection-grid" });
   let compact = false;
   try { compact = localStorage.getItem("eatplanner.app:recipe-layout") === "compact"; }
@@ -554,9 +642,31 @@ function showRecipes(updateUrl = true) {
   const layoutToggle = h("div", { className: "collection-layout-toggle", role: "group", "aria-label": "Recipe card layout" },
     comfortableButton, compactButton);
   const count = h("p", { className: "muted", role: "status", "aria-live": "polite" });
+  let recipes = null;
+  let scopeRequest = 0;
+  async function loadScope() {
+    const request = ++scopeRequest;
+    const selected = scope.value;
+    recipes = null;
+    count.textContent = "";
+    grid.replaceChildren(loadingState("Finding recipes..."));
+    try {
+      const result = selected === DEFAULT_RECIPE_SCOPE ? state.recipes : selected === "household"
+        ? state.recipes.filter((recipe) => recipe.source === "personal")
+        : await api(`/recipes?scope=${encodeURIComponent(selected)}`);
+      if (sequence !== loadSequence || request !== scopeRequest) return;
+      recipes = result;
+      filter();
+      return result;
+    } catch (error) {
+      if (sequence !== loadSequence || request !== scopeRequest) return;
+      grid.replaceChildren(h("p", { className: "notice", text: "Couldn't load these recipes." }), button("Try again", loadScope, "button secondary"));
+      throw error;
+    }
+  }
   function filter() {
     const query = search.value.toLowerCase().trim();
-    const filtered = state.recipes.filter((recipe) => (category.value === "all" || category.value === recipe.category) &&
+    const filtered = recipes.filter((recipe) => (category.value === "all" || category.value === recipe.category) &&
       (protein.value === "all" || protein.value === recipe.protein) &&
       `${recipe.title} ${recipe.description} ${recipe.ingredients.map((i) => i.name).join(" ")}`.toLowerCase().includes(query));
     count.textContent = `${filtered.length} ${filtered.length === 1 ? "recipe" : "recipes"}`;
@@ -564,27 +674,30 @@ function showRecipes(updateUrl = true) {
       const card = button("", () => showRecipe(recipe), "collection-card");
       card.append(h("div", { className: "collection-image" }, h("img", { src: recipe.image, alt: "", loading: "lazy" })),
         h("div", { className: "meal-copy" }, h("div", { className: "recipe-meta" }, h("span", { text: CATEGORIES[recipe.category] }), h("span", { text: `${recipe.prepMinutes + recipe.cookMinutes} min` })),
-          h("h3", { text: recipe.title }), h("p", { text: recipe.description })));
+          h("h3", { text: recipe.title }), h("p", { text: recipe.description }),
+          canEditRecipe(recipe) ? null : h("p", { className: "fineprint", text: "Shared by another household" })));
       return card;
     }));
     if (!filtered.length) grid.append(h("p", { className: "notice", text: "No recipes match. Clear the search or a filter, or add your own." }));
   }
-  function updateFilters() {
+  function saveFilters() {
     writeRoute({
       view: "recipes",
       q: search.value.trim() || undefined,
       category: category.value === "all" ? undefined : category.value,
       protein: protein.value === "all" ? undefined : protein.value,
+      scope: scope.value === DEFAULT_RECIPE_SCOPE ? undefined : scope.value,
     }, true);
-    filter();
   }
+  function updateFilters() { saveFilters(); if (recipes) filter(); }
   search.addEventListener("input", updateFilters);
   category.addEventListener("change", updateFilters);
   protein.addEventListener("change", updateFilters);
-  view.replaceChildren(heading("Recipes", "Everything your household cooks. Weekly plans are picked from this list."),
-    h("div", { className: "collection-toolbar" }, search, category, protein), layoutToggle, count, grid,
+  scope.addEventListener("change", () => { saveFilters(); run(loadScope); });
+  view.replaceChildren(heading("Recipes", "Browse starter recipes, your household's recipes, or recipes shared by other households."),
+    h("div", { className: "collection-toolbar" }, search, scope, category, protein), layoutToggle, count, grid,
     h("p", { className: "fineprint collection-note", text: "Photos are serving suggestions and may not show the exact recipe. Check ingredient labels for allergens and follow safe food-handling guidance." }));
-  filter();
+  return loadScope();
 }
 
 function showRecipe(recipe, servings = recipe.servings, weekKey, day, updateUrl = true) {
@@ -598,8 +711,8 @@ function showRecipe(recipe, servings = recipe.servings, weekKey, day, updateUrl 
   const ingredientList = h("div", { className: "recipe-ingredients" });
   recipe.ingredients.forEach((item) => ingredientList.append(h("label", { className: "shopping-item" }, h("input", { type: "checkbox" }), h("span", { text: ingredientLine(item, servings / recipe.servings) }))));
   let step = 0;
-  const storageKey = weekKey === undefined ? null : `eatplanner.app:cook:${weekKey}:${day}:${recipe.id}`;
-  const legacyStorageKey = weekKey === undefined ? null : `mealplan.ai:cook:${weekKey}:${day}:${recipe.id}`;
+  const storageKey = weekKey === undefined ? null : householdStorageKey(`cook:${weekKey}:${day}:${recipe.id}`);
+  const legacyStorageKey = weekKey === undefined || (state.user && !state.user.isAdmin) ? null : `mealplan.ai:cook:${weekKey}:${day}:${recipe.id}`;
   if (storageKey) {
     try {
       const current = localStorage.getItem(storageKey);
@@ -629,8 +742,14 @@ function showRecipe(recipe, servings = recipe.servings, weekKey, day, updateUrl 
     renderStep(true);
   }
   renderStep();
-  const allSteps = h("details", { className: "all-steps" }, h("summary", { text: "See the whole method" }),
+  const singleStep = h("div", { className: "single-step" }, stepCount, stepText, h("div", { className: "step-controls" }, previous, next));
+  const methodToggle = h("summary", { text: "See the whole method" });
+  const allSteps = h("details", { className: "all-steps" }, methodToggle,
     h("ol", {}, ...recipe.steps.map((text) => h("li", { text }))));
+  allSteps.addEventListener("toggle", () => {
+    singleStep.hidden = allSteps.open;
+    methodToggle.textContent = allSteps.open ? "Back to step-by-step" : "See the whole method";
+  });
   const credit = photoCreditParts(recipe.imageCredit);
   const scheduledMeal = weekKey !== undefined && weekKey === state.week?.week
     ? state.week.meals.find((meal) => meal.day === day && meal.recipe.id === recipe.id)
@@ -653,10 +772,13 @@ function showRecipe(recipe, servings = recipe.servings, weekKey, day, updateUrl 
       h("h2", { id: "modal-title", text: recipe.title }), h("p", { className: "muted", text: recipe.description }),
       h("div", { className: "recipe-stats" }, h("span", {}, "Serves ", h("strong", { text: String(servings) })), h("span", {}, "Prep ", h("strong", { text: `${recipe.prepMinutes} min` })), h("span", {}, "Cook ", h("strong", { text: `${recipe.cookMinutes} min` })), h("span", { text: recipe.diet[0].toUpperCase() + recipe.diet.slice(1) })),
       cookedButton ? h("div", { className: "action-row" }, cookedButton, cookedStatus) : null,
-      button("Edit recipe / update from photo", () => addRecipeDialog(recipe), "button secondary"),
-      h("div", { className: "recipe-layout" }, h("section", {}, h("h3", { text: "What you'll need" }), ingredientList), h("section", { className: "cook-mode", "aria-label": "Step-by-step cooking" }, stepCount, stepText, h("div", { className: "step-controls" }, previous, next), allSteps)),
+      h("div", { className: "recipe-layout" }, h("section", {}, h("h3", { text: "What you'll need" }), ingredientList), h("section", { className: "cook-mode", "aria-label": "Cooking method" }, singleStep, allSteps)),
       recipe.notes ? h("p", { className: "notice", text: recipe.notes }) : null,
       h("p", { className: "fineprint", text: "Check allergies and ingredient labels yourself. Times are a guide; make sure food is cooked safely. Photos are serving suggestions." })));
+  if (canEditRecipe(recipe)) {
+    editRecipeButton.onclick = () => run(() => addRecipeDialog(recipe));
+    editRecipeButton.hidden = false;
+  }
 }
 
 async function shareWeek() {
@@ -893,6 +1015,7 @@ function addRecipeDialog(existing, updateUrl = true) {
   }));
   const save = h("button", { type: "submit", className: "button", text: existing ? "Update this recipe" : "Save to my collection" });
   const form = h("form", { className: "recipe-form" },
+    existing ? null : h("p", { className: "muted", text: "Other signed-in households can find recipes you add." }),
     h("div", { className: "recipe-photo-options" },
       h("section", { className: "upload-box" }, h("h3", { text: "Recipe page" }),
         h("p", { className: "muted", text: "Choose an image or take a photo of the ingredients and method, or enter them manually below." }),
@@ -924,7 +1047,7 @@ function addRecipeDialog(existing, updateUrl = true) {
         if (index >= 0) state.recipes[index] = recipe;
       } else state.recipes.push(recipe);
       modal.close();
-      showRecipes();
+      await showRecipes();
       notify(existing ? "Recipe updated." : "Saved to your collection.");
     }, save);
   });
@@ -932,7 +1055,8 @@ function addRecipeDialog(existing, updateUrl = true) {
 }
 
 document.querySelector("#nav-weeks").addEventListener("click", () => run(showWeeks));
-document.querySelector("#nav-recipes").addEventListener("click", () => showRecipes());
+document.querySelector("#nav-recipes").addEventListener("click", () => run(showRecipes));
+document.querySelector("#nav-admin").addEventListener("click", () => run(showAdmin));
 document.querySelector("#add-recipe").addEventListener("click", () => addRecipeDialog());
 document.querySelector("#sign-out").addEventListener("click", (event) => run(async () => {
   await api("/auth/logout", {});
@@ -945,6 +1069,11 @@ async function restoreRoute() {
   const route = readRoute();
   if (modal.open) modal.close();
 
+  if (route.view === "admin") {
+    await showAdmin(false);
+    return;
+  }
+
   if (route.view === "week") {
     await openWeek(route.week, false);
     if (sequence !== restoreSequence || state.view !== "week" || state.weekKey !== route.week) return;
@@ -956,7 +1085,7 @@ async function restoreRoute() {
       const meal = state.week?.meals.find((item) => item.recipe.id === route.recipe && (route.day === null || item.day === Number(route.day)));
       if (meal) {
         showRecipe(meal.recipe, state.week.people, state.week.week, meal.day, false);
-        if (route.edit === "1") addRecipeDialog(meal.recipe, false);
+        if (route.edit === "1" && canEditRecipe(meal.recipe)) addRecipeDialog(meal.recipe, false);
         return;
       }
     }
@@ -965,19 +1094,20 @@ async function restoreRoute() {
   }
 
   if (route.view === "recipes") {
-    showRecipes(false);
+    const recipes = await showRecipes(false);
+    if (!recipes || sequence !== restoreSequence || state.view !== "recipes") return;
     if (route.edit === "new") {
       addRecipeDialog(undefined, false);
       return;
     }
     if (route.recipe) {
-      const recipe = state.recipes.find((item) => item.id === route.recipe);
+      const recipe = recipes.find((item) => item.id === route.recipe);
       if (recipe) {
         showRecipe(recipe, recipe.servings, undefined, undefined, false);
-        if (route.edit === "1") addRecipeDialog(recipe, false);
+        if (route.edit === "1" && canEditRecipe(recipe)) addRecipeDialog(recipe, false);
         return;
       }
-      writeRoute({ view: "recipes", q: route.q, category: route.category, protein: route.protein }, true);
+      writeRoute({ ...route, recipe: undefined, edit: undefined }, true);
     }
     return;
   }
@@ -989,7 +1119,9 @@ window.addEventListener("popstate", () => run(restoreRoute));
 
 async function initialise() {
   const session = await api("/auth/session");
+  state.user = session.user ?? null;
   document.querySelector("#sign-out").hidden = !session.enabled;
+  document.querySelector("#nav-admin").hidden = !state.user?.isAdmin;
   state.recipes = await api("/recipes");
   await restoreRoute();
 }

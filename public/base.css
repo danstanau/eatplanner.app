@@ -9,24 +9,24 @@
 
 :root {
   color-scheme: light dark;
-  --bg: #f4f6f5;
-  --surface: #ffffff;
-  --sunken: #e8ecee;
-  --ink: #131c3a;
-  --muted: #4a5470;
-  --line: #d3d9e4;
-  --line-control: #7d879f;
-  --primary: #1b3fa0;
-  --primary-hover: #142f7a;
-  --on-primary: #ffffff;
-  --primary-soft: #e3e9f8;
+  --bg: light-dark(#f4f6f5, #0e1426);
+  --surface: light-dark(#ffffff, #161e37);
+  --sunken: light-dark(#e8ecee, #121a30);
+  --ink: light-dark(#131c3a, #e8ecf8);
+  --muted: light-dark(#4a5470, #a7b1cc);
+  --line: light-dark(#d3d9e4, #2a3558);
+  --line-control: light-dark(#7d879f, #6f7ba0);
+  --primary: light-dark(#1b3fa0, #a3b8ff);
+  --primary-hover: light-dark(#142f7a, #c0cfff);
+  --on-primary: light-dark(#ffffff, #0e1426);
+  --primary-soft: light-dark(#e3e9f8, #1e2a52);
   --mark: #f6b92b;
-  --mark-soft: #fdf2d0;
+  --mark-soft: light-dark(#fdf2d0, #3a2f10);
   --on-mark: #131c3a;
-  --danger: #a4244b;
-  --on-danger: #ffffff;
-  --scrim: rgb(19 28 58 / 55%);
-  --shadow: 0 24px 70px rgb(19 28 58 / 24%);
+  --danger: light-dark(#a4244b, #f58aa6);
+  --on-danger: light-dark(#ffffff, #0e1426);
+  --scrim: light-dark(rgb(19 28 58 / 55%), rgb(4 7 16 / 70%));
+  --shadow: 0 24px 70px light-dark(rgb(19 28 58 / 24%), rgb(0 0 0 / 60%));
 
   --font: "Bricolage Grotesque", "Avenir Next", "Segoe UI Variable", "Segoe UI", system-ui, sans-serif;
   --text-xs: .8125rem;
@@ -45,26 +45,8 @@
   --fast: 120ms;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #0e1426;
-    --surface: #161e37;
-    --sunken: #121a30;
-    --ink: #e8ecf8;
-    --muted: #a7b1cc;
-    --line: #2a3558;
-    --line-control: #6f7ba0;
-    --primary: #a3b8ff;
-    --primary-hover: #c0cfff;
-    --on-primary: #0e1426;
-    --primary-soft: #1e2a52;
-    --mark-soft: #3a2f10;
-    --danger: #f58aa6;
-    --on-danger: #0e1426;
-    --scrim: rgb(4 7 16 / 70%);
-    --shadow: 0 24px 70px rgb(0 0 0 / 60%);
-  }
-}
+:root:where([data-theme="light"]) { color-scheme: light; }
+:root:where([data-theme="dark"]) { color-scheme: dark; }
 
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; scroll-padding-top: 96px; }
@@ -146,8 +128,10 @@ p { margin: 0; text-wrap: pretty; }
 main { max-width: calc(var(--page) + 2 * var(--gutter)); min-height: 72vh; margin: 0 auto; padding: 44px var(--gutter) 88px; }
 main:focus { outline: 0; }
 .page-heading { margin: 0 0 28px; }
-footer { max-width: calc(var(--page) + 2 * var(--gutter)); margin: 0 auto; padding: 24px var(--gutter) 32px; border-top: 1px solid var(--line); }
+footer { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 24px; max-width: calc(var(--page) + 2 * var(--gutter)); margin: 0 auto; padding: 24px var(--gutter) 32px; border-top: 1px solid var(--line); }
 footer .brand { font-size: 1.125rem; }
+.theme-picker { display: inline-flex; align-items: center; gap: 10px; color: var(--muted); font-size: var(--text-sm); }
+.theme-picker select { width: auto; min-height: 44px; }
 
 .button {
   display: inline-flex;
@@ -313,22 +297,33 @@ dialog::backdrop { background: var(--scrim); }
 @keyframes dialog-in { from { opacity: 0; transform: translateY(10px); } }
 dialog h2 { padding-right: 44px; }
 dialog h2 + .muted { margin-top: 10px; }
-.close-button {
+.dialog-actions {
   position: sticky;
   top: -20px;
   z-index: 2;
+  display: flex;
+  flex-direction: row-reverse;
+  gap: 8px;
+  width: max-content;
+  /* The controls overlay the content without adding height. */
+  margin: -16px -16px -28px auto;
+}
+.close-button, .dialog-icon-button {
   display: grid;
   place-items: center;
   width: 44px;
   height: 44px;
-  /* Takes no vertical room: 44px tall, pulled up 16px, then 28px back. */
-  margin: -16px -16px -28px auto;
+  padding: 0;
   border: 1px solid var(--line);
   border-radius: 50%;
   background: var(--surface);
+}
+.close-button {
   font-size: 1.625rem;
   line-height: 1;
 }
+.dialog-icon-button { color: var(--muted); }
+.dialog-icon-button:hover { color: var(--primary); }
 
 @media (max-width: 720px) {
   html { scroll-padding-top: 16px; }
@@ -368,7 +363,7 @@ dialog h2 + .muted { margin-top: 10px; }
     padding: 24px 20px calc(24px + env(safe-area-inset-bottom));
     border-radius: var(--radius-sheet) var(--radius-sheet) 0 0;
   }
-  .close-button { top: -14px; margin: -10px -8px -34px auto; }
+  .dialog-actions { top: -14px; margin: -10px -8px -34px auto; }
   .toast { bottom: calc(82px + env(safe-area-inset-bottom)); }
 }
 

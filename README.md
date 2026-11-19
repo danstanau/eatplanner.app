@@ -14,8 +14,8 @@ npm run auth:setup
 npm run dev
 ```
 
-During setup, accept `stanfield` as the household name, enter
-`http://127.0.0.1:3000` as the app URL, and choose a shared password.
+During setup, accept `stanfield` as the super admin name, enter
+`http://127.0.0.1:3000` as the app URL, and choose a password.
 Open **http://127.0.0.1:3000** and sign in. Browsing, planning, swapping, shopping lists,
 manual recipe entry and sharing all work **without an AI subscription or API key**.
 
@@ -46,24 +46,42 @@ To prefer Unsplash for photo search, create an API app at
 The key stays on the server. Without it, photo search uses Openverse and
 Wikimedia Commons.
 
-## Shared household login and hosting
+## Super admin, households and hosting
 
-The app supports one household, with a shared name and password for its members.
-There is no public sign-up or way to join without the password. No external
-authentication service is needed. To configure access, run:
+The login configured in `.env` is the **super admin**. It can use the planner
+and add recipes normally, and can manage additional households through the
+**Admin** gear button. Existing recipes and plans stay with this account.
+There is no public sign-up. No external authentication service is needed.
+To configure the super admin login, run:
 
 ```sh
 npm run auth:setup
 ```
 
-Accept `stanfield` as the household name (or choose another name), enter the URL
+Accept `stanfield` as the super admin name (or choose another name), enter the URL
 you will use to access the app, and choose a password of at least 6 characters.
 Short, simple passwords are easier to guess, especially on a public site. Share the
-password only with household members. Password entry is hidden. The command saves the name,
+super admin password only with people who should manage all household logins.
+Password entry is hidden. The command saves the name,
 a randomly salted scrypt password hash, and `APP_ORIGIN` in the gitignored
 `.env` file; it never saves the plaintext password. Restart the server after
 setup. Use the same command to change credentials; restarting also signs out
 existing sessions.
+
+In **Admin**, add a household with a unique name and a password of at least
+6 characters. Share that login with its members. Names are case-insensitive.
+Each household starts with the starter recipe library. By default, the collection
+and meal planner use starter recipes plus the current household's additions.
+Use **Recipe source** in either place to use just your household's recipes,
+other households' additions, or all recipes. Swaps follow the week's saved choice.
+Added recipes are visible to other signed-in households but editable only by the
+household that added them. Plans and shopping lists stay private. The main
+household uses ID `1`; older additions are attributed to the household that saved them.
+Only the super admin can list households, change their names or reset passwords.
+A name change preserves household data and active sessions; a password reset
+signs out that household's existing sessions immediately. Passwords cannot be
+viewed or recovered. Super admin credentials are managed only through `.env`.
+All households' AI features currently use the server's configured Copilot account.
 
 The planner, recipes, local photos and all planning/photo/AI APIs require login
 at all times. **Sign out** ends the current browser session. Sessions expire
@@ -97,7 +115,8 @@ LAN also requires HTTPS. `NODE_ENV=production` requires HTTPS for all addresses.
 For local HTTP development, visiting sign-in through another loopback name
 (such as `localhost` instead of `127.0.0.1`) redirects to `APP_ORIGIN` so the
 login and session cookies use the same address.
-Persist and back up `data/household.json` on your host, and keep `.env` private.
+Persist and back up `data/household.json`, `data/households.json` and the
+`data/households/` directory on your host, and keep `.env` private.
 
 ## The weekly flow
 
@@ -245,11 +264,14 @@ amounts, dietary labels and instructions yourself.
 
 ```text
 data/recipes.json    Starter recipe collection; edit to customise a fresh install
-data/household.json  Your recipes, draft weeks and confirmed snapshots (gitignored)
+data/household.json  Super admin recipes and weeks (gitignored; existing data stays here)
+data/households.json Household names, IDs and salted password hashes (gitignored)
+data/households/     Per-household recipes and weeks, keyed by stable ID (gitignored)
 public/             HTML, CSS, browser modules and local food photographs
 server/recipes.ts   Recipe, photo and extraction schemas
 server/planner.ts   Planning rules, alternatives, day moves and shopping aggregation
 server/store.ts     Serialized, atomic JSON persistence
+server/households.ts Household registry and isolated data stores
 server/app.ts       Validated local HTTP API and static assets
 server/copilot.ts   Server-only Copilot SDK integration
 server/index.ts     Loopback server and shutdown
@@ -257,7 +279,7 @@ server/index.ts     Loopback server and shutdown
 
 On the first write, the household file is seeded from `data/recipes.json`.
 Later changes to the seed do not overwrite your household's recipes. Back up
-`data/household.json` to preserve your collection and all weeks. Corrupt or
+all household files listed above to preserve logins, collections and weeks. Corrupt or
 unwritable storage is reported as an error, never silently replaced.
 
 Confirmed weeks contain recipe snapshots and their shopping quantities, so
@@ -276,7 +298,7 @@ site data removes those checkmarks, not your saved plans. The previous starter
 app's generated browser-only plan is not automatically converted to a dated
 week; its old localStorage entry is left untouched.
 
-Run **one server process per household file**. Atomic writes protect against
+Run **one server process for the registry and household files**. Atomic writes protect against
 partial files and requests within that process are serialized; this is not a
 multi-process database.
 
@@ -284,7 +306,7 @@ multi-process database.
 
 ```sh
 npm run dev     # Watch the server
-npm run auth:setup # Configure shared household credentials and app URL
+npm run auth:setup # Configure super admin credentials and app URL
 npm run check   # Type-check server
 npm test       # Rule, HTTP, storage and UI tests; no paid AI calls
 npm run build  # Compile server into dist/

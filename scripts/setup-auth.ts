@@ -12,7 +12,7 @@ const output = new Writable({
 });
 const prompt = createInterface({ input: process.stdin, output, terminal: Boolean(process.stdin.isTTY) });
 try {
-  const username = (await prompt.question("Household name [stanfield]: ")).trim() || "stanfield";
+  const username = (await prompt.question("Super admin name [stanfield]: ")).trim() || "stanfield";
   const publicOrigin = (await prompt.question("App URL (e.g. https://meals.example.com): ")).trim();
   process.stdout.write("Household password (6+ characters, hidden): ");
   hiding = true;
@@ -36,7 +36,7 @@ try {
   }
   await writeFile(".env", contents, { mode: 0o600 });
   await chmod(".env", 0o600);
-  console.log("Household login configured in .env. Restart the server to enable it.");
+  console.log("Super admin login configured in .env. Restart the server to enable it.");
 } catch (error) {
   console.error(error instanceof Error ? error.message : "Could not configure household login.");
   process.exitCode = 1;

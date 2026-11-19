@@ -10,6 +10,7 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <link rel="apple-touch-icon" href="/apple-touch-icon.png">
     <link rel="preload" href="/fonts/bricolage-grotesque.woff2" as="font" type="font/woff2" crossorigin>
+    <script src="/theme.js"></script>
     <link rel="stylesheet" href="/planner.css">
     <script type="module" src="/planner.js"></script>
   </head>
@@ -21,13 +22,22 @@
         <button id="nav-recipes" class="nav-link" type="button"><svg class="icon" aria-hidden="true"><use href="/icons.svg#book"></use></svg><span>Recipes</span></button>
         <button id="add-recipe" class="button small" type="button"><svg class="icon" aria-hidden="true"><use href="/icons.svg#plus"></use></svg><span>Add recipe</span></button>
       </nav>
+      <button id="nav-admin" class="text-button admin-link" type="button" aria-label="Admin" title="Admin" hidden><svg class="icon" aria-hidden="true"><use href="/icons.svg#settings"></use></svg></button>
       <button id="sign-out" class="text-button" type="button" hidden>Sign out</button>
     </header>
     <main id="view" tabindex="-1"><p class="loading">Setting the table...</p></main>
-    <footer><span class="brand"><img src="/favicon.svg" alt="" width="64" height="64">eatplanner<span>.app</span></span></footer>
+    <footer>
+      <span class="brand"><img src="/favicon.svg" alt="" width="64" height="64">eatplanner<span>.app</span></span>
+      <label class="theme-picker" hidden>Appearance
+        <select id="theme-picker"><option value="system">System</option><option value="light">Light</option><option value="dark">Dark</option></select>
+      </label>
+    </footer>
     <p id="toast" class="toast" role="status" hidden></p>
     <dialog id="modal" aria-labelledby="modal-title">
-      <button id="close-modal" class="close-button" type="button" aria-label="Close dialog">&times;</button>
+      <div class="dialog-actions">
+        <button id="close-modal" class="close-button" type="button" aria-label="Close dialog" autofocus>&times;</button>
+        <button id="edit-recipe" class="dialog-icon-button" type="button" aria-label="Edit recipe" title="Edit recipe" hidden><svg class="icon" aria-hidden="true"><use href="/icons.svg#pencil"></use></svg></button>
+      </div>
       <div id="modal-content"></div>
     </dialog>
   </body>

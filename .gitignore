@@ -2,3 +2,6 @@ node_modules/
 dist/
 .env
 data/household.json
+data/households.json
+data/households.json.tmp
+data/households/

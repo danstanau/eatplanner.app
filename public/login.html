@@ -8,6 +8,7 @@
     <link rel="apple-touch-icon" href="/apple-touch-icon.png">
     <meta name="theme-color" content="#f4f6f5" media="(prefers-color-scheme: light)">
     <meta name="theme-color" content="#0e1426" media="(prefers-color-scheme: dark)">
+    <script src="/theme.js"></script>
     <link rel="stylesheet" href="/base.css">
     <link rel="stylesheet" href="/login.css">
     <script type="module" src="/login.js"></script>
@@ -20,13 +21,16 @@
     <main>
       <a class="brand" href="/"><img src="/favicon.svg" alt="" width="64" height="64">eatplanner<span>.app</span></a>
       <h1>Sign in</h1>
-      <p>Use your household's shared login.</p>
+      <p>Use your household or super admin login.</p>
       <form id="login">
-        <label class="field">Household name<input name="username" autocomplete="username" required maxlength="200"></label>
+        <label class="field">Login name<input name="username" autocomplete="username" required maxlength="200"></label>
         <label class="field">Password<input name="password" type="password" autocomplete="current-password" required maxlength="1024"></label>
         <p id="login-error" role="alert" hidden></p>
         <button class="button" type="submit">Sign in</button>
       </form>
+      <label class="theme-picker" hidden>Appearance
+        <select id="theme-picker"><option value="system">System</option><option value="light">Light</option><option value="dark">Dark</option></select>
+      </label>
     </main>
   </body>
 </html>

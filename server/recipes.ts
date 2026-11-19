@@ -44,9 +44,15 @@ export const newRecipeSchema = recipeContentSchema.extend({
   image: recipeImageSchema,
   imageCredit: imageCreditSchema.optional(),
 });
+export const MAIN_HOUSEHOLD_ID = "1";
+export const recipeScopeSchema = z.enum(["starter-and-household", "household", "other-households", "all"]);
+export type RecipeScope = z.infer<typeof recipeScopeSchema>;
+export const DEFAULT_RECIPE_SCOPE: RecipeScope = "starter-and-household";
+
 export const recipeSchema = newRecipeSchema.extend({
   id: z.string().min(1).max(120),
   source: z.enum(["collection", "personal"]),
+  householdId: z.union([z.literal(MAIN_HOUSEHOLD_ID), z.uuid()]).optional(),
 });
 export const extractionSchema = z.object({
   recipe: recipeContentSchema.nullable(),

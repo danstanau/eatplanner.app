@@ -4,6 +4,39 @@ import test from "node:test";
 import { setImmediate } from "node:timers/promises";
 import { Window } from "happy-dom";
 
+test("appearance restores a saved theme and can return to the system preference", async (t) => {
+  const browser = new Window({ url: "https://meals.example.test", settings: { disableJavaScriptFileLoading: true, disableCSSFileLoading: true } });
+  browser.document.write(await readFile(new URL("../public/login.html", import.meta.url), "utf8"));
+  t.after(() => browser.happyDOM.abort());
+  const key = "eatplanner.app:theme";
+  browser.localStorage.setItem(key, "dark");
+  const globals = { document: browser.document, localStorage: browser.localStorage };
+  for (const [name, value] of Object.entries(globals)) {
+    const descriptor = Object.getOwnPropertyDescriptor(globalThis, name);
+    Object.defineProperty(globalThis, name, { configurable: true, writable: true, value });
+    t.after(() => {
+      if (descriptor) Object.defineProperty(globalThis, name, descriptor);
+      else Reflect.deleteProperty(globalThis, name);
+    });
+  }
+  // @ts-expect-error The actual browser entrypoint intentionally ships as JavaScript.
+  await import("../public/theme.js");
+  browser.document.dispatchEvent(new browser.Event("DOMContentLoaded"));
+  const picker = browser.document.querySelector<HTMLSelectElement>("#theme-picker");
+  assert.ok(picker);
+  assert.equal(picker.value, "dark");
+  assert.equal(browser.document.documentElement.dataset.theme, "dark");
+  picker.value = "light";
+  picker.dispatchEvent(new browser.Event("change"));
+  assert.equal(browser.localStorage.getItem(key), "light");
+  assert.equal(browser.document.documentElement.dataset.theme, "light");
+  picker.value = "system";
+  picker.dispatchEvent(new browser.Event("change"));
+  assert.equal(browser.localStorage.getItem(key), null);
+  assert.equal(browser.document.documentElement.hasAttribute("data-theme"), false);
+  assert.deepEqual([...browser.document.querySelectorAll('meta[name="theme-color"]')].map((meta) => meta.getAttribute("content")), ["#f4f6f5", "#0e1426"]);
+});
+
 test("login form reports failures, preserves local routes and rejects external redirects", async (t) => {
   const browser = new Window({ settings: { disableJavaScriptFileLoading: true, disableCSSFileLoading: true } });
   browser.document.write(await readFile(new URL("../public/login.html", import.meta.url), "utf8"));

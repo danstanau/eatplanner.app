@@ -1,6 +1,6 @@
 import { randomInt } from "node:crypto";
 import { z } from "zod";
-import { recipeSchema, type Ingredient, type Recipe } from "./recipes.js";
+import { recipeSchema, recipeScopeSchema, type Ingredient, type Recipe } from "./recipes.js";
 
 export class AppError extends Error {
   constructor(public status: number, message: string) { super(message); }
@@ -16,6 +16,7 @@ export const rulesSchema = z.object({
   overlapIngredients: z.boolean(),
   maxMinutes: z.number().int().min(10).max(180),
   diet: z.enum(["anything", "vegetarian", "vegan", "pescatarian"]),
+  recipeScope: recipeScopeSchema.optional(),
 });
 export const planningSchema = z.object({
   days: z.array(daySchema).min(1).max(7).refine((days) => new Set(days).size === days.length, "Choose each day only once."),
@@ -75,7 +76,7 @@ export function planWeek(week: string, input: Planning, recipes: Recipe[]): Week
   const candidates = recipes.filter((recipe) => eligible(recipe, input.rules));
   const available = input.rules.differentProteins ? new Set(candidates.map((r) => r.protein)).size : candidates.length;
   if (available < input.days.length) {
-    throw new AppError(422, `Only ${available} ${input.rules.differentProteins ? "different proteins" : "recipes"} match these rules. Choose fewer days, relax the time/diet rules, turn off different proteins, or add recipes.`);
+    throw new AppError(422, `Only ${available} ${input.rules.differentProteins ? "different proteins" : "recipes"} match these rules. Choose fewer days, broaden the recipe source, relax the time/diet rules, turn off different proteins, or add recipes.`);
   }
   const selected: Recipe[] = [];
   const meals = [...input.days].sort((a, b) => a - b).map((day) => {
