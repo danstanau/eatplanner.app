@@ -18,7 +18,11 @@ test("a full week has one meal per chosen day and genuinely different proteins",
 });
 
 test("diet and time limits are hard constraints with actionable infeasibility errors", () => {
-  assert.throws(() => planWeek("2026-11-16", { days: [0, 1, 2], people: 2, rules: { ...rules, diet: "vegan" } }, recipes), /Only 2 different proteins/);
+  const veganProteins = new Set(recipes.filter((recipe) => recipe.diet === "vegan").map((recipe) => recipe.protein));
+  assert.throws(() => planWeek("2026-11-16", {
+    days: Array.from({ length: veganProteins.size + 1 }, (_, day) => day),
+    people: 2, rules: { ...rules, diet: "vegan" },
+  }, recipes), new RegExp(`Only ${veganProteins.size} different proteins`));
   const week = planWeek("2026-11-16", { days: [0, 2, 4], people: 2, rules: { ...rules, diet: "vegan", differentProteins: false } }, recipes);
   assert.ok(week.meals.every(({ recipe }) => recipe.diet === "vegan"));
   const quick = planWeek("2026-11-16", { days: [1], people: 2, rules: { ...rules, maxMinutes: 20 } }, recipes);

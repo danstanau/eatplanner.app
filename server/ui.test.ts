@@ -81,8 +81,8 @@ test("UI completes week selection, swaps, moves, confirmation, cooking, sharing 
       const response = await originalFetch(new URL(url, base), init);
       if (new URL(url, base).pathname !== "/api/recipes" || (init?.method && init.method !== "GET")) return response;
       const recipes = await response.json() as Array<{ id: string; imageCredit?: unknown }>;
-      const brisket = recipes.find((recipe) => recipe.id === "beef-brisket");
-      if (brisket) brisket.imageCredit = {
+      const starterRecipe = recipes.find((recipe) => recipe.id === starter[0].id);
+      if (starterRecipe) starterRecipe.imageCredit = {
         creator: null, sourceUrl: "https://example.com/photo", license: "CC0", licenseUrl: "https://example.com/license",
       };
       return new Response(JSON.stringify(recipes), { status: response.status });
@@ -364,10 +364,10 @@ test("UI completes week selection, swaps, moves, confirmation, cooking, sharing 
   assert.ok(document.querySelector(".collection-grid")?.classList.contains("is-compact"));
   assert.equal(compactLayout.getAttribute("aria-pressed"), "true");
   assert.equal(browser.localStorage.getItem("eatplanner.app:recipe-layout"), "compact");
-  const brisketCard = [...document.querySelectorAll(".collection-card")].find((card) => card.querySelector("h3")?.textContent === "Beef brisket");
-  assert.ok(brisketCard);
-  assert.match(brisketCard.textContent ?? "", /Starter recipe/);
-  brisketCard.click();
+  const starterCard = [...document.querySelectorAll(".collection-card")].find((card) => card.querySelector("h3")?.textContent === starter[0].title);
+  assert.ok(starterCard);
+  assert.match(starterCard.textContent ?? "", /Starter recipe/);
+  starterCard.click();
   assert.equal(document.querySelector<HTMLButtonElement>("#edit-recipe")?.hidden, true);
   assert.doesNotMatch(document.querySelector("#modal-content")?.textContent ?? "", /\bnull\b/);
   assert.equal(document.querySelector(".photo-credit"), null);
