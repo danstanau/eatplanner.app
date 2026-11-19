@@ -13,7 +13,7 @@ import { Households, householdNameSchema, passwordSchema } from "./households.js
 interface Services {
   generatePlan: (preferences: Preferences) => Promise<MealPlan>;
   getStatus: () => Promise<{ authenticated: boolean; model: string }>;
-  extractRecipe: (photo: Photo) => Promise<Extraction>;
+  extractRecipe: (photo: Photo, signal: AbortSignal) => Promise<Extraction>;
   findRecipeImage: (recipe: RecipeImageSearch) => Promise<{ image: string; imageCredit: ImageCredit }>;
 }
 
@@ -185,11 +185,20 @@ export function createApp(services: Services, store = new Store(), options: { al
     const photo = photoSchema.parse(request.body);
     if (recipePhotoTask) throw new AppError(429, "Another recipe photo task is running. Please wait.");
     recipePhotoTask = true;
+    const controller = new AbortController();
+    const { signal } = controller;
+    const cancel = () => controller.abort();
+    response.once("close", cancel);
     try {
-      const extraction = extractionSchema.parse(await services.extractRecipe(photo));
+      const result = await services.extractRecipe(photo, signal);
+      signal.throwIfAborted();
+      const extraction = extractionSchema.parse(result);
       if (!extraction.recipe) throw new AppError(422, extraction.warnings.join(" ") || "No readable recipe was found. Try a clearer photo of the ingredients and method.");
       response.json(extraction);
+    } catch (error) {
+      if (!signal.aborted || error !== signal.reason) throw error;
     } finally {
+      response.off("close", cancel);
       recipePhotoTask = false;
     }
   });

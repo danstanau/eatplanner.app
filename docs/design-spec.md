@@ -16,7 +16,9 @@ Everything else stays quiet.
   and remembers manual overrides in the browser across planner and sign-in.
 - **Type**: one family, Bricolage Grotesque (SIL OFL), self-hosted in
   `public/fonts/`. Its width axis does the work: condensed and heavy for day
-  names and headings, normal width for reading. Sentence case throughout.
+  names and headings, normal width for reading. Both pages preload the font
+  and keep the system fallback for that page load if the font arrives late.
+  Sentence case throughout.
 - **Structure**: a 2px ink rule opens a list (the week, the shopping list, the
   recipe grid); 1px rules separate its rows. Recipes are a photo grid without
   card boxes. The double rule under the header is the only ornament.

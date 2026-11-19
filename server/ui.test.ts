@@ -16,10 +16,23 @@ test("UI completes week selection, swaps, moves, confirmation, cooking, sharing 
   const starter = await store.readStarterRecipes();
   const initialRecipes = starter.length;
   const { id: _id, source: _source, image: _image, ...content } = starter[0];
+  let recipeReads = 0;
+  let cancelledReads = 0;
+  const finishImport = Promise.withResolvers<void>();
   const server = createApp({
     generatePlan: async () => { throw new Error("Not used by weekly planning"); },
     getStatus: async () => ({ authenticated: false, model: "auto" }),
-    extractRecipe: async () => ({ recipe: content, warnings: ["Double-check the servings."] }),
+    extractRecipe: async (_photo, signal) => {
+      recipeReads++;
+      if (recipeReads === 1) {
+        await new Promise<never>((_resolve, reject) => signal.addEventListener("abort", () => {
+          cancelledReads++;
+          reject(signal.reason);
+        }, { once: true }));
+      }
+      if (recipeReads === 2) await finishImport.promise;
+      return { recipe: content, warnings: ["Double-check the servings."] };
+    },
     findRecipeImage: async () => ({
       image: "/images/chicken.jpg",
       imageCredit: {
@@ -33,7 +46,7 @@ test("UI completes week selection, swaps, moves, confirmation, cooking, sharing 
   await once(server, "listening");
   t.after(() => new Promise<void>((resolve, reject) => {
     server.close((error) => error ? reject(error) : resolve());
-    server.closeIdleConnections();
+    server.closeAllConnections();
   }));
   const address = server.address();
   assert.ok(address && typeof address !== "string");
@@ -78,8 +91,8 @@ test("UI completes week selection, swaps, moves, confirmation, cooking, sharing 
       if (file.name === "invalid.jpg" || file.name?.toLowerCase().endsWith(".heic")) throw new Error("Cannot decode image");
       return { width: 1200, height: 900, close() {} };
     },
-    setTimeout: (callback: () => void, timeout: number) => {
-      const timer = originalTimeout(callback, timeout);
+    setTimeout: (...args: Parameters<typeof originalTimeout>) => {
+      const timer = originalTimeout(...args);
       timer.unref();
       return timer;
     },
@@ -366,12 +379,35 @@ test("UI completes week selection, swaps, moves, confirmation, cooking, sharing 
   const dishUpload = document.querySelector<HTMLInputElement>('input[aria-label="Choose or take a photo of the finished dish"]');
   assert.ok(dishUpload);
   assert.equal(dishUpload.hasAttribute("capture"), false);
+  editor("Recipe name").value = "Keep this draft";
   Object.defineProperty(upload, "files", { configurable: true, value: [new browser.File(["photo"], "recipe.HEIC", { type: "" })] });
   upload.dispatchEvent(new browser.Event("change", { bubbles: true }));
-  await waitFor(() => !findButton("Read recipe with Copilot").disabled);
+  assert.match(document.querySelector(".upload-status")?.textContent ?? "", /Preparing/);
+  await waitFor(() => recipeReads === 1);
+  assert.match(document.querySelector(".upload-status")?.textContent ?? "", /Reading ingredients and method with Copilot/);
+  assert.equal(document.querySelector("progress")?.parentElement?.hidden, false);
+  assert.equal(findButton("Save to my collection").disabled, true);
   assert.equal(convertedPhonePhotos, 1);
-  findButton("Read recipe with Copilot").click();
+  findButton("Cancel reading").click();
+  assert.match(document.querySelector(".upload-status")?.textContent ?? "", /Reading cancelled/);
+  assert.equal(editor("Recipe name").value, "Keep this draft");
+  assert.equal(upload.disabled, false);
+  await waitFor(() => cancelledReads === 1);
+
+  Object.defineProperty(upload, "files", { configurable: true, value: [new browser.File(["photo"], "recipe.jpg", { type: "image/jpeg" })] });
+  upload.dispatchEvent(new browser.Event("change", { bubbles: true }));
+  await waitFor(() => recipeReads === 2);
+  assert.equal(dishUpload.disabled, false);
+  Object.defineProperty(dishUpload, "files", { configurable: true, value: [new browser.File(["photo"], "dinner.jpg", { type: "image/jpeg" })] });
+  dishUpload.dispatchEvent(new browser.Event("change", { bubbles: true }));
+  await waitFor(() => document.querySelectorAll(".upload-status")[1]?.textContent?.includes("Dish photo ready"));
+  const dishPhoto = document.querySelector('img[alt="Recipe cover photo"]')?.getAttribute("src");
+  assert.ok(dishPhoto?.startsWith("data:image/jpeg"));
+  assert.equal(findButton("Save to my collection").disabled, true);
+  finishImport.resolve();
   await waitFor(() => !document.querySelector(".import-warnings")?.hidden);
+  assert.equal(document.querySelector("progress")?.parentElement?.hidden, true);
+  assert.match(document.querySelector(".upload-status.is-success")?.textContent ?? "", /Draft ready: .*Review the details below, then save/);
   assert.equal(editor("Recipe name").value, content.title);
   assert.match(document.querySelector(".import-warnings")?.textContent ?? "", /Double-check the servings/);
   assert.equal((await store.read()).recipes.length, 1, "photo extraction remains a draft until a reviewed save");
@@ -385,7 +421,7 @@ test("UI completes week selection, swaps, moves, confirmation, cooking, sharing 
   const imported = (await store.read()).recipes.at(-1);
   assert.ok(imported);
   assert.equal((await store.read()).recipes.length, 2);
-  assert.equal(imported.image, "/images/pasta.jpg", "the recipe page is not used as the dish photo");
+  assert.equal(imported.image, dishPhoto, "the selected dish photo is saved with the imported recipe");
 
   Array.from(document.querySelectorAll(".collection-card")).at(-1)?.click();
   editRecipe();
@@ -404,8 +440,6 @@ test("UI completes week selection, swaps, moves, confirmation, cooking, sharing 
   assert.ok(updateUpload);
   Object.defineProperty(updateUpload, "files", { configurable: true, value: [new browser.File(["photo"], "updated-recipe.jpg", { type: "image/jpeg" })] });
   updateUpload.dispatchEvent(new browser.Event("change", { bubbles: true }));
-  await waitFor(() => !findButton("Read recipe with Copilot").disabled);
-  findButton("Read recipe with Copilot").click();
   await waitFor(() => !document.querySelector(".import-warnings")?.hidden);
   const updateReviewed = document.querySelector(".recipe-form > .check-field input");
   assert.ok(updateReviewed);
@@ -429,7 +463,7 @@ test("UI completes week selection, swaps, moves, confirmation, cooking, sharing 
   assert.ok(sourceAfterSearch);
   Object.defineProperty(sourceAfterSearch, "files", { configurable: true, value: [new browser.File(["photo"], "page.jpg", { type: "image/jpeg" })] });
   sourceAfterSearch.dispatchEvent(new browser.Event("change", { bubbles: true }));
-  await waitFor(() => !findButton("Read recipe with Copilot").disabled);
+  await waitFor(() => document.querySelector(".upload-status.is-success"));
   assert.ok((document.querySelector('img[alt="Recipe cover photo"]')?.getAttribute("src") ?? "").endsWith("/images/chicken.jpg"));
   assert.match(document.querySelector(".recipe-form .photo-credit")?.textContent ?? "", /Example photographer/);
   const imageReviewed = document.querySelector(".recipe-form > .check-field input");

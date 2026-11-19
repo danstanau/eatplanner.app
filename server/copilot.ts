@@ -77,8 +77,9 @@ export async function generatePlan(preferences: Preferences) {
   }
 }
 
-export async function extractRecipe(photo: Photo) {
+export async function extractRecipe(photo: Photo, signal: AbortSignal) {
   const auth = await requireCopilotAuth();
+  signal.throwIfAborted();
   const session = await client.createSession({
     model: process.env.COPILOT_VISION_MODEL || auth.model,
     tools: { availableTools: [] },
@@ -91,8 +92,14 @@ export async function extractRecipe(photo: Photo) {
     },
   });
   let completed = false;
+  let onAbort: (() => void) | undefined;
   try {
-    const result = await session.sendAndWait({
+    signal.throwIfAborted();
+    const cancelled = new Promise<never>((_resolve, reject) => {
+      onAbort = () => reject(signal.reason);
+      signal.addEventListener("abort", onAbort, { once: true });
+    });
+    const result = await Promise.race([cancelled, session.sendAndWait({
       prompt: [
         "Transcribe the recipe in this image. If no readable recipe is visible, return recipe=null and explain why in warnings. Never invent a recipe.",
         "Preserve ingredient amounts and every method step. Use metric units.",
@@ -106,10 +113,11 @@ export async function extractRecipe(photo: Photo) {
         "Pantry staples such as oil, spices, rice and pasta should have pantry=true.",
       ].join("\n"),
       attachments: [{ type: "blob", data: photo.data, mimeType: photo.mimeType, displayName: "recipe-photo" }],
-    }, extractionSchema, 120_000);
+    }, extractionSchema, 120_000)]);
     completed = true;
     return result;
   } finally {
+    if (onAbort) signal.removeEventListener("abort", onAbort);
     try { if (!completed) await session.abort(); } finally { await session.disconnect(); }
   }
 }

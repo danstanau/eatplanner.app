@@ -213,17 +213,18 @@ In **Recipes**, switch between Comfortable cards and Compact cards. Compact
 cards show more recipes at once; your layout choice is remembered in that
 browser.
 
-Use **Add recipe** to type a recipe manually or choose an image file or take a
-photo of its ingredients and method. The browser resizes the photo, then sends it to Copilot
-only when you press **Read recipe with Copilot**. The transcription fills an
-editable form and reports ambiguities. Nothing enters your library until you
-review the details, tick the review checkbox and save.
+Use **Add recipe** to type a recipe manually or select a photo of its ingredients
+and method. Selecting a recipe-page photo starts the import: the browser resizes
+it, sends it to Copilot and shows progress with a **Cancel reading** button.
+The transcription fills an editable draft and flags ambiguities. Nothing enters
+your library until you review the details, tick the review checkbox and save.
 Your recipes are added alongside the starter cards in the local household
 collection. This updates the current household's save file; the shipped starter
 file stays unchanged.
 
 The separate **Dish photo** section lets you choose an image file, take a photo
-of the finished dish, or search for a suitable image. The recipe-page photo is
+of the finished dish while the recipe is being read, or search for a suitable
+image once the draft is ready. The recipe-page photo is
 only used for transcription, not as the dish photo. JPEG, PNG, WebP and phone
 HEIC/HEIF photos are supported. If your browser cannot open a HEIC/HEIF photo,
 it is sent to this server for conversion before resizing; it is not saved there.

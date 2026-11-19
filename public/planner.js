@@ -19,6 +19,7 @@ let toastTimer;
 let loadSequence = 0;
 let shareUrl;
 let stripEntered = false;
+let disposeModal;
 
 function h(tag, options = {}, ...children) {
   const node = document.createElement(tag);
@@ -68,14 +69,15 @@ async function run(action, control) {
     notify(error instanceof Error ? error.message : "Something went wrong.", true);
   } finally { if (control) control.disabled = false; }
 }
-async function api(path, body, method) {
+async function api(path, body, method, signal) {
   const response = await fetch(`/api${path}`, {
     method: method ?? (body === undefined ? "GET" : "POST"),
     headers: body === undefined ? {} : { "Content-Type": "application/json" },
     body: body === undefined ? undefined : JSON.stringify(body),
-    signal: AbortSignal.timeout(150_000),
+    signal: requestDeadline(signal),
   });
   const value = await response.json();
+  signal?.throwIfAborted();
   if (response.status === 401) {
     window.location.assign(`/login?next=${encodeURIComponent(window.location.pathname + window.location.search)}`);
   }
@@ -85,6 +87,10 @@ async function api(path, body, method) {
     throw new Error([value.error || `Request failed (${response.status}).`, message].filter(Boolean).join(" "));
   }
   return value;
+}
+function requestDeadline(signal) {
+  const timeout = AbortSignal.timeout(150_000);
+  return signal ? AbortSignal.any([signal, timeout]) : timeout;
 }
 function heading(title, description) {
   return h("div", { className: "page-heading" },
@@ -124,12 +130,17 @@ function select(options, value) {
   return node;
 }
 function openModal(...content) {
+  clearModalWork();
   if (document.activeElement === editRecipeButton) closeModalButton.focus();
   editRecipeButton.hidden = true;
   editRecipeButton.onclick = null;
   modalContent.replaceChildren(...content.filter((item) => item !== null && item !== undefined));
   if (!modal.open) modal.showModal();
   modal.scrollTop = 0;
+}
+function clearModalWork() {
+  disposeModal?.();
+  disposeModal = undefined;
 }
 function readRoute() {
   const params = new URLSearchParams(window.location.search);
@@ -166,6 +177,7 @@ function writeRoute(route, replace = false) {
 function dismissRouteModal() {
   const route = readRoute();
   if (!route.recipe && !route.edit) return false;
+  clearModalWork();
   if (window.history.state?.plannerHasParent) {
     window.history.back();
   } else {
@@ -187,6 +199,7 @@ modal.addEventListener("cancel", (event) => {
   if (dismissRouteModal()) event.preventDefault();
 });
 modal.addEventListener("close", () => {
+  if (!modal.open) clearModalWork();
   if (shareUrl) { URL.revokeObjectURL(shareUrl); shareUrl = undefined; }
 });
 
@@ -838,13 +851,14 @@ async function shareWeek() {
     h("div", { className: "action-row" }, nativeShare, download), h("img", { className: "share-preview", src: shareUrl, alt: `Meal plan for ${weekLabel(week.week)}. ${week.meals.map((meal) => `${DAYS[meal.day]}: ${meal.recipe.title}`).join(". ")}` }));
 }
 
-async function preparePhoto(file) {
+async function preparePhoto(file, signal) {
   const isHeic = file && (/^image\/hei[cf](?:-sequence)?$/i.test(file.type) || /\.hei[cf]$/i.test(file.name));
   if (!file || (!file.type.startsWith("image/") && !isHeic)) throw new Error("Choose an image file.");
   if (file.size > 15_000_000) throw new Error("Choose a photo smaller than 15 MB.");
   let bitmap;
   try { bitmap = await createImageBitmap(file); }
   catch (error) {
+    signal?.throwIfAborted();
     if (!isHeic) {
       console.error(error);
       throw new Error("This photo format couldn't be opened. Try a JPEG, PNG, WebP or HEIC photo.");
@@ -853,16 +867,23 @@ async function preparePhoto(file) {
       method: "POST",
       headers: { "Content-Type": "application/octet-stream" },
       body: file,
-      signal: AbortSignal.timeout(150_000),
+      signal: requestDeadline(signal),
     });
     if (!response.ok) {
       const result = await response.json();
       throw new Error(result.error || `Photo conversion failed (${response.status}).`);
     }
-    try { bitmap = await createImageBitmap(await response.blob()); }
-    catch (conversionError) { console.error(conversionError); throw new Error("The converted photo couldn't be opened."); }
+    const converted = await response.blob();
+    signal?.throwIfAborted();
+    try { bitmap = await createImageBitmap(converted); }
+    catch (conversionError) {
+      signal?.throwIfAborted();
+      console.error(conversionError);
+      throw new Error("The converted photo couldn't be opened.");
+    }
   }
   try {
+    signal?.throwIfAborted();
     const scale = Math.min(1, 1600 / Math.max(bitmap.width, bitmap.height));
     const canvas = document.createElement("canvas");
     canvas.width = Math.max(1, Math.round(bitmap.width * scale));
@@ -882,9 +903,9 @@ function addRecipeDialog(existing, updateUrl = true) {
     writeRoute({ ...current, view: current.view === "week" ? "week" : "recipes", edit: existing ? "1" : "new" });
   }
   let image = existing?.image ?? "/images/pasta.jpg";
-  let prepared;
-  let preparing = false;
-  let extracting = false;
+  let reading;
+  let preparingDish = false;
+  let findingImage = false;
   const title = h("input", { required: true, maxLength: 100, placeholder: "Lemon chicken traybake", value: existing?.title ?? "" });
   const description = h("textarea", { rows: 2, required: true, maxLength: 400, placeholder: "One or two lines about the dish", value: existing?.description ?? "" });
   const category = select(CATEGORIES, existing?.category ?? "quick");
@@ -902,6 +923,12 @@ function addRecipeDialog(existing, updateUrl = true) {
   const recipePreview = h("img", { className: "upload-preview", alt: "Selected recipe page", hidden: true });
   const recipeFile = h("input", { type: "file", accept: "image/*,.heic,.heif", "aria-label": "Choose or take a photo of the recipe page" });
   const recipeStatus = h("p", { className: "muted upload-status", role: "status" });
+  const progress = h("progress", { "aria-label": "Recipe import in progress" });
+  const cancel = h("button", { type: "button", className: "button secondary", text: "Cancel reading", onClick: () => {
+    reading?.abort();
+    finishReading("Reading cancelled. Choose a photo to try again, or enter the recipe below.");
+  } });
+  const importActions = h("div", { className: "import-actions", hidden: true }, progress, cancel);
   const imagePreview = h("img", { className: "upload-preview", alt: "Recipe cover photo", src: image, hidden: !existing });
   const imageFile = h("input", { type: "file", accept: "image/*,.heic,.heif", "aria-label": "Choose or take a photo of the finished dish" });
   const imageStatus = h("p", { className: "muted upload-status", role: "status" });
@@ -916,21 +943,45 @@ function addRecipeDialog(existing, updateUrl = true) {
   };
   showPhotoCredit();
   function updatePhotoControls() {
-    const busy = preparing || extracting || findingImage;
-    recipeFile.disabled = busy;
-    imageFile.disabled = busy;
-    extract.disabled = busy || !prepared;
+    const busy = Boolean(reading) || preparingDish || findingImage;
+    recipeFile.disabled = Boolean(reading) || findingImage;
+    imageFile.disabled = preparingDish || findingImage;
     findImage.disabled = busy;
     save.disabled = busy;
+    for (const field of [title, description, category, protein, diet, servings, prep, cook, ingredients, steps, notes, reviewed]) {
+      field.disabled = Boolean(reading);
+    }
   }
-  const extract = button("Read recipe with Copilot", async () => {
-    if (!prepared) throw new Error("Take or choose a photo first.");
-    extracting = true;
+  function finishReading(message, success = false) {
+    reading = undefined;
+    recipeStatus.textContent = message;
+    recipeStatus.classList.toggle("is-success", success);
+    if (!success) recipePreview.hidden = true;
     updatePhotoControls();
-    reviewed.checked = false;
-    recipeStatus.textContent = "Reading your recipe. This can take up to two minutes...";
+    if (document.activeElement === cancel) recipeFile.focus();
+    importActions.hidden = true;
+  }
+  recipeFile.addEventListener("change", () => run(async () => {
+    const chosen = recipeFile.files?.[0];
+    if (!chosen || reading) return;
+    recipeFile.value = "";
+    const controller = new AbortController();
+    reading = controller;
+    const { signal } = controller;
+    updatePhotoControls();
+    recipePreview.hidden = true;
+    recipeStatus.classList.remove("is-success");
+    recipeStatus.textContent = "Preparing your recipe photo…";
+    importActions.hidden = false;
     try {
-      const result = await api("/recipes/extract", { data: prepared.split(",")[1], mimeType: "image/jpeg" });
+      const prepared = await preparePhoto(chosen, signal);
+      signal.throwIfAborted();
+      recipePreview.src = prepared;
+      recipePreview.hidden = false;
+      recipeStatus.textContent = "Reading ingredients and method with Copilot. This can take up to two minutes.";
+      const result = await api("/recipes/extract", { data: prepared.split(",")[1], mimeType: "image/jpeg" }, undefined, signal);
+      signal.throwIfAborted();
+      if (!modal.open || !form.isConnected) return;
       if (!result.recipe) throw new Error("No readable recipe was found. Try a clearer photo.");
       const recipe = result.recipe;
       title.value = recipe.title; description.value = recipe.description; category.value = recipe.category;
@@ -938,18 +989,18 @@ function addRecipeDialog(existing, updateUrl = true) {
       prep.value = recipe.prepMinutes; cook.value = recipe.cookMinutes;
       ingredients.value = recipe.ingredients.map((item) => `${item.quantity} | ${item.unit} | ${item.name}${item.pantry ? " | pantry" : ""}`).join("\n");
       steps.value = recipe.steps.join("\n"); notes.value = recipe.notes;
-      warnings.replaceChildren(h("strong", { text: "Please review the transcription." }),
-        h("ul", {}, ...result.warnings.map((warning) => h("li", { text: warning }))),
+      reviewed.checked = false;
+      warnings.replaceChildren(h("strong", { text: "Review before saving" }),
+        ...(result.warnings.length ? [h("ul", {}, ...result.warnings.map((warning) => h("li", { text: warning })))] : []),
         h("p", { text: "Compare quantities, units, dietary labels and method with your photo before saving." }));
       warnings.hidden = false;
-      recipeStatus.textContent = "Read successfully. Check the editable card below before saving.";
+      finishReading(`Draft ready: ${recipe.title}. Review the details below, then save to your collection.`, true);
     } catch (error) {
-      recipeStatus.textContent = "Photo import failed. You can try again or enter the recipe manually.";
+      if (signal.aborted || !modal.open || !form.isConnected) return;
+      finishReading("Couldn't read this photo. Try another image or enter the recipe below.");
       throw error;
-    } finally { extracting = false; updatePhotoControls(); }
-  }, "button secondary");
-  extract.disabled = true;
-  let findingImage = false;
+    }
+  }));
   const findImage = button("Find a photo with Copilot", async () => {
     if (findingImage) return;
     findingImage = true;
@@ -979,27 +1030,10 @@ function addRecipeDialog(existing, updateUrl = true) {
       updatePhotoControls();
     }
   }, "button secondary");
-  recipeFile.addEventListener("change", () => run(async () => {
-    const chosen = recipeFile.files?.[0];
-    if (!chosen) return;
-    preparing = true;
-    updatePhotoControls();
-    recipeStatus.textContent = "Preparing recipe photo...";
-    try {
-      prepared = await preparePhoto(chosen);
-      recipePreview.src = prepared;
-      recipePreview.hidden = false;
-      reviewed.checked = false;
-      recipeStatus.textContent = "Ready to read. Your photo is only sent to Copilot when you press Read recipe.";
-    } catch (error) {
-      recipeStatus.textContent = "Couldn't prepare the recipe photo. Your previous selection is unchanged.";
-      throw error;
-    } finally { preparing = false; updatePhotoControls(); }
-  }));
   imageFile.addEventListener("change", () => run(async () => {
     const chosen = imageFile.files?.[0];
     if (!chosen) return;
-    preparing = true;
+    preparingDish = true;
     updatePhotoControls();
     imageStatus.textContent = "Preparing dish photo...";
     try {
@@ -1012,15 +1046,15 @@ function addRecipeDialog(existing, updateUrl = true) {
     } catch (error) {
       imageStatus.textContent = "Couldn't prepare the dish photo. Your current image is unchanged.";
       throw error;
-    } finally { preparing = false; updatePhotoControls(); }
+    } finally { preparingDish = false; updatePhotoControls(); }
   }));
   const save = h("button", { type: "submit", className: "button", text: existing ? "Update this recipe" : "Save to my collection" });
   const form = h("form", { className: "recipe-form" },
     existing ? null : h("p", { className: "muted", text: "Other signed-in households can find recipes you add." }),
     h("div", { className: "recipe-photo-options" },
       h("section", { className: "upload-box" }, h("h3", { text: "Recipe page" }),
-        h("p", { className: "muted", text: "Choose an image or take a photo of the ingredients and method, or enter them manually below." }),
-        recipeFile, recipePreview, extract, recipeStatus),
+        h("p", { className: "muted", text: "Select a photo of the ingredients and method to start reading with Copilot, or enter them manually below." }),
+        recipeFile, recipeStatus, importActions, recipePreview),
       h("section", { className: "upload-box" }, h("h3", { text: "Dish photo" }),
         h("p", { className: "muted", text: "Choose an image or take a photo of the finished dish. This is separate from the recipe page." }),
         imageFile, imagePreview, photoCredit, findImage, imageStatus)),
@@ -1034,7 +1068,7 @@ function addRecipeDialog(existing, updateUrl = true) {
     h("div", { className: "form-bottom" }, h("span", { className: "muted", text: existing ? "This replaces the saved recipe." : "Saved to this household's recipe file." }), save));
   form.addEventListener("submit", (event) => {
     event.preventDefault();
-    if (extracting || preparing) return;
+    if (reading || preparingDish || findingImage) return;
     run(async () => {
       const content = {
         title: title.value, description: description.value, category: category.value, protein: protein.value, diet: diet.value,
@@ -1053,6 +1087,7 @@ function addRecipeDialog(existing, updateUrl = true) {
     }, save);
   });
   openModal(h("h2", { id: "modal-title", text: existing ? `Edit ${existing.title}` : "Add a recipe" }), form);
+  disposeModal = () => reading?.abort();
 }
 
 document.querySelector("#nav-weeks").addEventListener("click", () => run(showWeeks));
