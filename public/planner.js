@@ -405,7 +405,7 @@ function planningForm() {
       field("Recipe source", recipeScope),
       h("label", { className: "check-field" }, different, h("span", {}, h("strong", { text: "A different protein each dinner" }), h("small", { text: "No repeated primary protein in the week. Includes tofu, beans, eggs and cheese." }))),
       h("label", { className: "check-field" }, overlap, h("span", {}, h("strong", { text: "Some overlapping ingredients" }), h("small", { text: "Favour shared fresh ingredients, for a shorter shopping list and less waste." })))),
-    h("div", { className: "form-bottom" }, h("p", { className: "muted", text: "Planning uses the selected recipes and no Copilot allowance." }), submit));
+    h("div", { className: "form-bottom" }, submit));
   form.addEventListener("submit", (event) => {
     event.preventDefault();
     run(async () => {

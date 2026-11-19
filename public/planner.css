@@ -103,6 +103,7 @@
 .quick-pick { display: flex; align-items: center; flex-wrap: wrap; gap: 0 14px; color: var(--muted); font-size: var(--text-sm); }
 .form-bottom { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px 24px; padding-top: 24px; border-top: 1px solid var(--line); }
 .form-bottom .muted { max-width: 36ch; }
+.form-bottom > .button:only-child { margin-inline-start: auto; }
 
 /* A planned week: seven rows */
 .plan-status { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px 20px; margin-bottom: 20px; }
