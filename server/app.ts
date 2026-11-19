@@ -1,6 +1,7 @@
 import express, { type ErrorRequestHandler, type Response } from "express";
 import { fileURLToPath } from "node:url";
-import { randomUUID } from "node:crypto";
+import { randomBytes, randomUUID } from "node:crypto";
+import { readFile } from "node:fs/promises";
 import convertHeic from "heic-convert";
 import { z } from "zod";
 import { preferencesSchema, type MealPlan, type Preferences } from "./plan.js";
@@ -60,10 +61,12 @@ export function createApp(services: Services, store = new Store(), options: { al
   }
   app.disable("x-powered-by");
   app.use((_request, response, next) => {
+    const styleNonce = randomBytes(18).toString("base64");
+    response.locals.styleNonce = styleNonce;
     response.set({
       "X-Content-Type-Options": "nosniff",
       "Referrer-Policy": "no-referrer",
-      "Content-Security-Policy": "default-src 'self'; img-src 'self' data: blob:; style-src 'self'; script-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'",
+      "Content-Security-Policy": `default-src 'self'; img-src 'self' data: blob: https://images.unsplash.com; style-src 'self' 'nonce-${styleNonce}'; style-src-attr 'unsafe-inline'; script-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'`,
     });
     next();
   });
@@ -356,6 +359,10 @@ export function createApp(services: Services, store = new Store(), options: { al
   });
   app.use("/api", (_request, response) => {
     response.status(404).json({ error: "API endpoint not found." });
+  });
+  app.get(["/", "/index.html"], async (_request, response) => {
+    const html = await readFile(fileURLToPath(new URL("../public/build/index.html", import.meta.url)), "utf8");
+    response.type("html").send(html.replaceAll("__CSP_NONCE__", response.locals.styleNonce ?? ""));
   });
   app.use(express.static(fileURLToPath(new URL("../public/", import.meta.url))));
   const handleError: ErrorRequestHandler = (error: unknown, _request, response, _next) => {

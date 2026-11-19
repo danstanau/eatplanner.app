@@ -102,13 +102,19 @@ ALLOW_NETWORK_ACCESS=true
 
 `HOUSEHOLD_USERNAME` and `HOUSEHOLD_PASSWORD_HASH` are supplied by the setup
 command. Server startup fails if any login setting is missing or the hash is
-invalid. Public URLs must use HTTPS, even if `NODE_ENV` is not set. Build with `npm run build`, then run
-`npm start`. Keep Node bound to loopback when the proxy is on the same host;
+invalid. Public URLs must use HTTPS, even if `NODE_ENV` is not set. `npm run build`
+builds the Vite/React/Mantine client into `public/build/` and compiles the Express
+server into `dist/`; `npm start` serves both. Keep Node bound to loopback when the proxy is on the same host;
 set `HOST=0.0.0.0` only when your hosting platform requires it, and prevent direct
 public access to Node's HTTP port. The proxy should preserve the original
 request path and must not cache app responses. `APP_ORIGIN` is the canonical
 browser origin used for same-origin checks, so TLS termination needs no
 `trust proxy` setting.
+
+The client uses a per-response nonce for injected style blocks. Mantine also
+sets CSS custom properties on its controls, so the CSP separately permits
+inline style attributes with `style-src-attr`; scripts and style blocks remain
+restricted to self-hosted files and the response nonce.
 
 HTTP is allowed only for loopback development addresses; phone testing on your
 LAN also requires HTTPS. `NODE_ENV=production` requires HTTPS for all addresses.
@@ -276,10 +282,11 @@ data/recipes.json    Shared starter recipe collection; edit here and redeploy to
 data/household.json  Super admin recipes and weeks (default path, gitignored)
 data/households.json Household names, IDs and salted password hashes (default path, gitignored)
 data/households/     Per-household recipes and weeks, keyed by stable ID (default path, gitignored)
-public/             HTML, CSS, browser modules and local food photographs
-server/recipes.ts   Recipe, photo and extraction schemas
-server/planner.ts   Planning rules, alternatives, day moves and shopping aggregation
-server/store.ts     Serialized, atomic JSON persistence
+client/              React/Mantine application and Vite page entries
+public/              Shared CSS, fonts, built client assets and local food photographs
+server/recipes.ts    Recipe, photo and extraction schemas
+server/planner.ts    Planning rules, alternatives, day moves and shopping aggregation
+server/store.ts      Serialized, atomic JSON persistence
 server/households.ts Household registry and isolated data stores
 server/app.ts       Validated local HTTP API and static assets
 server/copilot.ts   Server-only Copilot SDK integration
@@ -315,11 +322,11 @@ multi-process database.
 ## Commands
 
 ```sh
-npm run dev     # Watch the server
+npm run dev     # Run Express and the Vite client with API proxying
 npm run auth:setup # Configure super admin credentials and app URL
-npm run check   # Type-check server
+npm run check   # Type-check server and client
 npm test       # Rule, HTTP, storage and UI tests; no paid AI calls
-npm run build  # Compile server into dist/
+npm run build  # Build client into public/build/ and server into dist/
 npm start      # Run compiled server; keep public/ and data/ alongside dist/
 ```
 

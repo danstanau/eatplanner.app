@@ -45,6 +45,17 @@ test("household login protects private pages and APIs, rotates sessions and sign
   for (const path of ["/login", "/login.js", "/theme.js", "/base.css", "/fonts/bricolage-grotesque.woff2", "/login.css", "/login-preview.svg", "/favicon.svg", "/apple-touch-icon.png"]) {
     assert.equal((await fetch(base + path)).status, 200);
   }
+  const loginPage = await fetch(`${base}/login`);
+  const loginHtml = await loginPage.text();
+  const loginCsp = loginPage.headers.get("content-security-policy") ?? "";
+  const loginNonce = loginCsp.match(/style-src 'self' 'nonce-([^']+)'/)?.[1];
+  assert.ok(loginNonce);
+  assert.match(loginCsp, /img-src 'self' data: blob: https:\/\/images\.unsplash\.com/);
+  assert.match(loginCsp, /style-src-attr 'unsafe-inline'/);
+  assert.ok(loginHtml.includes(`<meta name="csp-nonce" content="${loginNonce}">`));
+  const loginScript = loginHtml.match(/<script[^>]+src="([^"]+\.js)"/)?.[1];
+  assert.ok(loginScript?.startsWith("/build/"));
+  assert.equal((await fetch(`${base}${loginScript}`)).status, 200);
   assert.deepEqual(await (await fetch(`${base}/api/auth/session`)).json(), { enabled: true, authenticated: false });
   for (const path of ["/status", "/recipes", "/weeks"]) {
     assert.equal((await fetch(`${base}/api${path}`)).status, 401);
@@ -84,6 +95,12 @@ test("household login protects private pages and APIs, rotates sessions and sign
   const privatePage = await fetch(`${base}/`, { headers: { Cookie: cookie } });
   assert.equal(privatePage.status, 200);
   assert.equal(privatePage.headers.get("cache-control"), "no-store");
+  const privateHtml = await privatePage.text();
+  const privateCsp = privatePage.headers.get("content-security-policy") ?? "";
+  const privateNonce = privateCsp.match(/style-src 'self' 'nonce-([^']+)'/)?.[1];
+  assert.ok(privateNonce && privateNonce !== loginNonce);
+  assert.match(privateCsp, /style-src-attr 'unsafe-inline'/);
+  assert.ok(privateHtml.includes(`<meta name="csp-nonce" content="${privateNonce}">`));
   assert.equal((await fetch(`${base}/api/status`, { headers: { Cookie: cookie.slice(0, -1) } })).status, 401);
   const rotated = await login(credentials, { Cookie: cookie });
   const newCookie = (rotated.headers.get("set-cookie") ?? "").split(";")[0];

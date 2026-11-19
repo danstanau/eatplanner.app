@@ -1,6 +1,7 @@
 import { createHash, randomBytes, scrypt, timingSafeEqual } from "node:crypto";
 import express, { type Request } from "express";
 import { fileURLToPath } from "node:url";
+import { readFile } from "node:fs/promises";
 import { Households } from "./households.js";
 import { MAIN_HOUSEHOLD_ID } from "./recipes.js";
 
@@ -20,6 +21,7 @@ declare global {
   namespace Express {
     interface Locals {
       identity?: AuthIdentity;
+      styleNonce?: string;
     }
   }
 }
@@ -152,7 +154,7 @@ export function householdAuth(config?: AuthConfig, households = new Households()
     response.clearCookie(cookieName, cookieOptions);
     response.json({ authenticated: false });
   });
-  router.get("/login", (request, response) => {
+  router.get("/login", async (request, response) => {
     if (config && !secure) {
       const origin = new URL(config.publicOrigin);
       const loopback = ["localhost", "127.0.0.1", "[::1]"];
@@ -162,11 +164,12 @@ export function householdAuth(config?: AuthConfig, households = new Households()
       }
     }
     if (!config || response.locals.identity) { response.redirect("/"); return; }
-    response.sendFile(fileURLToPath(new URL("../public/login.html", import.meta.url)));
+    const html = await readFile(fileURLToPath(new URL("../public/build/login.html", import.meta.url)), "utf8");
+    response.type("html").send(html.replaceAll("__CSP_NONCE__", response.locals.styleNonce ?? ""));
   });
   router.use((request, response, next) => {
     const publicFiles = ["/login.js", "/login.css", "/login-preview.svg", "/theme.js", "/base.css", "/fonts/bricolage-grotesque.woff2", "/favicon.svg", "/apple-touch-icon.png"];
-    if (!config || response.locals.identity || publicFiles.includes(request.path)) { next(); return; }
+    if (!config || response.locals.identity || publicFiles.includes(request.path) || request.path.startsWith("/build/")) { next(); return; }
     if (request.path.startsWith("/api/")) {
       response.status(401).json({ error: "Please sign in to your household." });
     } else {
