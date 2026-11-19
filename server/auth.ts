@@ -15,18 +15,17 @@ function derivePassword(password: string, salt: string): Promise<Buffer> {
 }
 
 export async function hashPassword(password: string): Promise<string> {
-  if (password.length < 12 || password.length > 1024) throw new Error("Use a password between 12 and 1024 characters.");
+  if (password.length < 6 || password.length > 1024) throw new Error("Use a password between 6 and 1024 characters.");
   const salt = randomBytes(16).toString("hex");
   return `scrypt$${salt}$${(await derivePassword(password, salt)).toString("hex")}`;
 }
 
-export function readAuthConfig(env: NodeJS.ProcessEnv = process.env): AuthConfig | undefined {
+export function readAuthConfig(env: NodeJS.ProcessEnv = process.env): AuthConfig {
   const username = env.HOUSEHOLD_USERNAME?.trim();
   const passwordHash = env.HOUSEHOLD_PASSWORD_HASH;
   const publicOrigin = env.APP_ORIGIN;
-  if (!username && !passwordHash && !publicOrigin && env.NODE_ENV !== "production") return undefined;
   if (!username || !passwordHash || !publicOrigin) {
-    throw new Error("Set HOUSEHOLD_USERNAME, HOUSEHOLD_PASSWORD_HASH and APP_ORIGIN to enable household login. They are required in production.");
+    throw new Error("Household login is required. Run npm run auth:setup or set HOUSEHOLD_USERNAME, HOUSEHOLD_PASSWORD_HASH and APP_ORIGIN.");
   }
   if (username.length > 200 || /[\r\n]/.test(username)) throw new Error("HOUSEHOLD_USERNAME must be 1 to 200 characters on one line.");
   if (!/^scrypt\$[a-f0-9]{32}\$[a-f0-9]{128}$/.test(passwordHash)) {
@@ -37,6 +36,9 @@ export function readAuthConfig(env: NodeJS.ProcessEnv = process.env): AuthConfig
     throw new Error("APP_ORIGIN must be an HTTP(S) origin without a path, credentials, query or fragment.");
   }
   if (env.NODE_ENV === "production" && url.protocol !== "https:") throw new Error("APP_ORIGIN must use HTTPS in production.");
+  if (url.protocol !== "https:" && !["localhost", "127.0.0.1", "[::1]"].includes(url.hostname)) {
+    throw new Error("APP_ORIGIN must use HTTPS except for local development on localhost or loopback.");
+  }
   return { username, passwordHash, publicOrigin: url.origin };
 }
 
@@ -69,7 +71,7 @@ export function householdAuth(config?: AuthConfig) {
     if (config && secure) response.set("Strict-Transport-Security", "max-age=31536000");
     if (config && !["GET", "HEAD"].includes(request.method)) {
       if (request.get("origin") !== config.publicOrigin || request.get("sec-fetch-site") === "cross-site") {
-        response.status(403).json({ error: "Changes must be requested from this app." });
+        response.status(403).json({ error: `This request must come from ${config.publicOrigin}. Open that address, or update APP_ORIGIN and restart the server.` });
         return;
       }
     }
@@ -121,11 +123,19 @@ export function householdAuth(config?: AuthConfig) {
     response.json({ authenticated: false });
   });
   router.get("/login", (request, response) => {
+    if (config && !secure) {
+      const origin = new URL(config.publicOrigin);
+      const loopback = ["localhost", "127.0.0.1", "[::1]"];
+      if (loopback.includes(origin.hostname) && loopback.includes(request.hostname) && request.get("host") !== origin.host) {
+        response.redirect(`${config.publicOrigin}${request.originalUrl}`);
+        return;
+      }
+    }
     if (!config || authenticated(request)) { response.redirect("/"); return; }
     response.sendFile(fileURLToPath(new URL("../public/login.html", import.meta.url)));
   });
   router.use((request, response, next) => {
-    const publicFiles = ["/login.js", "/login.css", "/base.css", "/design.css", "/favicon.svg"];
+    const publicFiles = ["/login.js", "/login.css", "/login-preview.svg", "/base.css", "/fonts/bricolage-grotesque.woff2", "/favicon.svg", "/apple-touch-icon.png"];
     if (!config || authenticated(request) || publicFiles.includes(request.path)) { next(); return; }
     if (request.path.startsWith("/api/")) {
       response.status(401).json({ error: "Please sign in to your household." });

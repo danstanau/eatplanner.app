@@ -5,18 +5,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Sign in - eatplanner.app</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <meta name="theme-color" content="#f4f6f5" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#0e1426" media="(prefers-color-scheme: dark)">
     <link rel="stylesheet" href="/base.css">
-    <link rel="stylesheet" href="/design.css">
     <link rel="stylesheet" href="/login.css">
     <script type="module" src="/login.js"></script>
   </head>
   <body>
+    <div class="planner-preview" aria-hidden="true">
+      <img src="/login-preview.svg" alt="" width="1440" height="1000">
+      <span class="preview-caption">An example week on eatplanner</span>
+    </div>
     <main>
-      <a class="brand" href="/">eatplanner<span>.app</span></a>
-      <h1>Welcome to your kitchen.</h1>
-      <p>Sign in with your shared household login.</p>
+      <a class="brand" href="/"><img src="/favicon.svg" alt="" width="64" height="64">eatplanner<span>.app</span></a>
+      <h1>Sign in</h1>
+      <p>Use your household's shared login.</p>
       <form id="login">
-        <label class="field">Username<input name="username" autocomplete="username" required maxlength="200"></label>
+        <label class="field">Household name<input name="username" autocomplete="username" required maxlength="200"></label>
         <label class="field">Password<input name="password" type="password" autocomplete="current-password" required maxlength="1024"></label>
         <p id="login-error" role="alert" hidden></p>
         <button class="button" type="submit">Sign in</button>

@@ -10,10 +10,13 @@ Requires Node.js **26** and npm. If you use nvm, run `nvm use` to select the pro
 
 ```sh
 npm install
+npm run auth:setup
 npm run dev
 ```
 
-Open **http://127.0.0.1:3000**. Browsing, planning, swapping, shopping lists,
+During setup, accept `stanfield` as the household name, enter
+`http://127.0.0.1:3000` as the app URL, and choose a shared password.
+Open **http://127.0.0.1:3000** and sign in. Browsing, planning, swapping, shopping lists,
 manual recipe entry and sharing all work **without an AI subscription or API key**.
 
 To read recipe photos, install the Copilot CLI if needed and sign in:
@@ -45,22 +48,25 @@ Wikimedia Commons.
 
 ## Shared household login and hosting
 
-The built-in login uses one shared username and password for everyone in your
-household. No external authentication service is needed. To enable it, run:
+The app supports one household, with a shared name and password for its members.
+There is no public sign-up or way to join without the password. No external
+authentication service is needed. To configure access, run:
 
 ```sh
 npm run auth:setup
 ```
 
-Enter a username, the URL you will use to access the app, and a password of at
-least 12 characters. Password entry is hidden. The command saves the username,
+Accept `stanfield` as the household name (or choose another name), enter the URL
+you will use to access the app, and choose a password of at least 6 characters.
+Short, simple passwords are easier to guess, especially on a public site. Share the
+password only with household members. Password entry is hidden. The command saves the name,
 a randomly salted scrypt password hash, and `APP_ORIGIN` in the gitignored
 `.env` file; it never saves the plaintext password. Restart the server after
 setup. Use the same command to change credentials; restarting also signs out
 existing sessions.
 
 The planner, recipes, local photos and all planning/photo/AI APIs require login
-when configured. **Sign out** ends the current browser session. Sessions expire
+at all times. **Sign out** ends the current browser session. Sessions expire
 after seven days, are kept only in server memory, and end when the server
 restarts. Use one server process; no session database is required. Cookies are
 HTTP-only and SameSite=Strict, with Secure cookies for HTTPS. Login attempts are
@@ -77,8 +83,8 @@ ALLOW_NETWORK_ACCESS=true
 ```
 
 `HOUSEHOLD_USERNAME` and `HOUSEHOLD_PASSWORD_HASH` are supplied by the setup
-command. Production startup fails if any login setting is missing, the hash is
-invalid, or the public URL is not HTTPS. Build with `npm run build`, then run
+command. Server startup fails if any login setting is missing or the hash is
+invalid. Public URLs must use HTTPS, even if `NODE_ENV` is not set. Build with `npm run build`, then run
 `npm start`. Keep Node bound to loopback when the proxy is on the same host;
 set `HOST=0.0.0.0` only when your hosting platform requires it, and prevent direct
 public access to Node's HTTP port. The proxy should preserve the original
@@ -86,11 +92,11 @@ request path and must not cache app responses. `APP_ORIGIN` is the canonical
 browser origin used for same-origin checks, so TLS termination needs no
 `trust proxy` setting.
 
-For phone testing on your LAN, you can instead use an HTTP URL such as
-`http://192.168.4.33:3000`, with `HOST=0.0.0.0` and
-`ALLOW_NETWORK_ACCESS=true`. This is development-only: HTTP sends passwords and
-session cookies unencrypted. Without any login settings, non-production local
-development remains accessible without login; do not expose that mode online.
+HTTP is allowed only for loopback development addresses; phone testing on your
+LAN also requires HTTPS. `NODE_ENV=production` requires HTTPS for all addresses.
+For local HTTP development, visiting sign-in through another loopback name
+(such as `localhost` instead of `127.0.0.1`) redirects to `APP_ORIGIN` so the
+login and session cookies use the same address.
 Persist and back up `data/household.json` on your host, and keep `.env` private.
 
 ## The weekly flow

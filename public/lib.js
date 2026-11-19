@@ -23,7 +23,9 @@ export function dateLabel(key, options = { day: "numeric", month: "short" }) {
 }
 
 export function weekLabel(key) {
-  return `${dateLabel(key)} - ${dateLabel(addDays(key, 6), { day: "numeric", month: "short", year: "numeric" })}`;
+  const end = addDays(key, 6);
+  const sameMonth = key.slice(0, 7) === end.slice(0, 7);
+  return `${dateLabel(key, sameMonth ? { day: "numeric" } : undefined)}\u2013${dateLabel(end, { day: "numeric", month: "short", year: "numeric" })}`;
 }
 
 export function quantity(value) {

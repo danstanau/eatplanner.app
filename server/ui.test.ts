@@ -118,7 +118,7 @@ test("UI completes week selection, swaps, moves, confirmation, cooking, sharing 
   // @ts-expect-error The actual browser entrypoint intentionally ships as JavaScript.
   await import("../public/planner.js");
   assert.equal(document.querySelector("#add-recipe")?.parentElement?.tagName, "NAV");
-  await waitFor(() => document.querySelectorAll(".week-card").length === 10);
+  await waitFor(() => document.querySelectorAll(".week-card").length === 6);
   assert.equal(document.querySelector("#sign-out")?.hasAttribute("hidden"), true);
   findButton("Plan this week").click();
   assert.equal(new URL(browser.location.href).searchParams.get("view"), "week");
@@ -164,7 +164,7 @@ test("UI completes week selection, swaps, moves, confirmation, cooking, sharing 
   move.dispatchEvent(new browser.Event("change", { bubbles: true }));
   await waitFor(() => document.querySelectorAll(".day-card")[6].querySelector(".recipe-open"));
   assert.equal(document.querySelectorAll(".recipe-open").length, 3);
-  findButton("Confirm this week").click();
+  findButton("Lock in this week").click();
   await waitFor(() => document.querySelector("#shopping"));
   assert.equal(document.querySelectorAll(".meal-actions").length, 0);
   assert.ok(document.querySelector(".shopping-text")?.value.includes("\n"));
@@ -257,13 +257,13 @@ test("UI completes week selection, swaps, moves, confirmation, cooking, sharing 
   await waitFor(() => document.querySelector(".share-preview"));
   assert.ok(document.querySelector("a[download]")?.getAttribute("download")?.endsWith(".png"));
   assert.ok(drawing.some((text) => text.includes("Locked in")));
-  assert.ok(drawing.includes("MONDAY"));
-  assert.ok(drawing.includes("SUNDAY"));
+  assert.ok(drawing.includes("Monday"));
+  assert.ok(drawing.includes("Sunday"));
   document.querySelector("#close-modal")?.click();
   await waitFor(() => !document.querySelector("dialog")?.open && Boolean([...document.querySelectorAll("button")].find((item) => item.textContent?.includes("All weeks"))));
   findButton("All weeks").click();
-  await waitFor(() => document.querySelector(".week-card.current"));
-  const dayMarks = [...document.querySelectorAll(".week-card.current .mini-days span")].map((item, index) => item.classList.contains("filled") ? index : -1).filter((index) => index >= 0);
+  await waitFor(() => document.querySelector(".week-strip .filled"));
+  const dayMarks = [...document.querySelectorAll(".week-strip .strip-cell")].map((item, index) => item.classList.contains("filled") ? index : -1).filter((index) => index >= 0);
   assert.deepEqual(dayMarks, [1, 2, 6]);
 
   document.querySelector("#nav-recipes")?.click();
@@ -297,7 +297,7 @@ test("UI completes week selection, swaps, moves, confirmation, cooking, sharing 
   assert.ok(document.querySelector(".recipe-form"), document.querySelector("#modal-content")?.textContent);
   assert.match(document.querySelector(".form-bottom")?.textContent ?? "", /Saved to this household's recipe file/);
   editor("Recipe name").value = "Our family pasta";
-  editor("A little description").value = "A quick family favourite.";
+  editor("Description").value = "A quick family favourite.";
   editor("Ingredients").value = "200 | bag | pasta";
   editor("Method").value = "Cook pasta according to its packet.";
   const reviewed = document.querySelector(".recipe-form > .check-field input");
@@ -362,7 +362,7 @@ test("UI completes week selection, swaps, moves, confirmation, cooking, sharing 
   const updateReviewed = document.querySelector(".recipe-form > .check-field input");
   assert.ok(updateReviewed);
   updateReviewed.checked = true;
-  editor("A little description").value = "Updated from the photographed family recipe.";
+  editor("Description").value = "Updated from the photographed family recipe.";
   findButton("Update this recipe").click();
   await waitFor(() => !document.querySelector("dialog")?.open);
   const updated = (await store.read()).recipes.at(-1);

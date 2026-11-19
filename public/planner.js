@@ -5,20 +5,11 @@ const modal = document.querySelector("#modal");
 const modalContent = document.querySelector("#modal-content");
 const toast = document.querySelector("#toast");
 const state = { view: "weeks", recipes: [], summaries: [], weekKey: mondayFor(today()), week: null };
-const SHARE_PALETTE = {
-  paper: "#f3efe4",
-  forest: "#203f32",
-  ink: "#203b30",
-  cream: "#fffdf7",
-  green: "#49644a",
-  muted: "#59695b",
-  line: "#ded8c8",
-  saffron: "#c2943c",
-  terracotta: "#9c4c31",
-};
+const SHARE_PALETTE = { enamel: "#f4f6f5", white: "#ffffff", blue: "#1b3fa0", ink: "#131c3a", muted: "#4a5470", line: "#d3d9e4" };
 let toastTimer;
 let loadSequence = 0;
 let shareUrl;
+let stripEntered = false;
 
 function h(tag, options = {}, ...children) {
   const node = document.createElement(tag);
@@ -91,6 +82,7 @@ function heading(title, description) {
     h("h1", { text: title }),
     description ? h("p", { className: "lede", text: description }) : null);
 }
+function dinners(count) { return `${count} ${count === 1 ? "dinner" : "dinners"}`; }
 function tag(text, extra = "") { return h("span", { className: `tag ${extra}`, text }); }
 function hasImageCredit(credit) {
   return credit &&
@@ -102,9 +94,9 @@ function photoCreditParts(credit) {
   const creator = h("a", { href: credit.creatorUrl ?? credit.sourceUrl, target: "_blank", rel: "noreferrer", text: credit.creator });
   if (credit.creatorUrl) {
     return ["Photo by ", creator, " on ", h("a", { href: credit.sourceUrl, target: "_blank", rel: "noreferrer", text: "Unsplash" }),
-      " · ", h("a", { href: credit.licenseUrl, target: "_blank", rel: "noreferrer", text: "Unsplash licence" })];
+      " (", h("a", { href: credit.licenseUrl, target: "_blank", rel: "noreferrer", text: "Unsplash licence" }), ")"];
   }
-  return ["Photo by ", creator, ` · ${credit.license} `, h("a", { href: credit.licenseUrl, target: "_blank", rel: "noreferrer", text: "licence" })];
+  return ["Photo by ", creator, `, ${credit.license} `, h("a", { href: credit.licenseUrl, target: "_blank", rel: "noreferrer", text: "licence" })];
 }
 function field(label, input, help) {
   return h("label", { className: "field" }, h("span", { text: label }), input, help ? h("small", { text: help }) : null);
@@ -198,33 +190,59 @@ async function showWeeks(updateUrl = true) {
   renderWeeks();
 }
 function renderWeeks() {
-  const current = mondayFor(today());
+  const now = today();
+  const current = mondayFor(now);
   const keys = new Set(state.summaries.map((week) => week.week));
-  for (let offset = -2; offset <= 7; offset++) keys.add(addDays(current, offset * 7));
+  for (let offset = -2; offset <= 4; offset++) keys.add(addDays(current, offset * 7));
+  keys.delete(current);
   const datePicker = h("input", { type: "date", value: current, "aria-label": "Choose any date in a week" });
   datePicker.addEventListener("change", () => { if (datePicker.value) run(() => openWeek(mondayFor(datePicker.value))); });
-  const hero = h("section", { className: "hero" },
-    h("div", { className: "hero-copy" },
-      heading("Dinner, sorted for the week.", "Choose the nights that need a plan. Leave the rest open."),
-      h("div", { className: "hero-actions" }, button("Plan this week \u2192", () => openWeek(current)), h("span", { text: "Pick your days. We'll find the dishes." }))),
-    h("div", { className: "hero-art" },
-      h("img", { src: "/images/salad.jpg", alt: "A colourful bowl of fresh vegetables photographed from above" }),
-      h("div", { className: "hero-note" }, h("span", { text: "THIS WEEK AT HOME" }), h("p", { text: "Good dinners,\nwithout the daily debate." }))));
-  const grid = h("div", { className: "week-grid" });
-  [...keys].sort().forEach((key) => {
-    const saved = state.summaries.find((week) => week.week === key);
-    const title = key === current ? "This week" : key === addDays(current, 7) ? "Next week" : dateLabel(key, { month: "long", day: "numeric" });
-    const card = button("", () => openWeek(key), `week-card ${key === current ? "current" : ""}`);
-    card.append(
-      h("div", { className: "week-card-top" }, h("span", { className: "week-label", text: title }), tag(saved ? saved.status === "confirmed" ? "Locked in" : "Draft" : "A fresh page", saved?.status === "confirmed" ? "green" : "")),
-      h("p", { className: "week-date", text: weekLabel(key) }),
-      h("div", { className: "mini-days" }, ...DAYS.map((day, index) => h("span", { className: saved?.days.includes(index) ? "filled" : "", text: day[0], "aria-hidden": "true" }))),
-      h("p", { className: "week-preview", text: saved ? `${saved.count} dinners \u00b7 ${saved.titles.slice(0, 2).join(" / ")}${saved.count > 2 ? "..." : ""}` : "Something delicious could happen here." }),
-      h("span", { className: "card-link", text: saved ? "Open your week \u2197" : "Start planning \u2197" }));
-    grid.append(card);
+  const thisWeek = state.summaries.find((week) => week.week === current);
+  const strip = h("ol", { className: stripEntered ? "week-strip" : "week-strip is-entering" });
+  stripEntered = true;
+  DAYS.forEach((day, index) => {
+    const date = addDays(current, index);
+    const at = thisWeek ? thisWeek.days.indexOf(index) : -1;
+    const cell = h("li", { className: ["strip-cell", at >= 0 ? "filled" : "", date === now ? "is-today" : "", date < now ? "is-past" : ""].filter(Boolean).join(" ") },
+      h("div", { className: "strip-day" }, h("strong", { text: day.slice(0, 3) }), h("span", { text: dateLabel(date, { day: "numeric" }) }),
+        date === now ? h("span", { className: "strip-today", text: "Today" }) : null));
+    if (at >= 0) {
+      const meal = button("", () => openWeek(current), "strip-meal");
+      if (thisWeek.images?.[at]) meal.append(h("img", { src: thisWeek.images[at], alt: "", loading: "lazy" }));
+      meal.append(h("span", { text: thisWeek.titles[at] }));
+      cell.append(meal);
+    } else if (thisWeek) cell.append(h("span", { className: "strip-empty", text: "Night off" }));
+    strip.append(cell);
   });
+  const hero = h("section", { className: "this-week" },
+    h("div", { className: "this-week-head" },
+      heading("This week", thisWeek
+        ? `${dinners(thisWeek.count)}, ${weekLabel(current)}. ${thisWeek.status === "confirmed" ? "Locked in." : "Still a draft."}`
+        : `${weekLabel(current)}. Nothing planned yet.`),
+      h("div", { className: "this-week-actions" },
+        thisWeek ? null : h("p", { className: "muted", text: `Pick the nights. Dinners come from your ${state.recipes.length} recipes.` }),
+        button(thisWeek ? "Open this week" : "Plan this week", () => openWeek(current)))),
+    strip);
+  const weekRow = (key) => {
+    const saved = state.summaries.find((week) => week.week === key);
+    const name = key === addDays(current, 7) ? "Next week" : key === addDays(current, -7) ? "Last week" : null;
+    const card = button("", () => openWeek(key), saved ? "week-card" : "week-card is-open");
+    card.append(...[
+      h("span", { className: "week-label", text: name ?? weekLabel(key) }),
+      name ? h("span", { className: "week-date", text: weekLabel(key) }) : null,
+      h("span", { className: "mini-days", "aria-hidden": "true" }, ...DAYS.map((day, index) => h("span", { className: saved?.days.includes(index) ? "filled" : "", text: day[0] }))),
+      h("span", { className: "week-preview", text: saved ? `${dinners(saved.count)}: ${saved.titles.join(", ")}` : "Nothing planned" }),
+      h("span", { className: "week-status" }, saved ? tag(saved.status === "confirmed" ? "Locked in" : "Draft", saved.status === "confirmed" ? "green" : "draft") : "Plan"),
+    ].filter(Boolean));
+    return card;
+  };
+  const upcoming = [...keys].filter((key) => key > current).sort();
+  const earlier = [...keys].filter((key) => key < current).sort().reverse();
   view.replaceChildren(hero, h("section", { className: "weeks-section" },
-    h("div", { className: "section-bar" }, h("div", {}, h("h2", { text: "Your weeks, your rhythm." })), field("Jump to a week", datePicker)), grid));
+    h("div", { className: "section-bar" }, h("h2", { text: "Coming up" }), field("Jump to a week", datePicker)),
+    h("div", { className: "week-list" }, ...upcoming.map(weekRow)),
+    h("h3", { text: "Earlier" }),
+    h("div", { className: "week-list" }, ...earlier.map(weekRow))));
 }
 
 async function openWeek(key, updateUrl = true) {
@@ -255,12 +273,10 @@ function planningForm() {
   const count = h("p", { className: "selection-count" });
   const submit = h("button", { type: "submit", className: "button", text: "Start planning" });
   function updateDays() {
-    count.textContent = `${selected.size} ${selected.size === 1 ? "dinner" : "dinners"} to look forward to`;
+    count.textContent = `${dinners(selected.size)} to plan`;
     submit.textContent = existing
-      ? `Replan ${selected.size} ${selected.size === 1 ? "dinner" : "dinners"} \u2192`
-      : Number(weeksCount.value) === 1
-        ? `Start planning ${selected.size} ${selected.size === 1 ? "dinner" : "dinners"} \u2192`
-        : `Plan ${weeksCount.value} weeks \u2192`;
+      ? `Replan ${dinners(selected.size)}`
+      : Number(weeksCount.value) === 1 ? `Plan ${dinners(selected.size)}` : `Plan ${weeksCount.value} weeks`;
     submit.disabled = selected.size === 0;
     [...dayList.children].forEach((item, index) => { item.setAttribute("aria-pressed", String(selected.has(index))); });
   }
@@ -273,7 +289,7 @@ function planningForm() {
     dayList.lastChild.append(h("span", { text: day.slice(0, 3) }), h("strong", { text: dateLabel(addDays(state.weekKey, index), { day: "numeric" }) }), h("span", { className: "day-check", text: "\u2713", "aria-hidden": "true" }));
     dayList.lastChild.setAttribute("aria-label", `Plan dinner for ${day}`);
   });
-  const quickPick = h("div", { className: "quick-pick" }, h("span", { text: "Quick pick:" }),
+  const quickPick = h("div", { className: "quick-pick" }, h("span", { text: "Quick pick" }),
     ...[3, 5, 7].map((number) => button(`${number} dinners`, () => {
       selected.clear();
       for (let i = 0; i < number; i++) selected.add(i);
@@ -284,13 +300,13 @@ function planningForm() {
       h("h2", { text: "Which nights are we cooking?" }), h("p", { className: "muted", text: "Tap the days you need dinner. Leave space for leftovers and nights out." }),
       dayList, h("div", { className: "day-picker-footer" }, count, quickPick),
       existing ? null : field("Plan ahead", weeksCount, "Use these cooking nights and house rules for each week.")),
-    h("div", { className: "form-section" },
+    h("div", { className: "form-section" }, h("h2", { text: "Who's eating, and how?" }),
       h("div", { className: "form-grid" }, field("Adults", adults), field("Children", children)),
       h("p", { className: "muted", text: "Plan for 1 to 12 people in total. Each adult and child counts as one serving; adjust portions to suit your household." }),
       h("div", { className: "form-grid" }, field("How we eat", diet), field("Total time per meal", time)),
       h("label", { className: "check-field" }, different, h("span", {}, h("strong", { text: "A different protein each dinner" }), h("small", { text: "No repeated primary protein in the week. Includes tofu, beans, eggs and cheese." }))),
       h("label", { className: "check-field" }, overlap, h("span", {}, h("strong", { text: "Some overlapping ingredients" }), h("small", { text: "Favour shared fresh ingredients, for a shorter shopping list and less waste." })))),
-    h("div", { className: "form-bottom" }, h("p", { className: "muted", text: "Picked from your recipe collection. No AI credits needed." }), submit));
+    h("div", { className: "form-bottom" }, h("p", { className: "muted", text: "Dinners are picked from your recipes. This uses no Copilot allowance." }), submit));
   form.addEventListener("submit", (event) => {
     event.preventDefault();
     run(async () => {
@@ -306,7 +322,7 @@ function planningForm() {
         : (await api("/weeks/plan", { ...planning, startWeek: key, count }))[0];
       if (modalContent.contains(form)) modal.close();
       if (state.view === "week" && state.weekKey === key) { state.week = next; renderWeek(); }
-      notify(count === 1 ? "Your draft is ready. Swap anything you don't fancy." : `Your next ${count} weeks are ready. Swap anything you don't fancy.`);
+      notify(count === 1 ? "Draft ready. Swap anything you don't fancy." : `${count} weeks drafted. Swap anything you don't fancy.`);
     }, submit);
   });
   updateDays();
@@ -321,31 +337,31 @@ function peopleLabel(week) {
 function renderWeek() {
   const week = state.week;
   const locked = week?.status === "confirmed";
-  const actions = h("div", { className: "action-row" }, button("\u2190 All weeks", () => showWeeks(), "text-button"));
-  if (week) actions.append(button("Share week \u2197", shareWeek, "button secondary small"));
-  const title = heading(weekLabel(state.weekKey), week ? `${week.meals.length} dinners \u00b7 ${peopleLabel(week)} \u00b7 ${locked ? "Confirmed and locked in" : "A draft to make your own"}` : "Choose the nights. Set a few rules. Find your weeknight rhythm.");
+  const actions = h("div", { className: "action-row" }, button("All weeks", () => showWeeks(), "text-button"));
+  if (week) actions.append(button("Share week", shareWeek, "button secondary small"));
+  const title = heading(weekLabel(state.weekKey), week ? `${dinners(week.meals.length)} for ${peopleLabel(week)}.` : "Choose the nights that need dinner, then set a few rules.");
   if (!week) {
     view.replaceChildren(actions, title, planningForm());
     return;
   }
   const statusBar = h("div", { className: `plan-status ${locked ? "locked" : ""}` },
-    h("div", {}, tag(locked ? "\u2713 Locked in" : "Draft plan", locked ? "green" : ""), h("span", { text: locked ? "Your dinners and shopping quantities are saved for this week." : "Nothing is set in stone. Swap a dish, move a day, then make it official." })),
-    locked ? button("Unlock to edit", unlockWeek, "text-button") : button("Change planning rules", () => openModal(h("h2", { id: "modal-title", text: "A little change of plan" }), planningForm()), "text-button"));
+    h("div", {}, tag(locked ? "Locked in" : "Draft", locked ? "green" : "draft"), h("span", { text: locked ? "Dinners and shopping quantities are saved for this week." : "Swap a dinner or move it to another night, then lock the week in." })),
+    locked ? button("Unlock to edit", unlockWeek, "text-button") : button("Change planning rules", () => openModal(h("h2", { id: "modal-title", text: "Change planning rules" }), planningForm()), "text-button"));
   const grid = h("div", { className: "meal-grid" });
   DAYS.forEach((day, index) => {
     const meal = week.meals.find((item) => item.day === index);
     const date = addDays(week.week, index);
     const card = h("article", { className: `day-card ${meal ? "" : "day-off"} ${date === today() ? "today-card" : ""}` },
-      h("div", { className: "day-card-heading" }, h("strong", { text: day }), h("span", { text: `${date === today() ? "Today \u00b7 " : ""}${dateLabel(date, { day: "numeric", month: "short" })}` })));
+      h("div", { className: "day-card-heading" }, h("strong", { text: day }), h("span", { text: `${date === today() ? "Today, " : ""}${dateLabel(date, { day: "numeric", month: "short" })}` })));
     if (!meal) {
-      card.append(h("div", { className: "off-content" }, h("span", { className: "off-mark", text: "\u2014" }), h("h3", { text: "A night off." }), h("p", { text: "Leftovers, a favourite takeaway,\nor something spontaneous." })));
+      card.append(h("div", { className: "off-content" }, h("h3", { text: "Night off" }), h("p", { text: "Leftovers, takeaway, or whatever happens." })));
     } else {
       const recipe = meal.recipe;
       const open = button("", () => showRecipe(recipe, week.people, week.week, index), "recipe-open");
       open.append(h("img", { src: recipe.image, alt: recipe.title, loading: "lazy", className: "meal-photo" }),
         h("div", { className: "meal-copy" }, h("div", { className: "recipe-meta" }, tag(PROTEINS[recipe.protein]), h("span", { text: `${recipe.prepMinutes + recipe.cookMinutes} min` })), h("h3", { text: recipe.title }), h("p", { text: CATEGORIES[recipe.category] }),
-          meal.cooked ? h("span", { className: "tag green meal-completion" }, "\u2713 Cooked!")
-            : h("span", { className: "card-link", text: locked ? "Let's cook \u2192" : "Read recipe \u2192" })));
+          meal.cooked ? h("span", { className: "tag green meal-completion", text: "Cooked" })
+            : h("span", { className: "card-link", text: locked ? "Let's cook" : "Read recipe" })));
       card.append(open);
       if (!locked) {
         const move = select(Object.fromEntries(DAYS.map((name, dayIndex) => [dayIndex, `Move to ${name}`])), index);
@@ -353,21 +369,21 @@ function renderWeek() {
         move.addEventListener("change", () => run(async () => {
           try {
             await mutateWeek("move", { from: index, to: Number(move.value) });
-            notify("Days updated. Meals exchange places when both days are occupied.");
+            notify("Dinner moved. Two dinners trade places when both nights are taken.");
           } finally {
             if (move.isConnected) move.value = String(index);
           }
         }, move));
-        card.append(h("div", { className: "meal-actions" }, button("\u21bb Swap", () => swapDialog(index), "text-button"), move));
+        card.append(h("div", { className: "meal-actions" }, button("Swap", () => swapDialog(index), "text-button"), move));
       }
     }
     grid.append(card);
   });
   const bottom = locked ? shoppingPanel(week) : h("div", { className: "confirm-bar" },
-    h("div", {}, h("h2", { text: "Looks like a delicious week." }), h("p", { text: "Confirm to lock it in and bring your shopping list together." })),
-    button("Confirm this week \u2713", async () => {
+    h("div", {}, h("h2", { text: "Happy with this week?" }), h("p", { text: "Lock it in to build one shopping list for all of it." })),
+    button("Lock in this week", async () => {
       await mutateWeek("confirm");
-      notify("Locked in. Your combined shopping list is ready.");
+      notify("Locked in. Your shopping list is ready.");
       document.querySelector("#shopping")?.scrollIntoView({ behavior: "smooth", block: "start" });
     }));
   view.replaceChildren(actions, title, statusBar, grid, bottom);
@@ -378,9 +394,9 @@ async function mutateWeek(action, body = {}) {
   if (state.view === "week" && state.weekKey === key) { state.week = week; renderWeek(); }
 }
 async function unlockWeek() {
-  if (!window.confirm("Unlock this week? Its shopping list will be rebuilt when you confirm again.")) return;
+  if (!window.confirm("Unlock this week? Its shopping list is rebuilt when you lock it in again.")) return;
   await mutateWeek("unlock");
-  notify("Week unlocked. Confirm again after making your changes.");
+  notify("Unlocked. Lock the week in again after your changes.");
 }
 async function swapDialog(day) {
   const key = state.weekKey;
@@ -391,16 +407,16 @@ async function swapDialog(day) {
     if (state.weekKey !== key || state.week.revision !== revision) throw new Error("The week changed. Reopen the swap picker.");
     await mutateWeek("swap", { day, recipeId });
     modal.close();
-    notify("A fresh idea for dinner.");
+    notify("Dinner swapped.");
   };
   recipes.forEach((recipe) => {
     const choice = button("", () => replace(recipe.id), "swap-choice");
-    choice.append(h("img", { src: recipe.image, alt: "", loading: "lazy" }), h("div", {}, h("strong", { text: recipe.title }), h("p", { text: `${PROTEINS[recipe.protein]} \u00b7 ${recipe.prepMinutes + recipe.cookMinutes} min` })), h("span", { text: "\u2192" }));
+    choice.append(h("img", { src: recipe.image, alt: "", loading: "lazy" }), h("div", {}, h("strong", { text: recipe.title }), h("p", { text: `${PROTEINS[recipe.protein]}, ${recipe.prepMinutes + recipe.cookMinutes} min` })));
     list.append(choice);
   });
-  openModal(h("h2", { id: "modal-title", text: `A change for ${DAYS[day]}` }),
-    h("p", { className: "muted", text: "These alternatives still follow your diet, time and protein rules." }),
-    recipes.length ? button("Surprise me \u21bb", () => replace(undefined), "button secondary") : h("p", { className: "notice", text: "No alternatives fit. Change your planning rules or add another recipe to the collection." }), list);
+  openModal(h("h2", { id: "modal-title", text: `Swap ${DAYS[day]}'s dinner` }),
+    h("p", { className: "muted", text: "Every option follows this week's diet, time and protein rules." }),
+    recipes.length ? button("Pick one for me", () => replace(undefined), "button secondary") : h("p", { className: "notice", text: "No other recipe fits this week's rules. Change the planning rules or add a recipe." }), list);
 }
 
 function shoppingPanel(week) {
@@ -476,7 +492,7 @@ function shoppingPanel(week) {
     if (openWoolworths) window.location.assign("https://www.woolworths.com.au/");
   }
   return h("section", { className: "shopping-panel", id: "shopping" },
-    h("div", { className: "section-bar" }, h("div", {}, h("h2", { text: "A little list for the shops." })),
+    h("div", { className: "section-bar" }, h("div", {}, h("h2", { text: "Shopping list" })),
       button("Copy shopping list", () => copyList(), "button")),
     h("p", { className: "muted", text: `Combined and scaled for ${peopleLabel(week)}. Quantities are recipe amounts, not supermarket pack sizes. Ingredients marked Pantry go into the Woolworths list by default; untick the option below to leave them out. The item checkboxes are just shopping progress.` }),
     h("label", { className: "check-field compact" }, include, h("span", { text: "Include pantry items in Woolworths list" })),
@@ -510,7 +526,7 @@ function showRecipes(updateUrl = true) {
   state.view = "recipes";
   setNavigation();
   const route = readRoute();
-  const search = h("input", { type: "search", placeholder: "Find a recipe or ingredient...", "aria-label": "Search recipes", value: route.q ?? "" });
+  const search = h("input", { type: "search", placeholder: "Search recipes or ingredients", "aria-label": "Search recipes", value: route.q ?? "" });
   const category = select({ all: "Every category", ...CATEGORIES }, route.category ?? "all");
   category.setAttribute("aria-label", "Filter recipes by category");
   const protein = select({ all: "Every protein", ...PROTEINS }, route.protein ?? "all");
@@ -543,15 +559,15 @@ function showRecipes(updateUrl = true) {
     const filtered = state.recipes.filter((recipe) => (category.value === "all" || category.value === recipe.category) &&
       (protein.value === "all" || protein.value === recipe.protein) &&
       `${recipe.title} ${recipe.description} ${recipe.ingredients.map((i) => i.name).join(" ")}`.toLowerCase().includes(query));
-    count.textContent = `${filtered.length} recipes to come home to`;
+    count.textContent = `${filtered.length} ${filtered.length === 1 ? "recipe" : "recipes"}`;
     grid.replaceChildren(...filtered.map((recipe) => {
       const card = button("", () => showRecipe(recipe), "collection-card");
-      card.append(h("div", { className: "collection-image" }, h("img", { src: recipe.image, alt: recipe.title, loading: "lazy" }), tag(CATEGORIES[recipe.category])),
-        h("div", { className: "meal-copy" }, h("div", { className: "recipe-meta" }, h("span", { text: PROTEINS[recipe.protein] }), h("span", { text: `${recipe.prepMinutes + recipe.cookMinutes} min` })),
-          h("h3", { text: recipe.title }), h("p", { text: recipe.description }), h("span", { className: "card-link", text: "Into the kitchen \u2192" })));
+      card.append(h("div", { className: "collection-image" }, h("img", { src: recipe.image, alt: "", loading: "lazy" })),
+        h("div", { className: "meal-copy" }, h("div", { className: "recipe-meta" }, h("span", { text: CATEGORIES[recipe.category] }), h("span", { text: `${recipe.prepMinutes + recipe.cookMinutes} min` })),
+          h("h3", { text: recipe.title }), h("p", { text: recipe.description })));
       return card;
     }));
-    if (!filtered.length) grid.append(h("p", { className: "notice", text: "No recipes match yet. Try another filter or add one of your own." }));
+    if (!filtered.length) grid.append(h("p", { className: "notice", text: "No recipes match. Clear the search or a filter, or add your own." }));
   }
   function updateFilters() {
     writeRoute({
@@ -565,9 +581,9 @@ function showRecipes(updateUrl = true) {
   search.addEventListener("input", updateFilters);
   category.addEventListener("change", updateFilters);
   protein.addEventListener("change", updateFilters);
-  view.replaceChildren(heading("Your recipe collection.", "A growing book of everyday favourites. Good ingredients, clear steps, and something for every kind of evening."),
+  view.replaceChildren(heading("Recipes", "Everything your household cooks. Weekly plans are picked from this list."),
     h("div", { className: "collection-toolbar" }, search, category, protein), layoutToggle, count, grid,
-    h("p", { className: "fineprint collection-note", text: "Photography is serving inspiration and may not depict the exact recipe. Always check ingredient labels for allergens and follow safe food-handling guidance." }));
+    h("p", { className: "fineprint collection-note", text: "Photos are serving suggestions and may not show the exact recipe. Check ingredient labels for allergens and follow safe food-handling guidance." }));
   filter();
 }
 
@@ -594,14 +610,14 @@ function showRecipe(recipe, servings = recipe.servings, weekKey, day, updateUrl 
   }
   const stepCount = h("p", { className: "eyebrow" });
   const stepText = h("p", { className: "step-instruction", tabIndex: -1 });
-  const previous = button("\u2190 Previous", () => changeStep(-1), "button secondary");
-  const next = button("Next step \u2192", () => changeStep(1));
+  const previous = button("Previous step", () => changeStep(-1), "button secondary");
+  const next = button("Next step", () => changeStep(1));
   function renderStep(focus = false) {
     stepCount.textContent = `Step ${step + 1} of ${recipe.steps.length}`;
     stepText.textContent = recipe.steps[step];
     previous.disabled = step === 0;
     next.disabled = step === recipe.steps.length - 1;
-    next.textContent = step === recipe.steps.length - 1 ? "Ready to serve \u2713" : "Next step \u2192";
+    next.textContent = step === recipe.steps.length - 1 ? "Ready to serve" : "Next step";
     if (focus) stepText.focus();
   }
   function changeStep(delta) {
@@ -619,7 +635,7 @@ function showRecipe(recipe, servings = recipe.servings, weekKey, day, updateUrl 
   const scheduledMeal = weekKey !== undefined && weekKey === state.week?.week
     ? state.week.meals.find((meal) => meal.day === day && meal.recipe.id === recipe.id)
     : undefined;
-  const cookedStatus = h("p", { className: "muted", role: "status", text: scheduledMeal?.cooked ? "Done! You've cooked this meal." : "Not cooked yet." });
+  const cookedStatus = h("p", { className: "muted", role: "status", text: scheduledMeal?.cooked ? "Cooked." : "Not cooked yet." });
   const cookedButton = scheduledMeal ? button(scheduledMeal.cooked ? "Undo cooked" : "Cooked!", async () => {
     const cooked = !scheduledMeal.cooked;
     const updated = await api(`/weeks/${weekKey}/cooked`, { day, recipeId: recipe.id, cooked });
@@ -629,18 +645,18 @@ function showRecipe(recipe, servings = recipe.servings, weekKey, day, updateUrl 
       renderWeek();
     }
     cookedButton.textContent = cooked ? "Undo cooked" : "Cooked!";
-    cookedStatus.textContent = cooked ? "Done! You've cooked this meal." : "Not cooked yet.";
+    cookedStatus.textContent = cooked ? "Cooked." : "Not cooked yet.";
   }) : null;
   openModal(h("img", { className: "recipe-hero", src: recipe.image, alt: recipe.title }),
     credit ? h("p", { className: "fineprint photo-credit" }, ...credit) : null,
-    h("div", { className: "recipe-intro" }, h("p", { className: "eyebrow", text: `${CATEGORIES[recipe.category]} · ${PROTEINS[recipe.protein]}` }),
+    h("div", { className: "recipe-intro" }, h("p", { className: "recipe-kind", text: `${CATEGORIES[recipe.category]}, ${PROTEINS[recipe.protein].toLowerCase()}` }),
       h("h2", { id: "modal-title", text: recipe.title }), h("p", { className: "muted", text: recipe.description }),
-      h("div", { className: "recipe-stats" }, tag(`${servings} servings`), tag(`${recipe.prepMinutes} min prep`), tag(`${recipe.cookMinutes} min cook`), tag(recipe.diet)),
+      h("div", { className: "recipe-stats" }, h("span", {}, "Serves ", h("strong", { text: String(servings) })), h("span", {}, "Prep ", h("strong", { text: `${recipe.prepMinutes} min` })), h("span", {}, "Cook ", h("strong", { text: `${recipe.cookMinutes} min` })), h("span", { text: recipe.diet[0].toUpperCase() + recipe.diet.slice(1) })),
       cookedButton ? h("div", { className: "action-row" }, cookedButton, cookedStatus) : null,
       button("Edit recipe / update from photo", () => addRecipeDialog(recipe), "button secondary"),
       h("div", { className: "recipe-layout" }, h("section", {}, h("h3", { text: "What you'll need" }), ingredientList), h("section", { className: "cook-mode", "aria-label": "Step-by-step cooking" }, stepCount, stepText, h("div", { className: "step-controls" }, previous, next), allSteps)),
       recipe.notes ? h("p", { className: "notice", text: recipe.notes }) : null,
-      h("p", { className: "fineprint", text: "Check allergies and ingredient labels yourself. Times are a guide; make sure food is cooked safely. Photos are serving inspiration." })));
+      h("p", { className: "fineprint", text: "Check allergies and ingredient labels yourself. Times are a guide; make sure food is cooked safely. Photos are serving suggestions." })));
 }
 
 async function shareWeek() {
@@ -651,51 +667,51 @@ async function shareWeek() {
   canvas.height = 1480;
   const ctx = canvas.getContext("2d");
   if (!ctx) throw new Error("This browser cannot create a share card.");
-  ctx.fillStyle = SHARE_PALETTE.paper; ctx.fillRect(0, 0, 1080, 1480);
-  ctx.fillStyle = SHARE_PALETTE.forest; ctx.fillRect(0, 0, 1080, 265);
-  ctx.fillStyle = "#d8bd79"; ctx.fillRect(70, 86, 58, 4);
-  ctx.fillStyle = SHARE_PALETTE.saffron; ctx.font = "500 24px sans-serif"; ctx.fillText("EATPLANNER.APP / OUR HOME KITCHEN", 70, 65);
-  ctx.fillStyle = SHARE_PALETTE.cream; ctx.font = "62px Georgia"; ctx.fillText("This week, at our table.", 70, 143);
-  ctx.font = "29px sans-serif"; ctx.fillStyle = "#e4e6d9"; ctx.fillText(weekLabel(week.week), 70, 205);
+  const face = '"Bricolage Grotesque", "Avenir Next Condensed", "Arial Narrow", sans-serif';
+  try { await document.fonts?.load(`800 84px ${face}`); }
+  catch (error) { console.error("The share card font couldn't be loaded:", error); }
+  ctx.fillStyle = SHARE_PALETTE.enamel; ctx.fillRect(0, 0, 1080, 1480);
+  ctx.fillStyle = SHARE_PALETTE.blue; ctx.fillRect(0, 0, 1080, 250); ctx.fillRect(0, 262, 1080, 4);
+  ctx.fillStyle = SHARE_PALETTE.white;
+  ctx.font = `800 condensed 88px ${face}`; ctx.fillText("Dinner this week", 70, 138);
+  ctx.font = `400 32px ${face}`; ctx.fillText(weekLabel(week.week), 70, 198);
   const wrap = (text, x, y, maxWidth) => {
     let line = ""; let offset = 0;
     for (const word of text.split(" ")) {
       const next = line ? `${line} ${word}` : word;
-      if (ctx.measureText(next).width > maxWidth && line) { ctx.fillText(line, x, y + offset); offset += 38; line = word; }
+      if (ctx.measureText(next).width > maxWidth && line) { ctx.fillText(line, x, y + offset); offset += 40; line = word; }
       else line = next;
     }
     ctx.fillText(line, x, y + offset);
   };
   DAYS.forEach((day, index) => {
-    const y = 310 + index * 143;
+    const y = 318 + index * 142;
     const meal = week.meals.find((item) => item.day === index);
-    ctx.fillStyle = "#e5e9d9"; ctx.beginPath(); ctx.arc(105, y + 40, 35, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = SHARE_PALETTE.green; ctx.font = "24px sans-serif"; ctx.fillText(day.slice(0, 1), 96, y + 48);
-    ctx.font = "600 19px sans-serif"; ctx.fillStyle = SHARE_PALETTE.muted; ctx.fillText(day.toUpperCase(), 170, y + 5);
-    ctx.font = "31px Georgia"; ctx.fillStyle = meal ? SHARE_PALETTE.ink : SHARE_PALETTE.muted;
-    wrap(meal ? meal.recipe.title : "A night off. Something spontaneous.", 170, y + 48, 810);
-    ctx.strokeStyle = SHARE_PALETTE.line; ctx.beginPath(); ctx.moveTo(170, y + 110); ctx.lineTo(1000, y + 110); ctx.stroke();
+    ctx.font = `800 condensed 46px ${face}`; ctx.fillStyle = meal ? SHARE_PALETTE.blue : SHARE_PALETTE.muted;
+    ctx.fillText(day, 70, y + 52);
+    ctx.font = `600 34px ${face}`; ctx.fillStyle = meal ? SHARE_PALETTE.ink : SHARE_PALETTE.muted;
+    wrap(meal ? meal.recipe.title : "Night off", 330, y + 50, 680);
+    ctx.strokeStyle = SHARE_PALETTE.line; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(70, y + 116); ctx.lineTo(1010, y + 116); ctx.stroke();
   });
-  ctx.fillStyle = SHARE_PALETTE.forest; ctx.font = "24px sans-serif";
-  ctx.fillText(`${peopleLabel(week)} / ${week.meals.length} dinners / ${week.status === "confirmed" ? "Locked in" : "DRAFT - not yet confirmed"}`, 70, 1385);
-  ctx.fillStyle = SHARE_PALETTE.terracotta; ctx.fillRect(70, 1400, 40, 3);
-  ctx.fillStyle = SHARE_PALETTE.muted; ctx.font = "22px Georgia"; ctx.fillText("A little less planning. A little more living.", 70, 1430);
+  ctx.fillStyle = SHARE_PALETTE.ink; ctx.font = `600 28px ${face}`;
+  ctx.fillText(`${dinners(week.meals.length)} for ${peopleLabel(week)}. ${week.status === "confirmed" ? "Locked in." : "Draft, not locked in yet."}`, 70, 1376);
+  ctx.fillStyle = SHARE_PALETTE.muted; ctx.font = `400 24px ${face}`; ctx.fillText("eatplanner.app", 70, 1420);
   const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
   if (!blob) throw new Error("The share card couldn't be created.");
   const file = new File([blob], `eatplanner-${week.week}.png`, { type: "image/png" });
   if (shareUrl) URL.revokeObjectURL(shareUrl);
   shareUrl = URL.createObjectURL(blob);
   const download = h("a", { className: "button secondary", href: shareUrl, download: file.name, text: "Download PNG" });
-  const nativeShare = button("Share card \u2197", async () => {
+  const nativeShare = button("Share card", async () => {
     if (!navigator.canShare?.({ files: [file] })) {
-      notify("File sharing isn't available here. Download the PNG and send it in your favourite app.");
+      notify("This browser can't share files. Download the PNG and send it from any app.");
       return;
     }
     try { await navigator.share({ files: [file], title: "Our weekly meal plan" }); }
     catch (error) { if (error instanceof Error && error.name === "AbortError") return; throw error; }
   });
-  openModal(h("p", { className: "eyebrow", text: "Good food is better shared" }), h("h2", { id: "modal-title", text: "Your week, in one little card." }),
-    h("p", { className: "muted", text: "Send a PNG to your household. No account or access to this app needed. This is a snapshot, not a live shared link." }),
+  openModal(h("h2", { id: "modal-title", text: "Share this week" }),
+    h("p", { className: "muted", text: "Send this picture to your household. They don't need an account. It's a snapshot, so later changes won't show." }),
     h("div", { className: "action-row" }, nativeShare, download), h("img", { className: "share-preview", src: shareUrl, alt: `Meal plan for ${weekLabel(week.week)}. ${week.meals.map((meal) => `${DAYS[meal.day]}: ${meal.recipe.title}`).join(". ")}` }));
 }
 
@@ -746,8 +762,8 @@ function addRecipeDialog(existing, updateUrl = true) {
   let prepared;
   let preparing = false;
   let extracting = false;
-  const title = h("input", { required: true, maxLength: 100, placeholder: "Your family's favourite...", value: existing?.title ?? "" });
-  const description = h("textarea", { rows: 2, required: true, maxLength: 400, placeholder: "A little about this dish", value: existing?.description ?? "" });
+  const title = h("input", { required: true, maxLength: 100, placeholder: "Lemon chicken traybake", value: existing?.title ?? "" });
+  const description = h("textarea", { rows: 2, required: true, maxLength: 400, placeholder: "One or two lines about the dish", value: existing?.description ?? "" });
   const category = select(CATEGORIES, existing?.category ?? "quick");
   const protein = select(PROTEINS, existing?.protein ?? "chicken");
   const diet = select({ omnivore: "Omnivore", vegetarian: "Vegetarian", vegan: "Vegan", pescatarian: "Pescatarian" }, existing?.diet ?? "omnivore");
@@ -875,7 +891,7 @@ function addRecipeDialog(existing, updateUrl = true) {
       throw error;
     } finally { preparing = false; updatePhotoControls(); }
   }));
-  const save = h("button", { type: "submit", className: "button", text: existing ? "Update this recipe \u2192" : "Save to my collection \u2192" });
+  const save = h("button", { type: "submit", className: "button", text: existing ? "Update this recipe" : "Save to my collection" });
   const form = h("form", { className: "recipe-form" },
     h("div", { className: "recipe-photo-options" },
       h("section", { className: "upload-box" }, h("h3", { text: "Recipe page" }),
@@ -885,13 +901,13 @@ function addRecipeDialog(existing, updateUrl = true) {
         h("p", { className: "muted", text: "Choose an image or take a photo of the finished dish. This is separate from the recipe page." }),
         imageFile, imagePreview, photoCredit, findImage, imageStatus)),
     h("p", { className: "fineprint recipe-photo-note", text: "Reading a recipe photo or finding a dish photo uses GitHub Copilot and your allowance. Images are resized locally. Only import recipes you have permission to use." }),
-    warnings, field("Recipe name", title), field("A little description", description),
+    warnings, field("Recipe name", title), field("Description", description),
     h("div", { className: "form-grid" }, field("Category", category), field("Primary protein", protein), field("Diet", diet)),
     h("div", { className: "form-grid" }, field("Servings", servings), field("Prep minutes", prep), field("Cook minutes", cook)),
     field("Ingredients", ingredients, "One per line: quantity | unit | name. Optionally add | pantry. Units: g, kg, ml, l, tsp, tbsp, piece, pinch. Australian tbsp = 20 ml; tsp = 5 ml. Use singular grocery names so identical ingredients combine."),
-    field("Method", steps, "One complete step per line."), field("Notes & source", notes),
+    field("Method", steps, "One complete step per line."), field("Notes and source", notes),
     h("label", { className: "check-field" }, reviewed, h("span", { text: "I've checked the amounts, dietary labels and steps against the original." })),
-    h("div", { className: "form-bottom" }, h("span", { className: "muted", text: existing ? "This updates the recipe card in your collection." : "Saved to this household's recipe file." }), save));
+    h("div", { className: "form-bottom" }, h("span", { className: "muted", text: existing ? "This replaces the saved recipe." : "Saved to this household's recipe file." }), save));
   form.addEventListener("submit", (event) => {
     event.preventDefault();
     if (extracting || preparing) return;
@@ -909,11 +925,10 @@ function addRecipeDialog(existing, updateUrl = true) {
       } else state.recipes.push(recipe);
       modal.close();
       showRecipes();
-      notify(existing ? "Recipe updated in your collection." : "A new favourite, safely in your collection.");
+      notify(existing ? "Recipe updated." : "Saved to your collection.");
     }, save);
   });
-  openModal(h("p", { className: "eyebrow", text: existing ? "Make this recipe your own" : "Make room for a new favourite" }),
-    h("h2", { id: "modal-title", text: existing ? `Update ${existing.title}.` : "Add a little to your recipe book." }), form);
+  openModal(h("h2", { id: "modal-title", text: existing ? `Edit ${existing.title}` : "Add a recipe" }), form);
 }
 
 document.querySelector("#nav-weeks").addEventListener("click", () => run(showWeeks));

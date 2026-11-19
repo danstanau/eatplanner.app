@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { once } from "node:events";
 import { spawn } from "node:child_process";
+import { request as httpRequest } from "node:http";
 import { mkdtemp, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { parseEnv } from "node:util";
@@ -9,7 +10,7 @@ import { createApp } from "./app.js";
 import { hashPassword, readAuthConfig } from "./auth.js";
 
 test("household login protects private pages and APIs, rotates sessions and signs out", async (t) => {
-  const password = "test household password";
+  const password = "test12";
   const auth = {
     username: "household",
     passwordHash: await hashPassword(password),
@@ -41,7 +42,7 @@ test("household login protects private pages and APIs, rotates sessions and sign
     assert.ok(response.headers.get("location")?.startsWith("/login?next="));
     assert.equal(response.headers.get("cache-control"), "no-store");
   }
-  for (const path of ["/login", "/login.js", "/base.css", "/design.css", "/login.css"]) {
+  for (const path of ["/login", "/login.js", "/base.css", "/fonts/bricolage-grotesque.woff2", "/login.css", "/login-preview.svg", "/favicon.svg", "/apple-touch-icon.png"]) {
     assert.equal((await fetch(base + path)).status, 200);
   }
   assert.deepEqual(await (await fetch(`${base}/api/auth/session`)).json(), { enabled: true, authenticated: false });
@@ -49,7 +50,11 @@ test("household login protects private pages and APIs, rotates sessions and sign
     assert.equal((await fetch(`${base}/api${path}`)).status, 401);
   }
   const credentials = { username: auth.username, password };
-  assert.equal((await login(credentials, { Origin: "https://other.example" })).status, 403);
+  const wrongOrigin = await login(credentials, { Origin: "https://other.example" });
+  assert.equal(wrongOrigin.status, 403);
+  assert.deepEqual(await wrongOrigin.json(), {
+    error: `This request must come from ${auth.publicOrigin}. Open that address, or update APP_ORIGIN and restart the server.`,
+  });
   assert.equal((await fetch(`${base}/api/auth/login`, {
     method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(credentials),
   })).status, 403);
@@ -58,6 +63,9 @@ test("household login protects private pages and APIs, rotates sessions and sign
       method: "POST", headers: { Origin: auth.publicOrigin, "Content-Type": "application/json" }, body: "{}",
     })).status, 401);
   }
+  assert.equal((await fetch(`${base}/api/auth/signup`, {
+    method: "POST", headers: { Origin: auth.publicOrigin, "Content-Type": "application/json" }, body: "{}",
+  })).status, 401);
   assert.equal(aiCalls, 0);
   assert.equal((await login({ username: "wrong", password })).status, 401);
   assert.equal((await login({ username: auth.username, password: "wrong" })).status, 401);
@@ -100,20 +108,78 @@ test("household login protects private pages and APIs, rotates sessions and sign
   assert.equal((await fetch(`${base}/api/status`, { headers: { Cookie: expiringCookie } })).status, 401);
 });
 
-test("login configuration fails closed in production and rejects partial or invalid settings", async () => {
-  assert.equal(readAuthConfig({}), undefined);
-  assert.throws(() => readAuthConfig({ NODE_ENV: "production" }), /required in production/);
-  assert.throws(() => readAuthConfig({ HOUSEHOLD_USERNAME: "household" }), /required in production/);
+test("local login redirects hostname aliases to the configured origin without weakening origin checks", async (t) => {
+  const password = "test12";
+  const auth = {
+    username: "stanfield",
+    passwordHash: await hashPassword(password),
+    publicOrigin: "http://127.0.0.1",
+  };
+  const unused = async (): Promise<never> => { throw new Error("Login must not call planner services"); };
+  const server = createApp({
+    getStatus: unused, generatePlan: unused, extractRecipe: unused, findRecipeImage: unused,
+  }, undefined, { auth }).listen(0, "127.0.0.1");
+  await once(server, "listening");
+  t.after(() => new Promise<void>((resolve, reject) => {
+    server.close((error) => error ? reject(error) : resolve());
+    server.closeIdleConnections();
+  }));
+  const address = server.address();
+  assert.ok(address && typeof address !== "string");
+  auth.publicOrigin = `http://127.0.0.1:${address.port}`;
+  for (const host of [`localhost:${address.port}`, `[::1]:${address.port}`, "127.0.0.1:1234"]) {
+    const response = await new Promise<{ status?: number; location?: string }>((resolve, reject) => {
+      const request = httpRequest(`${auth.publicOrigin}/login?next=%2F%3Fview%3Drecipes`, {
+        headers: { Host: host },
+      }, (response) => {
+        response.resume();
+        response.on("end", () => resolve({ status: response.statusCode, location: response.headers.location }));
+      });
+      request.on("error", reject);
+      request.end();
+    });
+    assert.equal(response.status, 302);
+    assert.equal(response.location, `${auth.publicOrigin}/login?next=%2F%3Fview%3Drecipes`);
+  }
+  assert.equal((await fetch(`${auth.publicOrigin}/login`, { redirect: "manual" })).status, 200);
+  const login = (origin: string) => fetch(`${auth.publicOrigin}/api/auth/login`, {
+    method: "POST",
+    headers: { Origin: origin, "Content-Type": "application/json" },
+    body: JSON.stringify({ username: auth.username, password }),
+  });
+  assert.equal((await login(`http://localhost:${address.port}`)).status, 403);
+  assert.equal((await login(auth.publicOrigin)).status, 200);
+});
+
+test("login configuration is required everywhere and rejects partial or invalid settings", async () => {
+  assert.throws(() => readAuthConfig({}), /Household login is required/);
+  assert.throws(() => readAuthConfig({ NODE_ENV: "production" }), /Household login is required/);
+  assert.throws(() => readAuthConfig({ HOUSEHOLD_USERNAME: "household" }), /Household login is required/);
   const values = {
     HOUSEHOLD_USERNAME: "household", HOUSEHOLD_PASSWORD_HASH: await hashPassword("test household password"),
     APP_ORIGIN: "https://meals.example.test",
   };
-  assert.equal(readAuthConfig({ ...values, NODE_ENV: "production" })?.publicOrigin, values.APP_ORIGIN);
+  assert.equal(readAuthConfig({ ...values, NODE_ENV: "production" }).publicOrigin, values.APP_ORIGIN);
   assert.throws(() => readAuthConfig({ ...values, APP_ORIGIN: "http://example.test", NODE_ENV: "production" }), /HTTPS/);
+  assert.throws(() => readAuthConfig({ ...values, APP_ORIGIN: "http://example.test" }), /HTTPS/);
+  assert.throws(() => readAuthConfig({ ...values, APP_ORIGIN: "http://192.168.1.10:3000" }), /HTTPS/);
+  assert.equal(readAuthConfig({ ...values, APP_ORIGIN: "http://127.0.0.1:3000" }).publicOrigin, "http://127.0.0.1:3000");
   assert.throws(() => readAuthConfig({ ...values, APP_ORIGIN: "https://example.test/path" }), /without a path/);
   assert.throws(() => readAuthConfig({ ...values, HOUSEHOLD_PASSWORD_HASH: "plaintext" }), /invalid/);
-  await assert.rejects(hashPassword("short"), /12/);
+  await assert.rejects(hashPassword("short"), /6/);
   assert.notEqual(await hashPassword("test household password"), values.HOUSEHOLD_PASSWORD_HASH);
+});
+
+test("server refuses to start without household credentials even in development", { timeout: 10000 }, async (t) => {
+  const child = spawn(process.execPath, ["--import", "tsx", fileURLToPath(new URL("./index.ts", import.meta.url))], {
+    env: { NODE_ENV: "development" }, stdio: ["ignore", "ignore", "pipe"],
+  });
+  t.after(() => { if (child.exitCode === null) child.kill(); });
+  let errors = "";
+  child.stderr.on("data", (chunk: Buffer) => { errors += chunk.toString(); });
+  const [code] = await once(child, "close");
+  assert.notEqual(code, 0);
+  assert.match(errors, /Household login is required/);
 });
 
 test("interactive setup stores only a password hash and preserves other environment settings", { timeout: 10000 }, async (t) => {
@@ -126,10 +192,10 @@ test("interactive setup stores only a password hash and preserves other environm
   });
   t.after(() => { if (child.exitCode === null) child.kill(); });
   const prompts = [
-    ["Household username: ", "family"],
+    ["Household name [stanfield]: ", ""],
     ["App URL (e.g. https://meals.example.com): ", "https://meals.example.test"],
-    ["Household password (12+ characters, hidden): ", "test setup password"],
-    ["Repeat password: ", "test setup password"],
+    ["Household password (6+ characters, hidden): ", "test12"],
+    ["Repeat password: ", "test12"],
   ];
   let output = "";
   let errors = "";
@@ -145,12 +211,12 @@ test("interactive setup stores only a password hash and preserves other environm
   const [code] = await once(child, "close");
   assert.equal(code, 0, errors);
   assert.equal(prompts.length, 0);
-  assert.doesNotMatch(output, /test setup password/);
+  assert.doesNotMatch(output, /test12/);
   const saved = await readFile(envFile, "utf8");
-  assert.doesNotMatch(saved, /test setup password/);
+  assert.doesNotMatch(saved, /test12/);
   const values = parseEnv(saved);
   assert.equal(values.COPILOT_MODEL, "auto");
-  assert.equal(values.HOUSEHOLD_USERNAME, "family");
-  assert.equal(readAuthConfig(values)?.publicOrigin, "https://meals.example.test");
+  assert.equal(values.HOUSEHOLD_USERNAME, "stanfield");
+  assert.equal(readAuthConfig(values).publicOrigin, "https://meals.example.test");
   assert.equal((await stat(envFile)).mode & 0o777, 0o600);
 });

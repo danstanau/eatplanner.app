@@ -135,6 +135,7 @@ export function createApp(services: Services, store = new Store(), options: { al
       week: week.week, status: week.status, count: week.meals.length,
       days: week.meals.map((meal) => meal.day),
       titles: week.meals.map((meal) => meal.recipe.title),
+      images: week.meals.map((meal) => meal.recipe.image),
     })));
   });
   app.get("/api/weeks/:week", async (request, response) => {

@@ -3,26 +3,28 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="theme-color" content="#203b32">
-    <meta name="description" content="A thoughtful little meal planner for your home. Pick your week, find your dinners, and shop once.">
-    <title>eatplanner.app - Dinner, a little more considered.</title>
+    <meta name="theme-color" content="#f4f6f5" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#0e1426" media="(prefers-color-scheme: dark)">
+    <meta name="description" content="A dinner planner for your household. Pick the nights, choose the dinners, shop once.">
+    <title>eatplanner.app</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <link rel="preload" href="/fonts/bricolage-grotesque.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="stylesheet" href="/planner.css">
-    <link rel="stylesheet" href="/design.css">
     <script type="module" src="/planner.js"></script>
   </head>
   <body>
     <header class="topbar">
-      <a class="brand" href="/">eatplanner<span>.app</span><span class="brand-dot" aria-hidden="true"></span></a>
+      <a class="brand" href="/"><img src="/favicon.svg" alt="" width="64" height="64">eatplanner<span>.app</span></a>
       <nav aria-label="Main navigation">
-        <button id="nav-weeks" class="nav-link active" type="button" aria-current="page"><svg class="icon" aria-hidden="true"><use href="/icons.svg#calendar"></use></svg><span>My plans</span></button>
+        <button id="nav-weeks" class="nav-link active" type="button" aria-current="page"><svg class="icon" aria-hidden="true"><use href="/icons.svg#calendar"></use></svg><span>Weeks</span></button>
         <button id="nav-recipes" class="nav-link" type="button"><svg class="icon" aria-hidden="true"><use href="/icons.svg#book"></use></svg><span>Recipes</span></button>
         <button id="add-recipe" class="button small" type="button"><svg class="icon" aria-hidden="true"><use href="/icons.svg#plus"></use></svg><span>Add recipe</span></button>
       </nav>
       <button id="sign-out" class="text-button" type="button" hidden>Sign out</button>
     </header>
     <main id="view" tabindex="-1"><p class="loading">Setting the table...</p></main>
-    <footer><span class="brand">eatplanner<span>.app</span></span><p>A little less planning. A little more living.</p><span>Made for your home kitchen.</span></footer>
+    <footer><span class="brand"><img src="/favicon.svg" alt="" width="64" height="64">eatplanner<span>.app</span></span></footer>
     <p id="toast" class="toast" role="status" hidden></p>
     <dialog id="modal" aria-labelledby="modal-title">
       <button id="close-modal" class="close-button" type="button" aria-label="Close dialog">&times;</button>

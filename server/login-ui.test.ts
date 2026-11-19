@@ -7,6 +7,10 @@ import { Window } from "happy-dom";
 test("login form reports failures, preserves local routes and rejects external redirects", async (t) => {
   const browser = new Window({ settings: { disableJavaScriptFileLoading: true, disableCSSFileLoading: true } });
   browser.document.write(await readFile(new URL("../public/login.html", import.meta.url), "utf8"));
+  const preview = browser.document.querySelector(".planner-preview");
+  assert.equal(preview?.getAttribute("aria-hidden"), "true");
+  assert.equal(preview?.querySelector("img")?.getAttribute("src"), "/login-preview.svg");
+  assert.equal(preview?.querySelector("a, button, input, [tabindex]"), null);
   const destinations: string[] = [];
   const location = {
     origin: "https://meals.example.test", search: "?next=%2F%3Fview%3Drecipes",

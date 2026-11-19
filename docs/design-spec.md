@@ -2,46 +2,53 @@
 
 ## Direction
 
-A warm, modern cookbook: food-first, editorial, and at home in a real kitchen.
-Use cream paper, deep forest-green ink, and restrained terracotta and saffron.
-Keep the arch-shaped food hero and the existing plain-language voice. Avoid
-generic dashboard patterns, decorative glyphs as labels, remote assets, and
-runtime dependencies.
+The week planner on the fridge door, in the colours of enamelware and a tea
+towel. The week itself is the loudest thing in the app: seven columns on the
+home page, seven rows on a week page, the same seven rows on the share card.
+Everything else stays quiet.
 
 ## Foundations
 
-- Keep all presentation in self-hosted CSS and the existing browser JavaScript.
-- Centralize color, type, spacing, radius, shadow, and motion values as CSS
-  custom properties. Prefer Georgia and system fonts; do not load remote fonts.
-- Body copy should remain readable at 15–17px. Controls use at least 16px text,
-  at least 44px touch targets, and a visible keyboard focus ring.
-- Maintain readable contrast in both color schemes, respect
-  `prefers-color-scheme` and `prefers-reduced-motion`, and use fluid layouts.
-- Keep the strict self-hosted Content Security Policy: no inline styles/scripts,
-  external assets, or style attributes.
+- **Colour**: enamel `#F4F6F5` page, white surfaces, navy ink `#131C3A`, rim
+  blue `#1B3FA0` for actions and selection, yolk `#F6B92B` for today and
+  drafts, beetroot `#A4244B` for errors. Dark mode swaps the tokens in
+  `base.css`; yolk stays.
+- **Type**: one family, Bricolage Grotesque (SIL OFL), self-hosted in
+  `public/fonts/`. Its width axis does the work: condensed and heavy for day
+  names and headings, normal width for reading. Sentence case throughout.
+- **Structure**: a 2px ink rule opens a list (the week, the shopping list, the
+  recipe grid); 1px rules separate its rows. Recipes are a photo grid without
+  card boxes. The double rule under the header is the only ornament.
+- **Motion**: the home strip deals its seven days in once per visit. Other
+  motion answers an action (dialog opening, a day being selected).
+- **Logo**: a white plate with a yolk-yellow centre and a fork beside it,
+  on a rim-blue tile (`favicon.svg`, `apple-touch-icon.png`). It sits left of the
+  wordmark in the header, sign-in page and footer.
+- **Sign-in**: an opaque form floats over a softened, static example week
+  (`login-preview.svg`). The backdrop is decorative, non-interactive and uses
+  fictional meals; it never loads household data or private photos.
+- Tokens live at the top of `base.css` (shared with the sign-in page);
+  `planner.css` holds the screens. Component rules reference tokens only.
+- Controls use at least 16px text and 44px targets, with a visible focus ring.
+  `prefers-color-scheme` and `prefers-reduced-motion` are respected.
+- Keep the strict self-hosted Content Security Policy: no inline styles or
+  scripts, no remote assets.
 
-## Components and screens
+## Writing
 
-- Sticky desktop header; compact mobile bottom navigation with text labels and
-  local SVG icons.
-- Keep home/week cards editorial and airy; use agenda-like single-column meals
-  on narrow screens while retaining all existing actions and identifiers.
-- Give planning controls, status/confirmation bars, shopping checklist, recipe
-  collection filters, recipe/cook dialogs, recipe editor, swap picker, and share
-  card consistent hierarchy and accessible sizing.
-- Provide clear loading, empty, progress, and error states. Preserve existing
-  app flows, data handling, and selector-based UI tests.
-- Include print-specific styling for the week and shopping list.
+Buttons say what they do and keep that name through the flow: "Lock in this
+week" leads to "Locked in" and "Unlock to edit". No arrows or symbols on
+buttons, no labels above headings, no uppercase labels.
 
-## Asset and implementation limits
+## Limits
 
-Food photography, iconography, and the favicon are served locally. The share
-card canvas follows the same forest/cream/terracotta palette as the interface.
-Do not introduce a framework, backend changes, or optional planning behavior
-unless it can be implemented without changing existing guarantees.
-# eatplanner.app design spec
+No framework, no build step. `server/ui.test.ts` selects on class names such as
+`.week-card`, `.week-strip`, `.day-card`, `.day-toggle`, `.recipe-open`,
+`.collection-card` and `.swap-choice`; keep them when restyling.
 
-Status: proposal. Scope: the browser UI in `public/` and the share card. No server or data-model changes are required except where marked optional.
+# Earlier proposal
+
+Status: superseded by the direction above; kept for its component inventory and optional feature ideas. Scope: the browser UI in `public/` and the share card. No server or data-model changes are required except where marked optional.
 
 ## 1. Where the app is today
 

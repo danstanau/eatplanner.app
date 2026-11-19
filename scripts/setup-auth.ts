@@ -12,9 +12,9 @@ const output = new Writable({
 });
 const prompt = createInterface({ input: process.stdin, output, terminal: Boolean(process.stdin.isTTY) });
 try {
-  const username = (await prompt.question("Household username: ")).trim();
+  const username = (await prompt.question("Household name [stanfield]: ")).trim() || "stanfield";
   const publicOrigin = (await prompt.question("App URL (e.g. https://meals.example.com): ")).trim();
-  process.stdout.write("Household password (12+ characters, hidden): ");
+  process.stdout.write("Household password (6+ characters, hidden): ");
   hiding = true;
   const password = await prompt.question("");
   process.stdout.write("\nRepeat password: ");
