@@ -592,7 +592,9 @@ function shoppingPanel(week) {
   }
   return h("section", { className: "shopping-panel", id: "shopping" },
     h("div", { className: "section-bar" }, h("div", {}, h("h2", { text: "Shopping list" })),
-      button("Copy shopping list", () => copyList(), "button")),
+      h("div", { className: "shopping-share-actions" },
+        button("Copy shopping list", () => copyList(), "button"),
+        button("Share shopping list", () => shareShoppingList(week, shoppingText(week.shoppingList, include.checked)), "button secondary"))),
     h("p", { className: "muted", text: `Combined and scaled for ${peopleLabel(week)}. Quantities are recipe amounts, not supermarket pack sizes. Ingredients marked Pantry go into the Woolworths list by default; untick the option below to leave them out. The item checkboxes are just shopping progress.` }),
     h("label", { className: "check-field compact" }, include, h("span", { text: "Include pantry items in Woolworths list" })),
     h("div", { className: "shopping-layout" }, h("div", {}, progress, checklist), h("div", {},
@@ -613,6 +615,109 @@ function shoppingPanel(week) {
       h("p", { className: "fineprint" },
         "The Woolworths link may open the installed app if your phone allows it; otherwise it opens the website. Olive is only available in the app, not on the website or in in-store mode. Nothing is sent to Olive automatically. ",
         h("a", { href: "https://www.woolworths.com.au/shop/services/olive", text: "Woolworths Olive help" })))));
+}
+
+async function shareShoppingList(week, ingredients) {
+  const title = "Woolworths shopping list";
+  const items = ingredients.split("\n").map((item) => item.trim()).filter(Boolean);
+  const date = weekLabel(week.week);
+  const text = `${title} — ${date}\n\n${items.length ? items.join("\n") : "No ingredients on this list."}`;
+  const canvas = document.createElement("canvas");
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("This browser cannot create a shopping-list share card.");
+  const face = '"Bricolage Grotesque", "Avenir Next Condensed", "Arial Narrow", sans-serif';
+  try { await document.fonts?.load(`600 34px ${face}`); }
+  catch (error) { console.error("The share card font couldn't be loaded:", error); }
+  ctx.font = `500 34px ${face}`;
+  const wrappedItems = (items.length ? items : ["No ingredients on this list."]).map((item) => {
+    const lines = [];
+    let line = "";
+    for (const word of item.split(/\s+/)) {
+      const next = line ? `${line} ${word}` : word;
+      if (ctx.measureText(next).width > 900 && line) {
+        lines.push(line);
+        line = word;
+      } else line = next;
+    }
+    if (line) lines.push(line);
+    return lines;
+  });
+  const rowHeight = 54;
+  const height = 300 + wrappedItems.reduce((total, lines) => total + Math.max(1, lines.length) * rowHeight + 20, 0) + 100;
+  canvas.width = 1080;
+  canvas.height = height;
+  ctx.fillStyle = SHARE_PALETTE.enamel; ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = SHARE_PALETTE.blue; ctx.fillRect(0, 0, canvas.width, 250);
+  ctx.fillStyle = SHARE_PALETTE.white; ctx.font = `800 62px ${face}`;
+  ctx.fillText(title, 70, 112);
+  ctx.font = `400 32px ${face}`; ctx.fillText(date, 70, 178);
+  ctx.fillStyle = SHARE_PALETTE.line; ctx.fillRect(70, 262, 940, 3);
+  ctx.font = `500 34px ${face}`;
+  let y = 330;
+  wrappedItems.forEach((lines, index) => {
+    ctx.fillStyle = SHARE_PALETTE.blue; ctx.font = `700 28px ${face}`;
+    ctx.fillText(`${index + 1}.`, 70, y);
+    ctx.fillStyle = SHARE_PALETTE.ink; ctx.font = `500 34px ${face}`;
+    lines.forEach((line, lineIndex) => ctx.fillText(line, 125, y + lineIndex * rowHeight));
+    y += Math.max(1, lines.length) * rowHeight + 20;
+    if (index < wrappedItems.length - 1) {
+      ctx.fillStyle = SHARE_PALETTE.line; ctx.fillRect(125, y - 10, 885, 2);
+    }
+  });
+  ctx.fillStyle = SHARE_PALETTE.muted; ctx.font = `400 24px ${face}`;
+  ctx.fillText("eatplanner.app", 70, height - 38);
+  const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
+  if (!blob) throw new Error("The shopping-list share card couldn't be created.");
+  const file = new File([blob], `woolworths-shopping-list-${week.week}.png`, { type: "image/png" });
+  if (shareUrl) URL.revokeObjectURL(shareUrl);
+  shareUrl = URL.createObjectURL(blob);
+
+  const preview = h("textarea", {
+    className: "shopping-share-text", rows: Math.min(12, Math.max(4, items.length)),
+    readOnly: true, value: text, "aria-label": "Shopping list text to share",
+  });
+  const status = h("p", { className: "muted", role: "status", "aria-live": "polite" });
+  async function copyText() {
+    let copied = false;
+    if (navigator.clipboard?.writeText) {
+      try {
+        await navigator.clipboard.writeText(text);
+        copied = true;
+      } catch (error) { console.error("Clipboard access failed:", error); }
+    }
+    if (!copied) {
+      preview.focus();
+      preview.select();
+      preview.setSelectionRange(0, text.length);
+      try { copied = document.execCommand?.("copy") === true; }
+      catch (error) { console.error("Clipboard fallback failed:", error); }
+    }
+    status.textContent = copied
+      ? "Shopping list copied. Paste it into a message to share."
+      : "Your browser couldn't copy automatically. The text is selected: press and hold, then tap Copy.";
+  }
+  const shareText = button("Share as text", async () => {
+    if (!navigator.share) {
+      await copyText();
+      return;
+    }
+    try { await navigator.share({ title, text }); }
+    catch (error) { if (error instanceof Error && error.name === "AbortError") return; throw error; }
+  });
+  const shareImage = button("Share image", async () => {
+    if (!navigator.canShare?.({ files: [file] })) {
+      notify("This browser can't share images. Download the PNG and send it from any app.");
+      return;
+    }
+    try { await navigator.share({ files: [file], title }); }
+    catch (error) { if (error instanceof Error && error.name === "AbortError") return; throw error; }
+  });
+  const download = h("a", { className: "button secondary", href: shareUrl, download: file.name, text: "Download PNG" });
+  openModal(h("h2", { id: "modal-title", text: "Share shopping list" }),
+    h("p", { className: "muted", text: "Share the current Woolworths ingredients as text or an image. This is a snapshot; later list changes won't be included." }),
+    h("div", { className: "action-row" }, shareText, button("Copy text", copyText, "button secondary"), shareImage, download),
+    status, preview,
+    h("img", { className: "share-preview", src: shareUrl, alt: `Woolworths shopping list for ${date}. ${items.join(". ") || "No ingredients."}` }));
 }
 
 async function showRecipes(updateUrl = true) {

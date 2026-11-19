@@ -152,8 +152,10 @@
 .shopping-item:has(input:checked) > span:not(.tag) { color: var(--muted); text-decoration: line-through; }
 .shopping-instructions { margin: 16px 0; padding-left: 20px; color: var(--muted); font-size: var(--text-sm); line-height: 1.55; }
 .shopping-instructions li + li { margin-top: 8px; }
+.shopping-share-actions { display: flex; flex-wrap: wrap; gap: 10px; }
 .shopping-copy-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 12px; }
 .shopping-text { min-height: 220px; margin: 12px 0; font-size: var(--text-sm); line-height: 1.7; }
+.shopping-share-text { min-height: 110px; margin: 12px 0; font-size: var(--text-sm); line-height: 1.7; }
 
 /* Recipes */
 .collection-toolbar { display: flex; gap: 12px; margin-bottom: 16px; }
@@ -281,7 +283,7 @@ dialog .action-row > :first-child { margin-right: 0; }
   .day-picker { gap: 5px; }
   .day-toggle { min-height: 84px; }
   .day-toggle > span:first-child { font-size: 1.125rem; }
-  .form-bottom .button, .confirm-bar .button, .shopping-copy-actions .button, .recipe-intro > .button { width: 100%; }
+  .form-bottom .button, .confirm-bar .button, .shopping-share-actions .button, .shopping-copy-actions .button, .recipe-intro > .button { width: 100%; }
   .shopping-layout, .recipe-layout, .recipe-photo-options { grid-template-columns: 1fr; gap: 28px; }
   .recipe-photo-options { gap: 12px; }
   .collection-toolbar { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
@@ -298,7 +300,7 @@ dialog .action-row > :first-child { margin-right: 0; }
 
 @media print {
   :root { color-scheme: light; --bg: #fff; --surface: #fff; --sunken: #fff; --ink: #000; --muted: #333; --line: #bbb; --mark-soft: #fff; }
-  .topbar, footer, .action-row, .plan-status, .meal-actions, .confirm-bar, #toast, .shopping-panel .button, .shopping-copy-actions, .shopping-instructions, .shopping-text, .shopping-panel .check-field, .shopping-progress, .card-link { display: none !important; }
+  .topbar, footer, .action-row, .plan-status, .meal-actions, .confirm-bar, #toast, .shopping-panel .button, .shopping-copy-actions, .shopping-share-actions, .shopping-instructions, .shopping-text, .shopping-share-text, .shopping-panel .check-field, .shopping-progress, .card-link { display: none !important; }
   main { max-width: none; padding: 0; }
   .day-card { padding: 8px 0; break-inside: avoid; }
   .day-card.today-card { box-shadow: none; }

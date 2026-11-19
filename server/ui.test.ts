@@ -218,6 +218,33 @@ test("UI completes week selection, swaps, moves, confirmation, cooking, sharing 
   justAddInstruction.click();
   assert.equal(document.querySelector(".shopping-text")?.value, oliveShoppingText.replace("Add these items to my cart\n\n", ""));
   oliveInstruction.click();
+  const shareDescriptor = Object.getOwnPropertyDescriptor(browser.navigator, "share");
+  const canShareDescriptor = Object.getOwnPropertyDescriptor(browser.navigator, "canShare");
+  let sharedData: ShareData | undefined;
+  Object.defineProperties(browser.navigator, {
+    share: { configurable: true, value: async (data: ShareData) => { sharedData = data; } },
+    canShare: { configurable: true, value: (data: ShareData) => Boolean(data.files?.length) },
+  });
+  findButton("Share shopping list").click();
+  await waitFor(() => document.querySelector(".shopping-share-text"));
+  const sharedText = document.querySelector<HTMLTextAreaElement>(".shopping-share-text")?.value ?? "";
+  assert.match(sharedText, /^Woolworths shopping list — /);
+  assert.equal(sharedText.split("\n\n").slice(1).join("\n\n"),
+    document.querySelector(".shopping-text")?.value.split("\n\n").slice(1).join("\n\n"));
+  assert.ok(!sharedText.includes("Add these items to my cart"));
+  assert.ok(drawing.includes("Woolworths shopping list"));
+  findButton("Share as text").click();
+  await waitFor(() => Boolean(sharedData?.text));
+  assert.equal(sharedData?.text, sharedText);
+  findButton("Share image").click();
+  await waitFor(() => Boolean(sharedData?.files?.length));
+  assert.match(sharedData?.files?.[0]?.name ?? "", /^woolworths-shopping-list-.*\.png$/);
+  document.querySelector("#close-modal")?.click();
+  await waitFor(() => !document.querySelector("dialog")?.open);
+  if (shareDescriptor) Object.defineProperty(browser.navigator, "share", shareDescriptor);
+  else Reflect.deleteProperty(browser.navigator, "share");
+  if (canShareDescriptor) Object.defineProperty(browser.navigator, "canShare", canShareDescriptor);
+  else Reflect.deleteProperty(browser.navigator, "canShare");
   const expectedShoppingText = document.querySelector(".shopping-text")?.value;
   const clipboardDescriptor = Object.getOwnPropertyDescriptor(browser.navigator, "clipboard");
   let copiedText = "";
