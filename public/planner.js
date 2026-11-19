@@ -86,9 +86,8 @@ async function api(path, body, method) {
   }
   return value;
 }
-function heading(kicker, title, description) {
+function heading(title, description) {
   return h("div", { className: "page-heading" },
-    h("p", { className: "eyebrow", text: kicker }),
     h("h1", { text: title }),
     description ? h("p", { className: "lede", text: description }) : null);
 }
@@ -206,11 +205,11 @@ function renderWeeks() {
   datePicker.addEventListener("change", () => { if (datePicker.value) run(() => openWeek(mondayFor(datePicker.value))); });
   const hero = h("section", { className: "hero" },
     h("div", { className: "hero-copy" },
-      heading("A TABLE WORTH COMING HOME TO", "Good weeks start\nwith good dinners.", "A few thoughtful choices now. One less thing to think about later."),
+      heading("Dinner, sorted for the week.", "Choose the nights that need a plan. Leave the rest open."),
       h("div", { className: "hero-actions" }, button("Plan this week \u2192", () => openWeek(current)), h("span", { text: "Pick your days. We'll find the dishes." }))),
     h("div", { className: "hero-art" },
       h("img", { src: "/images/salad.jpg", alt: "A colourful bowl of fresh vegetables photographed from above" }),
-      h("div", { className: "hero-note" }, h("span", { text: "ON THE MENU" }), h("p", { text: "A little seasonal.\nA little spontaneous.\nEntirely yours." }))));
+      h("div", { className: "hero-note" }, h("span", { text: "THIS WEEK AT HOME" }), h("p", { text: "Good dinners,\nwithout the daily debate." }))));
   const grid = h("div", { className: "week-grid" });
   [...keys].sort().forEach((key) => {
     const saved = state.summaries.find((week) => week.week === key);
@@ -225,7 +224,7 @@ function renderWeeks() {
     grid.append(card);
   });
   view.replaceChildren(hero, h("section", { className: "weeks-section" },
-    h("div", { className: "section-bar" }, h("div", {}, h("p", { className: "eyebrow", text: "YOUR KITCHEN CALENDAR" }), h("h2", { text: "Your weeks, your rhythm." })), field("Jump to a week", datePicker)), grid));
+    h("div", { className: "section-bar" }, h("div", {}, h("h2", { text: "Your weeks, your rhythm." })), field("Jump to a week", datePicker)), grid));
 }
 
 async function openWeek(key, updateUrl = true) {
@@ -281,11 +280,11 @@ function planningForm() {
       updateDays();
     }, "text-button")));
   const form = h("form", { className: "planning-form" },
-    h("div", { className: "form-section" }, h("p", { className: "eyebrow", text: "01 / MAKE ROOM AT THE TABLE" }),
+    h("div", { className: "form-section" },
       h("h2", { text: "Which nights are we cooking?" }), h("p", { className: "muted", text: "Tap the days you need dinner. Leave space for leftovers and nights out." }),
       dayList, h("div", { className: "day-picker-footer" }, count, quickPick),
       existing ? null : field("Plan ahead", weeksCount, "Use these cooking nights and house rules for each week.")),
-    h("div", { className: "form-section" }, h("p", { className: "eyebrow", text: "02 / A FEW HOUSE RULES" }),
+    h("div", { className: "form-section" },
       h("div", { className: "form-grid" }, field("Adults", adults), field("Children", children)),
       h("p", { className: "muted", text: "Plan for 1 to 12 people in total. Each adult and child counts as one serving; adjust portions to suit your household." }),
       h("div", { className: "form-grid" }, field("How we eat", diet), field("Total time per meal", time)),
@@ -324,7 +323,7 @@ function renderWeek() {
   const locked = week?.status === "confirmed";
   const actions = h("div", { className: "action-row" }, button("\u2190 All weeks", () => showWeeks(), "text-button"));
   if (week) actions.append(button("Share week \u2197", shareWeek, "button secondary small"));
-  const title = heading(locked ? "DINNER IS SORTED" : "A LITTLE FORWARD THINKING", weekLabel(state.weekKey), week ? `${week.meals.length} dinners \u00b7 ${peopleLabel(week)} \u00b7 ${locked ? "Confirmed and locked in" : "A draft to make your own"}` : "Choose the nights. Set a few rules. Find your weeknight rhythm.");
+  const title = heading(weekLabel(state.weekKey), week ? `${week.meals.length} dinners \u00b7 ${peopleLabel(week)} \u00b7 ${locked ? "Confirmed and locked in" : "A draft to make your own"}` : "Choose the nights. Set a few rules. Find your weeknight rhythm.");
   if (!week) {
     view.replaceChildren(actions, title, planningForm());
     return;
@@ -399,7 +398,7 @@ async function swapDialog(day) {
     choice.append(h("img", { src: recipe.image, alt: "", loading: "lazy" }), h("div", {}, h("strong", { text: recipe.title }), h("p", { text: `${PROTEINS[recipe.protein]} \u00b7 ${recipe.prepMinutes + recipe.cookMinutes} min` })), h("span", { text: "\u2192" }));
     list.append(choice);
   });
-  openModal(h("p", { className: "eyebrow", text: `A CHANGE FOR ${DAYS[day].toUpperCase()}` }), h("h2", { id: "modal-title", text: "Something else sound good?" }),
+  openModal(h("h2", { id: "modal-title", text: `A change for ${DAYS[day]}` }),
     h("p", { className: "muted", text: "These alternatives still follow your diet, time and protein rules." }),
     recipes.length ? button("Surprise me \u21bb", () => replace(undefined), "button secondary") : h("p", { className: "notice", text: "No alternatives fit. Change your planning rules or add another recipe to the collection." }), list);
 }
@@ -477,7 +476,7 @@ function shoppingPanel(week) {
     if (openWoolworths) window.location.assign("https://www.woolworths.com.au/");
   }
   return h("section", { className: "shopping-panel", id: "shopping" },
-    h("div", { className: "section-bar" }, h("div", {}, h("p", { className: "eyebrow", text: "ONE LIST. ONE LESS TRIP." }), h("h2", { text: "A little list for the shops." })),
+    h("div", { className: "section-bar" }, h("div", {}, h("h2", { text: "A little list for the shops." })),
       button("Copy shopping list", () => copyList(), "button")),
     h("p", { className: "muted", text: `Combined and scaled for ${peopleLabel(week)}. Quantities are recipe amounts, not supermarket pack sizes. Ingredients marked Pantry go into the Woolworths list by default; untick the option below to leave them out. The item checkboxes are just shopping progress.` }),
     h("label", { className: "check-field compact" }, include, h("span", { text: "Include pantry items in Woolworths list" })),
@@ -566,7 +565,7 @@ function showRecipes(updateUrl = true) {
   search.addEventListener("input", updateFilters);
   category.addEventListener("change", updateFilters);
   protein.addEventListener("change", updateFilters);
-  view.replaceChildren(heading("THE THINGS WE LOVE TO COOK", "Your recipe collection.", "A growing book of everyday favourites. Good ingredients, clear steps, and something for every kind of evening."),
+  view.replaceChildren(heading("Your recipe collection.", "A growing book of everyday favourites. Good ingredients, clear steps, and something for every kind of evening."),
     h("div", { className: "collection-toolbar" }, search, category, protein), layoutToggle, count, grid,
     h("p", { className: "fineprint collection-note", text: "Photography is serving inspiration and may not depict the exact recipe. Always check ingredient labels for allergens and follow safe food-handling guidance." }));
   filter();
@@ -598,7 +597,7 @@ function showRecipe(recipe, servings = recipe.servings, weekKey, day, updateUrl 
   const previous = button("\u2190 Previous", () => changeStep(-1), "button secondary");
   const next = button("Next step \u2192", () => changeStep(1));
   function renderStep(focus = false) {
-    stepCount.textContent = `STEP ${step + 1} OF ${recipe.steps.length}`;
+    stepCount.textContent = `Step ${step + 1} of ${recipe.steps.length}`;
     stepText.textContent = recipe.steps[step];
     previous.disabled = step === 0;
     next.disabled = step === recipe.steps.length - 1;
@@ -634,7 +633,7 @@ function showRecipe(recipe, servings = recipe.servings, weekKey, day, updateUrl 
   }) : null;
   openModal(h("img", { className: "recipe-hero", src: recipe.image, alt: recipe.title }),
     credit ? h("p", { className: "fineprint photo-credit" }, ...credit) : null,
-    h("div", { className: "recipe-intro" }, h("p", { className: "eyebrow", text: `${CATEGORIES[recipe.category]} / ${PROTEINS[recipe.protein]}` }),
+    h("div", { className: "recipe-intro" }, h("p", { className: "eyebrow", text: `${CATEGORIES[recipe.category]} · ${PROTEINS[recipe.protein]}` }),
       h("h2", { id: "modal-title", text: recipe.title }), h("p", { className: "muted", text: recipe.description }),
       h("div", { className: "recipe-stats" }, tag(`${servings} servings`), tag(`${recipe.prepMinutes} min prep`), tag(`${recipe.cookMinutes} min cook`), tag(recipe.diet)),
       cookedButton ? h("div", { className: "action-row" }, cookedButton, cookedStatus) : null,
@@ -695,7 +694,7 @@ async function shareWeek() {
     try { await navigator.share({ files: [file], title: "Our weekly meal plan" }); }
     catch (error) { if (error instanceof Error && error.name === "AbortError") return; throw error; }
   });
-  openModal(h("p", { className: "eyebrow", text: "GOOD FOOD IS BETTER SHARED" }), h("h2", { id: "modal-title", text: "Your week, in one little card." }),
+  openModal(h("p", { className: "eyebrow", text: "Good food is better shared" }), h("h2", { id: "modal-title", text: "Your week, in one little card." }),
     h("p", { className: "muted", text: "Send a PNG to your household. No account or access to this app needed. This is a snapshot, not a live shared link." }),
     h("div", { className: "action-row" }, nativeShare, download), h("img", { className: "share-preview", src: shareUrl, alt: `Meal plan for ${weekLabel(week.week)}. ${week.meals.map((meal) => `${DAYS[meal.day]}: ${meal.recipe.title}`).join(". ")}` }));
 }
@@ -913,7 +912,7 @@ function addRecipeDialog(existing, updateUrl = true) {
       notify(existing ? "Recipe updated in your collection." : "A new favourite, safely in your collection.");
     }, save);
   });
-  openModal(h("p", { className: "eyebrow", text: existing ? "MAKE THIS RECIPE YOUR OWN" : "MAKE ROOM FOR A NEW FAVOURITE" }),
+  openModal(h("p", { className: "eyebrow", text: existing ? "Make this recipe your own" : "Make room for a new favourite" }),
     h("h2", { id: "modal-title", text: existing ? `Update ${existing.title}.` : "Add a little to your recipe book." }), form);
 }
 
@@ -982,7 +981,7 @@ async function initialise() {
 run(async () => {
   try { await initialise(); }
   catch (error) {
-    view.replaceChildren(heading("THE KITCHEN IS TAKING A MOMENT", "Couldn't open your planner.", "Check that the server is running and your household JSON file is valid."),
+    view.replaceChildren(heading("Couldn't open your planner.", "Check that the server is running and your household JSON file is valid."),
       button("Try again", initialise));
     throw error;
   }

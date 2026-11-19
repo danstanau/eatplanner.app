@@ -248,9 +248,9 @@ test("UI completes week selection, swaps, moves, confirmation, cooking, sharing 
   browser.history.back();
   await waitFor(() => !document.querySelector("dialog")?.open && new URL(browser.location.href).searchParams.get("view") === "week" && document.querySelector(".recipe-open") !== originalMealCard);
   document.querySelector(".recipe-open")?.click();
-  assert.match(document.querySelector(".cook-mode .eyebrow")?.textContent ?? "", /STEP 1/);
+  assert.match(document.querySelector(".cook-mode .eyebrow")?.textContent ?? "", /Step 1/);
   findButton("Next step").click();
-  assert.match(document.querySelector(".cook-mode .eyebrow")?.textContent ?? "", /STEP 2/);
+  assert.match(document.querySelector(".cook-mode .eyebrow")?.textContent ?? "", /Step 2/);
   document.querySelector("#close-modal")?.click();
   await waitFor(() => !document.querySelector("dialog")?.open && Boolean([...document.querySelectorAll("button")].find((item) => item.textContent?.includes("Share week"))));
   findButton("Share week").click();
