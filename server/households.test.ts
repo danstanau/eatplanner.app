@@ -1,12 +1,12 @@
 import assert from "node:assert/strict";
 import { once } from "node:events";
 import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import test from "node:test";
 import { createApp } from "./app.js";
 import { hashPassword } from "./auth.js";
 import { Households } from "./households.js";
-import { Store } from "./store.js";
 
 test("household registry persists identities, serializes duplicate names and reports damaged storage", async (t) => {
   const directory = await mkdtemp(fileURLToPath(new URL("../.test-households-", import.meta.url)));
@@ -30,9 +30,15 @@ test("household registry persists identities, serializes duplicate names and rep
   await assert.rejects(new Households(path).list(), SyntaxError);
 });
 
-test("super admin manages households with isolated recipes, plans, credentials and sessions", async (t) => {
+test("super admin manages isolated households and persists their data under DATA_DIR", async (t) => {
   const directory = await mkdtemp(fileURLToPath(new URL("../.test-household-admin-", import.meta.url)));
   t.after(() => rm(directory, { recursive: true, force: true }));
+  const previousDataDir = process.env.DATA_DIR;
+  process.env.DATA_DIR = directory;
+  t.after(() => {
+    if (previousDataDir === undefined) delete process.env.DATA_DIR;
+    else process.env.DATA_DIR = previousDataDir;
+  });
   const registryPath = `${directory}/households.json`;
   const adminStorePath = `${directory}/household.json`;
   const auth = {
@@ -43,9 +49,7 @@ test("super admin manages households with isolated recipes, plans, credentials a
   const unused = async (): Promise<never> => { throw new Error("Household management must not call AI"); };
   const services = { getStatus: unused, generatePlan: unused, extractRecipe: unused, findRecipeImage: unused };
   const start = async () => {
-    const server = createApp(services, new Store(adminStorePath), {
-      auth, households: new Households(registryPath),
-    }).listen(0, "127.0.0.1");
+    const server = createApp(services, undefined, { auth }).listen(0, "127.0.0.1");
     await once(server, "listening");
     t.after(() => new Promise<void>((resolve, reject) => {
       server.close((error) => error ? reject(error) : resolve());
@@ -92,7 +96,14 @@ test("super admin manages households with isolated recipes, plans, credentials a
     assert.equal((await request("/admin/households", cookie, { name: "Intruder", password: "test12" })).status, 403);
     assert.equal((await request(`/admin/households/${beta.id}`, cookie, { password: "hacked" }, "PATCH")).status, 403);
   }
-  const [{ id: _id, source: _source, ...recipe }] = await (await request("/recipes", admin)).json();
+  const starter = await (await request("/recipes", admin)).json();
+  assert.deepEqual(await (await request("/recipes", alphaCookie)).json(), starter);
+  const [{ id: starterId, source: _source, ...recipe }] = starter;
+  for (const cookie of [admin, alphaCookie]) {
+    const edit = await request(`/recipes/${starterId}`, cookie, { ...recipe, title: "Cannot edit starter" }, "PUT");
+    assert.equal(edit.status, 403);
+    assert.deepEqual(await edit.json(), { error: "Starter recipes are read-only." });
+  }
   const adminRecipeResponse = await request("/recipes", admin, { ...recipe, title: "Super admin's recipe" });
   assert.equal(adminRecipeResponse.status, 201);
   const adminRecipe = await adminRecipeResponse.json();
@@ -118,6 +129,7 @@ test("super admin manages households with isolated recipes, plans, credentials a
   assert.deepEqual((await recipesFor("other-households")).map((item: { id: string }) => item.id), [adminRecipe.id, betaRecipe.id]);
   const all = await recipesFor("all");
   assert.equal(all.filter((item: { source: string }) => item.source === "personal").length, 3);
+  assert.deepEqual(all.filter((item: { source: string }) => item.source === "collection"), starter);
   assert.equal(new Set(all.map((item: { id: string }) => item.id)).size, all.length);
   assert.equal((await request("/recipes?scope=invalid", alphaCookie)).status, 400);
   const rules = { differentProteins: false, overlapIngredients: false, maxMinutes: 180, diet: "anything" };
@@ -167,6 +179,9 @@ test("super admin manages households with isolated recipes, plans, credentials a
   const disk = await readFile(registryPath, "utf8");
   assert.doesNotMatch(disk, /alpha-password|beta-password|reset-password/);
   assert.match(disk, /scrypt\$/);
+  const savedAlpha = JSON.parse(await readFile(join(directory, "households", `${alpha.id}.json`), "utf8"));
+  assert.ok(savedAlpha.recipes.some((item: { id: string }) => item.id === personal.id));
+  assert.ok(savedAlpha.weeks["2026-11-16"]);
   const savedAdmin = JSON.parse(await readFile(adminStorePath, "utf8"));
   const savedRecipe = savedAdmin.recipes.find((item: { id: string }) => item.id === adminRecipe.id);
   assert.equal(savedRecipe.householdId, "1");

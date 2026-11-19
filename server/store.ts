@@ -1,5 +1,5 @@
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
-import { dirname } from "node:path";
+import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { z } from "zod";
 import { MAIN_HOUSEHOLD_ID, recipeSchema, type Recipe } from "./recipes.js";
@@ -9,13 +9,20 @@ const stateSchema = z.object({
   recipes: z.array(recipeSchema),
   weeks: z.record(weekKeySchema, weekSchema),
 });
+const starterRecipesSchema = z.array(recipeSchema.extend({ source: z.literal("collection") }));
 type State = { recipes: Recipe[]; weeks: Record<string, Week> };
+
+export function householdDataPath(filename: string): string {
+  const directory = process.env.DATA_DIR?.trim() || fileURLToPath(new URL("../data/", import.meta.url));
+  return resolve(directory, filename);
+}
 
 export class Store {
   private queue: Promise<unknown> = Promise.resolve();
   private state: State | undefined;
+  private starterRecipes: Promise<Recipe[]> | undefined;
   constructor(
-    private path = fileURLToPath(new URL("../data/household.json", import.meta.url)),
+    private path = householdDataPath("household.json"),
     private seedPath = fileURLToPath(new URL("../data/recipes.json", import.meta.url)),
     private householdId = MAIN_HOUSEHOLD_ID,
   ) {}
@@ -26,8 +33,10 @@ export class Store {
       this.state = stateSchema.parse(JSON.parse(await readFile(this.path, "utf8")));
     } catch (error) {
       if (!(error instanceof Error && "code" in error && error.code === "ENOENT")) throw error;
-      this.state = { recipes: z.array(recipeSchema).parse(JSON.parse(await readFile(this.seedPath, "utf8"))), weeks: {} };
+      this.state = { recipes: [], weeks: {} };
     }
+    // Older saves included a copy of the bundled library.
+    this.state.recipes = this.state.recipes.filter((recipe) => recipe.source === "personal");
     // Older files kept ownership implicitly in the file that held the recipe.
     for (const recipe of this.state.recipes) this.fillOwner(recipe);
     for (const week of Object.values(this.state.weeks)) {
@@ -48,6 +57,11 @@ export class Store {
   async readRecipes(): Promise<Recipe[]> {
     await this.queue;
     return structuredClone((await this.load()).recipes);
+  }
+
+  async readStarterRecipes(): Promise<Recipe[]> {
+    this.starterRecipes ??= readFile(this.seedPath, "utf8").then((json) => starterRecipesSchema.parse(JSON.parse(json)));
+    return structuredClone(await this.starterRecipes);
   }
 
   update<T>(change: (state: State) => T): Promise<T> {

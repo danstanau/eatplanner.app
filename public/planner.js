@@ -97,7 +97,7 @@ function householdStorageKey(suffix) {
   return `eatplanner.app:${household}${suffix}`;
 }
 function canEditRecipe(recipe) {
-  return !recipe.householdId || recipe.householdId === (state.user?.id ?? "1");
+  return recipe.source === "personal" && recipe.householdId === (state.user?.id ?? "1");
 }
 function tag(text, extra = "") { return h("span", { className: `tag ${extra}`, text }); }
 function hasImageCredit(credit) {
@@ -675,7 +675,8 @@ async function showRecipes(updateUrl = true) {
       card.append(h("div", { className: "collection-image" }, h("img", { src: recipe.image, alt: "", loading: "lazy" })),
         h("div", { className: "meal-copy" }, h("div", { className: "recipe-meta" }, h("span", { text: CATEGORIES[recipe.category] }), h("span", { text: `${recipe.prepMinutes + recipe.cookMinutes} min` })),
           h("h3", { text: recipe.title }), h("p", { text: recipe.description }),
-          canEditRecipe(recipe) ? null : h("p", { className: "fineprint", text: "Shared by another household" })));
+          recipe.source === "collection" ? h("p", { className: "fineprint", text: "Starter recipe" }) :
+            canEditRecipe(recipe) ? null : h("p", { className: "fineprint", text: "Shared by another household" })));
       return card;
     }));
     if (!filtered.length) grid.append(h("p", { className: "notice", text: "No recipes match. Clear the search or a filter, or add your own." }));

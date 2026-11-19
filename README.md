@@ -70,8 +70,8 @@ existing sessions.
 
 In **Admin**, add a household with a unique name and a password of at least
 6 characters. Share that login with its members. Names are case-insensitive.
-Each household starts with the starter recipe library. By default, the collection
-and meal planner use starter recipes plus the current household's additions.
+All households share the same read-only starter recipe library. By default, the
+collection and meal planner use starter recipes plus the current household's additions.
 Use **Recipe source** in either place to use just your household's recipes,
 other households' additions, or all recipes. Swaps follow the week's saved choice.
 Added recipes are visible to other signed-in households but editable only by the
@@ -115,8 +115,16 @@ LAN also requires HTTPS. `NODE_ENV=production` requires HTTPS for all addresses.
 For local HTTP development, visiting sign-in through another loopback name
 (such as `localhost` instead of `127.0.0.1`) redirects to `APP_ORIGIN` so the
 login and session cookies use the same address.
-Persist and back up `data/household.json`, `data/households.json` and the
-`data/households/` directory on your host, and keep `.env` private.
+Saved recipes, plans and household accounts use `DATA_DIR` if set, otherwise
+the app's `data/` directory. Keep `.env` private and back up `household.json`,
+`households.json` and the `households/` directory from your save directory.
+
+On Railway, attach a volume to your existing app service and mount it at
+`/app/storage`. Set `DATA_DIR=/app/storage` in that service's Variables, then
+deploy from GitHub as usual. Don't mount over `/app/data`: it contains the
+bundled starter recipes. Changing `DATA_DIR` doesn't move existing saves.
+If you have data to keep, back it up before changing the mount or redeploying,
+then copy it into the new save directory before using the app.
 
 ## The weekly flow
 
@@ -211,8 +219,8 @@ only when you press **Read recipe with Copilot**. The transcription fills an
 editable form and reports ambiguities. Nothing enters your library until you
 review the details, tick the review checkbox and save.
 Your recipes are added alongside the starter cards in the local household
-collection. This updates only the gitignored `data/household.json`; the shipped
-starter file stays unchanged.
+collection. This updates the current household's save file; the shipped starter
+file stays unchanged.
 
 The separate **Dish photo** section lets you choose an image file, take a photo
 of the finished dish, or search for a suitable image. The recipe-page photo is
@@ -263,10 +271,10 @@ amounts, dietary labels and instructions yourself.
 ## Files and persistence
 
 ```text
-data/recipes.json    Starter recipe collection; edit to customise a fresh install
-data/household.json  Super admin recipes and weeks (gitignored; existing data stays here)
-data/households.json Household names, IDs and salted password hashes (gitignored)
-data/households/     Per-household recipes and weeks, keyed by stable ID (gitignored)
+data/recipes.json    Shared starter recipe collection; edit here and redeploy to update it
+data/household.json  Super admin recipes and weeks (default path, gitignored)
+data/households.json Household names, IDs and salted password hashes (default path, gitignored)
+data/households/     Per-household recipes and weeks, keyed by stable ID (default path, gitignored)
 public/             HTML, CSS, browser modules and local food photographs
 server/recipes.ts   Recipe, photo and extraction schemas
 server/planner.ts   Planning rules, alternatives, day moves and shopping aggregation
@@ -277,10 +285,11 @@ server/copilot.ts   Server-only Copilot SDK integration
 server/index.ts     Loopback server and shutdown
 ```
 
-On the first write, the household file is seeded from `data/recipes.json`.
-Later changes to the seed do not overwrite your household's recipes. Back up
-all household files listed above to preserve logins, collections and weeks. Corrupt or
-unwritable storage is reported as an error, never silently replaced.
+Changes to `data/recipes.json` appear for all households after redeploying, without
+changing their added recipes or saved plans. Older copies of starter cards in
+household files, including edits made to those copies, are no longer used.
+Back up all household files listed above to preserve logins, collections and weeks.
+Corrupt or unwritable storage is reported as an error, never silently replaced.
 
 Confirmed weeks contain recipe snapshots and their shopping quantities, so
 future additions to the collection don't alter a locked plan. Revision checks

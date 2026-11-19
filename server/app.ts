@@ -18,10 +18,8 @@ interface Services {
 }
 
 const revisionSchema = z.object({ revision: z.number().int().min(1) });
-function recipePool(local: Recipe[], shared: Recipe[], scope: RecipeScope) {
-  if (scope === "household") return local.filter((recipe) => recipe.source === "personal");
-  if (scope === "other-households") return shared;
-  return scope === "all" ? [...local, ...shared] : local;
+function recipePool(local: Recipe[], { starter, shared }: { starter: Recipe[]; shared: Recipe[] }, scope: RecipeScope) {
+  return scope === "other-households" ? shared : [...starter, ...local, ...shared];
 }
 function requireWeek(weeks: Record<string, Week>, key: string): Week {
   const week = weeks[key];
@@ -39,8 +37,15 @@ export function createApp(services: Services, store = new Store(), options: { al
     const sources = [MAIN_HOUSEHOLD_ID, ...(await households.list()).map(({ id }) => id)].filter((id) => id !== ownId);
     return (await Promise.all(sources.map(async (id) => {
       const recipes = await (id === MAIN_HOUSEHOLD_ID ? store : households.store(id)).readRecipes();
-      return recipes.filter((recipe) => recipe.source === "personal" && recipe.householdId === id);
+      return recipes.filter((recipe) => recipe.householdId === id);
     }))).flat();
+  }
+  async function recipeSources(response: Response, scope: RecipeScope) {
+    const [starter, shared] = await Promise.all([
+      scope === DEFAULT_RECIPE_SCOPE || scope === "all" ? store.readStarterRecipes() : [],
+      sharedRecipes(response, scope),
+    ]);
+    return { starter, shared };
   }
   function storeFor(response: Response): Store {
     if (!options.auth) return store;
@@ -140,8 +145,8 @@ export function createApp(services: Services, store = new Store(), options: { al
   });
   app.get("/api/recipes", async (request, response) => {
     const scope = recipeScopeSchema.optional().parse(request.query.scope) ?? DEFAULT_RECIPE_SCOPE;
-    const recipes = await storeFor(response).readRecipes();
-    response.json(recipePool(recipes, await sharedRecipes(response, scope), scope));
+    const [local, sources] = await Promise.all([storeFor(response).readRecipes(), recipeSources(response, scope)]);
+    response.json(recipePool(local, sources, scope));
   });
   app.post("/api/recipes", async (request, response) => {
     const content = newRecipeSchema.parse(request.body);
@@ -164,6 +169,9 @@ export function createApp(services: Services, store = new Store(), options: { al
   });
   app.put("/api/recipes/:id", async (request, response) => {
     const content = newRecipeSchema.parse(request.body);
+    if ((await store.readStarterRecipes()).some((recipe) => recipe.id === request.params.id)) {
+      throw new AppError(403, "Starter recipes are read-only.");
+    }
     response.json(await storeFor(response).update((state) => {
       const index = state.recipes.findIndex((recipe) => recipe.id === request.params.id);
       if (index < 0) throw new AppError(404, "This recipe is no longer in your collection.");
@@ -201,7 +209,7 @@ export function createApp(services: Services, store = new Store(), options: { al
   app.post("/api/weeks/plan", async (request, response) => {
     const input = batchPlanningSchema.parse(request.body);
     const scope = input.rules.recipeScope ?? DEFAULT_RECIPE_SCOPE;
-    const shared = await sharedRecipes(response, scope);
+    const sources = await recipeSources(response, scope);
     response.json(await storeFor(response).update((state) => {
       const start = new Date(`${input.startWeek}T00:00:00Z`);
       const keys = Array.from({ length: input.count }, (_, index) => {
@@ -211,7 +219,7 @@ export function createApp(services: Services, store = new Store(), options: { al
       });
       const existing = keys.find((key) => state.weeks[key]);
       if (existing) throw new AppError(409, `The week starting ${existing} already has a plan. Choose another start week or plan fewer weeks.`);
-      const pool = recipePool(state.recipes, shared, scope);
+      const pool = recipePool(state.recipes, sources, scope);
       const weeks = keys.map((key) => planWeek(key, input, pool));
       weeks.forEach((week) => { state.weeks[week.week] = week; });
       return weeks;
@@ -221,12 +229,12 @@ export function createApp(services: Services, store = new Store(), options: { al
     const key = weekKeySchema.parse(request.params.week);
     const input = planningSchema.parse(request.body);
     const scope = input.rules.recipeScope ?? DEFAULT_RECIPE_SCOPE;
-    const shared = await sharedRecipes(response, scope);
+    const sources = await recipeSources(response, scope);
     response.json(await storeFor(response).update((state) => {
       const current = state.weeks[key];
       if (current) assertEditable(current, input.revision ?? 0);
       else if (input.revision) throw new AppError(409, "This week no longer exists. Reload before planning.");
-      const next = planWeek(key, input, recipePool(state.recipes, shared, scope));
+      const next = planWeek(key, input, recipePool(state.recipes, sources, scope));
       next.revision = (current?.revision ?? 0) + 1;
       state.weeks[key] = next;
       return next;
@@ -238,7 +246,7 @@ export function createApp(services: Services, store = new Store(), options: { al
     const state = await storeFor(response).read();
     const week = requireWeek(state.weeks, key);
     const scope = week.rules.recipeScope ?? DEFAULT_RECIPE_SCOPE;
-    response.json(alternatives(week, day, recipePool(state.recipes, await sharedRecipes(response, scope), scope)));
+    response.json(alternatives(week, day, recipePool(state.recipes, await recipeSources(response, scope), scope)));
   });
   app.post("/api/weeks/:week/swap", async (request, response) => {
     const key = weekKeySchema.parse(request.params.week);
@@ -247,11 +255,11 @@ export function createApp(services: Services, store = new Store(), options: { al
     const current = requireWeek((await own.read()).weeks, key);
     assertEditable(current, input.revision);
     const scope = current.rules.recipeScope ?? DEFAULT_RECIPE_SCOPE;
-    const shared = await sharedRecipes(response, scope);
+    const sources = await recipeSources(response, scope);
     response.json(await own.update((state) => {
       const week = requireWeek(state.weeks, key);
       assertEditable(week, input.revision);
-      swapMeal(week, input.day, recipePool(state.recipes, shared, scope), input.recipeId);
+      swapMeal(week, input.day, recipePool(state.recipes, sources, scope), input.recipeId);
       week.revision++;
       return week;
     }));

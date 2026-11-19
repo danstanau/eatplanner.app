@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { once } from "node:events";
-import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import test from "node:test";
@@ -14,8 +14,8 @@ test("weekly HTTP workflow persists recipes, swaps and locks, and safely imports
   t.after(() => rm(temporary, { recursive: true, force: true }));
   const path = join(temporary, "household.json");
   const store = new Store(path);
-  const seed = await store.read();
-  const { id: _id, source: _source, image: _image, ...content } = seed.recipes[0];
+  const starter = await store.readStarterRecipes();
+  const { id: _id, source: _source, image: _image, ...content } = starter[0];
   let photoCalls = 0;
   let imageSearch: unknown;
   let unreadable = false;
@@ -128,28 +128,51 @@ test("weekly HTTP workflow persists recipes, swaps and locks, and safely imports
   const extracted = await post("/recipes/extract", { mimeType: "image/jpeg", data: image });
   assert.equal(extracted.status, 200);
   assert.equal(photoCalls, 1);
-  assert.equal((await store.read()).recipes.length, seed.recipes.length, "extraction must wait for user review before saving");
+  assert.equal((await store.read()).recipes.length, 0, "extraction must wait for user review before saving");
   unreadable = true;
   assert.equal((await post("/recipes/extract", { mimeType: "image/jpeg", data: image })).status, 422);
   const added = await post("/recipes", { ...content, title: "My reviewed recipe", image: "/images/chicken.jpg" });
   assert.equal(added.status, 201);
   const recipe = recipeSchema.parse(await added.json());
   assert.equal(recipe.source, "personal");
-  assert.equal((await new Store(path).read()).recipes.length, seed.recipes.length + 1);
+  assert.equal((await new Store(path).read()).recipes.length, 1);
   assert.equal((await new Store(path).read()).recipes.at(-1)?.title, "My reviewed recipe");
   const another = await post("/recipes", { ...content, title: "Another family recipe", image: "/images/chicken.jpg" });
   assert.equal(another.status, 201);
-  assert.equal((await new Store(path).read()).recipes.length, seed.recipes.length + 2);
+  assert.equal((await new Store(path).read()).recipes.length, 2);
   assert.deepEqual((await new Store(path).read()).recipes.slice(-2).map((item) => item.title), ["My reviewed recipe", "Another family recipe"]);
   assert.equal((await post("/recipes", { ...content, image: "https://untrusted.example/tracker.jpg" })).status, 400);
   const summaries = await (await fetch(base + "/weeks")).json();
   assert.equal(summaries[0].count, 3);
+
+  const saved = await store.read();
+  const seedPath = join(temporary, "updated-starter.json");
+  const updatedStarter = [
+    { ...starter[0], title: "Updated starter recipe" },
+    { ...starter[1], id: "new-starter", title: "New starter recipe" },
+  ];
+  await writeFile(path, JSON.stringify({ ...saved, recipes: [...starter, ...saved.recipes] }));
+  await writeFile(seedPath, JSON.stringify(updatedStarter));
+  const restarted = new Store(path, seedPath);
+  assert.deepEqual(await restarted.readStarterRecipes(), updatedStarter);
+  assert.deepEqual(await restarted.read(), saved);
+  await restarted.update((state) => { state.recipes[0].title = "Updated personal recipe"; });
+  const rewritten = JSON.parse(await readFile(path, "utf8"));
+  assert.deepEqual(rewritten.recipes.map((item: { title: string }) => item.title), ["Updated personal recipe", "Another family recipe"]);
+  assert.deepEqual(rewritten.weeks, saved.weeks);
 });
 
 test("failed storage mutations cannot change saved state or block subsequent writes", async (t) => {
   const temporary = await mkdtemp(join(fileURLToPath(new URL("../", import.meta.url)), ".test-store-"));
   t.after(() => rm(temporary, { recursive: true, force: true }));
   const store = new Store(join(temporary, "household.json"));
+  const starter = await store.readStarterRecipes();
+  await store.update((state) => {
+    state.recipes.push(
+      { ...starter[0], id: "first-personal", source: "personal", householdId: "1" },
+      { ...starter[1], id: "second-personal", source: "personal", householdId: "1" },
+    );
+  });
   const original = (await store.read()).recipes[0].title;
   await assert.rejects(store.update((state) => {
     state.recipes[0].title = "Should not be saved";

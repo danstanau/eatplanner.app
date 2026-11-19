@@ -13,8 +13,9 @@ test("UI completes week selection, swaps, moves, confirmation, cooking, sharing 
   const temporary = await mkdtemp(join(fileURLToPath(new URL("../", import.meta.url)), ".test-ui-"));
   t.after(() => rm(temporary, { recursive: true, force: true }));
   const store = new Store(join(temporary, "household.json"));
-  const initialRecipes = (await store.read()).recipes.length;
-  const { id: _id, source: _source, image: _image, ...content } = (await store.read()).recipes[0];
+  const starter = await store.readStarterRecipes();
+  const initialRecipes = starter.length;
+  const { id: _id, source: _source, image: _image, ...content } = starter[0];
   const server = createApp({
     generatePlan: async () => { throw new Error("Not used by weekly planning"); },
     getStatus: async () => ({ authenticated: false, model: "auto" }),
@@ -255,11 +256,7 @@ test("UI completes week selection, swaps, moves, confirmation, cooking, sharing 
   await waitFor(() => !document.querySelector(".meal-completion"));
   assert.match(document.querySelector(".recipe-open .card-link")?.textContent ?? "", /Let's cook/);
   assert.ok(!(await store.read()).weeks[Object.keys((await store.read()).weeks)[0]].meals.some((meal) => meal.cooked));
-  editRecipe();
-  assert.equal(new URL(browser.location.href).searchParams.get("edit"), "1");
   assert.equal(document.querySelector<HTMLButtonElement>("#edit-recipe")?.hidden, true);
-  browser.history.back();
-  await waitFor(() => new URL(browser.location.href).searchParams.has("recipe") && !new URL(browser.location.href).searchParams.has("edit") && Boolean(document.querySelector(".recipe-layout")));
   browser.history.back();
   await waitFor(() => !document.querySelector("dialog")?.open && new URL(browser.location.href).searchParams.get("view") === "week" && document.querySelector(".recipe-open") !== originalMealCard);
   document.querySelector(".recipe-open")?.click();
@@ -329,7 +326,9 @@ test("UI completes week selection, swaps, moves, confirmation, cooking, sharing 
   assert.equal(browser.localStorage.getItem("eatplanner.app:recipe-layout"), "compact");
   const brisketCard = [...document.querySelectorAll(".collection-card")].find((card) => card.querySelector("h3")?.textContent === "Beef brisket");
   assert.ok(brisketCard);
+  assert.match(brisketCard.textContent ?? "", /Starter recipe/);
   brisketCard.click();
+  assert.equal(document.querySelector<HTMLButtonElement>("#edit-recipe")?.hidden, true);
   assert.doesNotMatch(document.querySelector("#modal-content")?.textContent ?? "", /\bnull\b/);
   assert.equal(document.querySelector(".photo-credit"), null);
   document.querySelector("#close-modal")?.click();
@@ -358,7 +357,7 @@ test("UI completes week selection, swaps, moves, confirmation, cooking, sharing 
   editor("Ingredients").value = "200 | g | pasta | pantry";
   findButton("Save to my collection").click();
   await waitFor(() => document.querySelectorAll(".collection-card").length === initialRecipes + 1);
-  assert.equal((await store.read()).recipes.length, initialRecipes + 1);
+  assert.equal((await store.read()).recipes.length, 1);
 
   document.querySelector("#add-recipe")?.click();
   const upload = document.querySelector<HTMLInputElement>('input[aria-label="Choose or take a photo of the recipe page"]');
@@ -375,7 +374,7 @@ test("UI completes week selection, swaps, moves, confirmation, cooking, sharing 
   await waitFor(() => !document.querySelector(".import-warnings")?.hidden);
   assert.equal(editor("Recipe name").value, content.title);
   assert.match(document.querySelector(".import-warnings")?.textContent ?? "", /Double-check the servings/);
-  assert.equal((await store.read()).recipes.length, initialRecipes + 1, "photo extraction remains a draft until a reviewed save");
+  assert.equal((await store.read()).recipes.length, 1, "photo extraction remains a draft until a reviewed save");
   const photoReviewed = document.querySelector(".recipe-form > .check-field input");
   assert.ok(photoReviewed);
   assert.equal(photoReviewed.required, true);
@@ -385,7 +384,7 @@ test("UI completes week selection, swaps, moves, confirmation, cooking, sharing 
   await waitFor(() => document.querySelectorAll(".collection-card").length === initialRecipes + 2);
   const imported = (await store.read()).recipes.at(-1);
   assert.ok(imported);
-  assert.equal((await store.read()).recipes.length, initialRecipes + 2);
+  assert.equal((await store.read()).recipes.length, 2);
   assert.equal(imported.image, "/images/pasta.jpg", "the recipe page is not used as the dish photo");
 
   Array.from(document.querySelectorAll(".collection-card")).at(-1)?.click();
@@ -415,7 +414,7 @@ test("UI completes week selection, swaps, moves, confirmation, cooking, sharing 
   findButton("Update this recipe").click();
   await waitFor(() => !document.querySelector("dialog")?.open);
   const updated = (await store.read()).recipes.at(-1);
-  assert.equal((await store.read()).recipes.length, initialRecipes + 2);
+  assert.equal((await store.read()).recipes.length, 2);
   assert.equal(updated?.id, imported.id);
   assert.equal(updated?.description, "Updated from the photographed family recipe.");
   assert.equal(updated?.image, imported.image, "reading a recipe page leaves the existing cover unchanged");

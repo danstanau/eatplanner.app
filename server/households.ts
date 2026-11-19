@@ -1,10 +1,9 @@
 import { randomUUID } from "node:crypto";
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
 import { z } from "zod";
 import { AppError } from "./planner.js";
-import { Store } from "./store.js";
+import { householdDataPath, Store } from "./store.js";
 
 export const householdNameSchema = z.string().trim().min(1).max(200).regex(/^[^\u0000-\u001f\u007f]+$/, "Use a household name on one line.");
 export const passwordSchema = z.string().min(6, "Use at least 6 characters.").max(1024);
@@ -30,7 +29,7 @@ export class Households {
   private records: Household[] | undefined;
   private stores = new Map<string, Store>();
 
-  constructor(private path = fileURLToPath(new URL("../data/households.json", import.meta.url))) {}
+  constructor(private path = householdDataPath("households.json")) {}
 
   private async load(): Promise<Household[]> {
     if (this.records) return this.records;
