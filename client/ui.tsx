@@ -445,12 +445,15 @@ function ShoppingPanel({ week, user, notify, onShare }: {
   const itemsToBuy = items.filter((item) => (includePantry || !item.pantry) && !haveItems.has(`${item.name}|${item.unit}`));
   const text = shoppingText(itemsToBuy, true);
   const preferenceText = [
-    lookForSpecials ? "Please look for specials and lower-priced suitable alternatives where available." : "",
-    preferPremium ? "Please prefer premium products and brands where available; avoid budget alternatives." : "",
+    lookForSpecials ? "Please choose specials or lower-priced suitable alternatives when available." : "",
+    preferPremium ? "Please prefer premium products and brands when available." : "",
   ].filter(Boolean);
   const instructions = [
     olive ? "Add these items to my cart" : "",
     ...(olive ? preferenceText : []),
+    olive && preferenceText.length
+      ? "Important: Add every ingredient listed below. These are preferences, not requirements; never skip or defer an item because no special or premium match is available. Add the closest suitable in-stock option at its usual price instead."
+      : "",
     justAdd ? "Just add, don't confirm" : "",
   ].filter(Boolean);
   const copyText = instructions.length && text ? `${instructions.join("\n")}\n\n${text}` : text;

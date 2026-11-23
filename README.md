@@ -203,7 +203,10 @@ The optional **Look for specials and lower-priced alternatives** and
 **Prefer premium products and brands** checkboxes independently add requests to
 the copied prompt; you can select either, both, or neither. Woolworths says Olive
 can suggest specials and swaps and that shoppers can specify preferences, but
-these phrases are requests, not guaranteed ranking rules. [Woolworths' Olive announcement](https://www.woolworthsgroup.com.au/au/en/our-newsroom/media-releases/latest-news/2026/woolworths-takes-the-hassle-out-of-the-weekly-shop-with-new-digi.html)
+these phrases are requests, not guaranteed ranking rules. When either is selected,
+the prompt explicitly says to add every listed ingredient and use the closest
+suitable in-stock product at its usual price if there is no preferred match.
+[Woolworths' Olive announcement](https://www.woolworthsgroup.com.au/au/en/our-newsroom/media-releases/latest-news/2026/woolworths-takes-the-hassle-out-of-the-weekly-shop-with-new-digi.html)
 describes specials and smart swaps; [Canstar's review](https://www.canstar.com.au/news/woolies-launches-revamped-ai-chatbot/)
 notes these compare Woolworths products rather than other supermarkets. Check
 suggested products, prices, brands and sizes yourself before checkout.

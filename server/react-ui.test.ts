@@ -203,19 +203,24 @@ test("React planner loads the weeks screen, navigates, and opens planning contro
     specialsPreference.click();
     await delay(10);
   });
-  assert.match(document.querySelector<HTMLTextAreaElement>(".shopping-text")?.value ?? "", /Please look for specials/);
+  const specialsOnly = document.querySelector<HTMLTextAreaElement>(".shopping-text")?.value ?? "";
+  assert.match(specialsOnly, /Please choose specials or lower-priced suitable alternatives/);
+  assert.match(specialsOnly, /Add every ingredient listed below/);
+  assert.match(specialsOnly, /never skip or defer an item/);
+  assert.match(specialsOnly, /lamb mince/);
+  assert.match(specialsOnly, /black pepper/);
   await act(async () => {
     premiumPreference.click();
     await delay(10);
   });
   const bothPreferences = document.querySelector<HTMLTextAreaElement>(".shopping-text")?.value ?? "";
-  assert.match(bothPreferences, /Please look for specials/);
+  assert.match(bothPreferences, /Please choose specials or lower-priced suitable alternatives/);
   assert.match(bothPreferences, /Please prefer premium products/);
   await act(async () => {
     specialsPreference.click();
     await delay(10);
   });
   const premiumOnly = document.querySelector<HTMLTextAreaElement>(".shopping-text")?.value ?? "";
-  assert.doesNotMatch(premiumOnly, /Please look for specials/);
+  assert.doesNotMatch(premiumOnly, /Please choose specials/);
   assert.match(premiumOnly, /Please prefer premium products/);
 });
