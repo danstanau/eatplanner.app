@@ -1025,9 +1025,18 @@ async function preparePhoto(file: File, signal?: AbortSignal): Promise<string> {
       body: file,
       signal: signal ? AbortSignal.any([signal, AbortSignal.timeout(150_000)]) : AbortSignal.timeout(150_000),
     });
-    const result: unknown = await response.json();
-    if (!response.ok) throw new Error(isRecord(result) && typeof result.error === "string" ? result.error : "Photo conversion failed.");
-    bitmap = await createImageBitmap(await response.blob());
+    if (!response.ok) {
+      const result: unknown = response.headers.get("content-type")?.includes("application/json") ? await response.json() : null;
+      throw new Error(isRecord(result) && typeof result.error === "string" ? result.error : `Photo conversion failed (${response.status}).`);
+    }
+    const converted = await response.blob();
+    signal?.throwIfAborted();
+    try { bitmap = await createImageBitmap(converted); }
+    catch (conversionError) {
+      signal?.throwIfAborted();
+      console.error(conversionError);
+      throw new Error("The converted photo couldn't be opened.");
+    }
   }
   try {
     signal?.throwIfAborted();
@@ -1059,7 +1068,7 @@ function PhotoPicker({ disabled, onFile }: { disabled: boolean; onFile: (file?: 
       disabled={disabled} onChange={handleChange} />
     <input ref={libraryInput} type="file" accept="image/*,.heic,.heif"
       disabled={disabled} onChange={handleChange} />
-    <Group gap="sm" className="photo-picker-actions">
+    <Group gap="sm" grow wrap="nowrap" className="photo-picker-actions">
       <Button type="button" disabled={disabled} onClick={() => cameraInput.current?.click()}>Take a photo</Button>
       <Button type="button" variant="default" disabled={disabled} onClick={() => libraryInput.current?.click()}>
         Choose from library

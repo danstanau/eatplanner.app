@@ -26,6 +26,9 @@ test("React planner loads the weeks screen, navigates, and opens planning contro
   ]);
   const requests: string[] = [];
   const originalFetch = globalThis.fetch;
+  let conversionFailure: "json" | "text" | null = null;
+  let conversions = 0;
+  const jpeg = Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0x4a, 0x46, 0x49, 0x46]);
   const globals: Record<string, unknown> = {
     window: browser,
     document,
@@ -38,9 +41,24 @@ test("React planner loads the weeks screen, navigates, and opens planning contro
     getComputedStyle: browser.getComputedStyle.bind(browser),
     requestAnimationFrame: browser.requestAnimationFrame.bind(browser),
     cancelAnimationFrame: browser.cancelAnimationFrame.bind(browser),
+    createImageBitmap: async (image: Blob & { name?: string }) => {
+      if (image.name?.endsWith(".HEIC")) throw new Error("Browser cannot decode HEIC");
+      assert.equal(image.type, "image/jpeg");
+      return { width: 1200, height: 900, close() {} };
+    },
     fetch: async (input: RequestInfo | URL) => {
       const path = String(input);
       requests.push(path);
+      if (path === "/api/recipes/convert-heic") {
+        conversions++;
+        if (conversionFailure === "json") return Response.json({ error: "This HEIC photo couldn't be opened." }, { status: 422 });
+        if (conversionFailure === "text") return new Response("Service unavailable", { status: 503 });
+        return new Response(jpeg, { headers: { "Content-Type": "image/jpeg" } });
+      }
+      if (path === "/api/recipes/extract") {
+        const { id: _id, source: _source, image: _image, ...content } = recipe;
+        return Response.json({ recipe: content, warnings: [] });
+      }
       if (path.startsWith("/api/weeks/")) return Response.json(null);
       if (!responses.has(path)) throw new Error(`Unexpected React UI request: ${path}`);
       return Response.json(responses.get(path));
@@ -49,6 +67,12 @@ test("React planner loads the weeks screen, navigates, and opens planning contro
   const descriptors = new Map(Object.keys(globals).map((key) => [key, Object.getOwnPropertyDescriptor(globalThis, key)]));
   for (const [key, value] of Object.entries(globals)) Object.defineProperty(globalThis, key, { configurable: true, writable: true, value });
   Object.defineProperty(globalThis, "IS_REACT_ACT_ENVIRONMENT", { configurable: true, writable: true, value: true });
+  Object.defineProperty(browser.HTMLCanvasElement.prototype, "getContext", {
+    configurable: true, value: () => ({ fillStyle: "", fillRect() {}, drawImage() {} }),
+  });
+  Object.defineProperty(browser.HTMLCanvasElement.prototype, "toDataURL", {
+    configurable: true, value: () => `data:image/jpeg;base64,${jpeg.toString("base64")}`,
+  });
   const root = createRoot(document.querySelector("#root")!);
   t.after(async () => {
     await act(async () => root.unmount());
@@ -94,6 +118,29 @@ test("React planner loads the weeks screen, navigates, and opens planning contro
   assert.equal(document.querySelector('[role="dialog"] [class*="title"]')?.textContent, "Add a recipe");
   assert.deepEqual([...document.querySelectorAll<HTMLButtonElement>('[role="dialog"] .photo-picker-actions button')]
     .map((button) => button.textContent?.trim()), ["Take a photo", "Choose from library", "Take a photo", "Choose from library"]);
+  const inputs = document.querySelectorAll<HTMLInputElement>('[role="dialog"] .photo-picker input[type="file"]');
+  const upload = async (input: HTMLInputElement) => {
+    Object.defineProperty(input, "files", { configurable: true, value: [new browser.File(["heic"], "photo.HEIC", { type: "image/heic" })] });
+    await act(async () => {
+      input.dispatchEvent(new browser.Event("change", { bubbles: true }));
+      await delay(20);
+    });
+  };
+  await upload(inputs[0]);
+  assert.equal(conversions, 1);
+  assert.ok(requests.includes("/api/recipes/extract"), "recipe photo reaches extraction after conversion");
+  assert.match(document.querySelector(".upload-status")?.textContent ?? "", /Draft ready: Lemon pasta/);
+  await upload(inputs[2]);
+  assert.equal(conversions, 2);
+  assert.match(document.querySelector(".upload-status")?.textContent ?? "", /Dish photo ready/);
+  conversionFailure = "json";
+  await upload(inputs[2]);
+  assert.equal(conversions, 3);
+  assert.match(document.querySelector('[role="alert"]')?.textContent ?? "", /This HEIC photo couldn't be opened/);
+  conversionFailure = "text";
+  await upload(inputs[2]);
+  assert.equal(conversions, 4);
+  assert.match(document.querySelector('[role="alert"]')?.textContent ?? "", /Photo conversion failed \(503\)/);
   await act(async () => {
     document.querySelector<HTMLButtonElement>(".close-button")?.click();
     await delay(10);

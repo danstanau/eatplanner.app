@@ -247,7 +247,8 @@ dialog .action-row > :first-child { margin-right: 0; }
 .upload-box h3 { margin-bottom: 6px; font-size: 1.25rem; }
 .upload-box input[type=file] { display: none; }
 .photo-picker { margin: 16px 0; }
-.photo-picker-actions { flex-wrap: wrap; }
+.photo-picker-actions { width: 100%; flex-wrap: nowrap; }
+.photo-picker-actions > button { min-width: 0; padding-inline: 8px; }
 .upload-preview { display: block; max-width: 100%; max-height: 260px; margin: 0 0 14px; border-radius: var(--radius-photo); object-fit: contain; }
 .upload-box .photo-credit { margin: -6px 0 12px; }
 .upload-status:not(:empty) { margin-top: 12px; }
