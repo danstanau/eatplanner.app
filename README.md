@@ -194,19 +194,22 @@ lists. Unchecked pantry staples are included by default; turn off **Include
 unchecked pantry items in Woolworths list** to omit them. These checks are saved
 in this browser for the current plan.
 
-The **Include Olive instruction** checkbox (on by default) prefixes the copied
-text with “Add these items to my cart”. Turn it off for plain ingredient lines.
-The separate **Just add** checkbox (off by default) adds “Just add, don't confirm”.
-It can be used with or without the first instruction and requests fewer prompts,
-but Olive may still require confirmation.
-The optional **Look for specials and lower-priced alternatives** and
-**Prefer premium products and brands** checkboxes independently add requests to
-the copied prompt; you can select either, both, or neither. Woolworths says Olive
-can suggest specials and swaps and that shoppers can specify preferences, but
-these phrases are requests, not guaranteed ranking rules. When either is selected,
-the prompt explicitly says to add every listed ingredient and use the closest
-suitable in-stock product at its usual price if there is no preferred match.
-[Woolworths' Olive announcement](https://www.woolworthsgroup.com.au/au/en/our-newsroom/media-releases/latest-news/2026/woolworths-takes-the-hassle-out-of-the-weekly-shop-with-new-digi.html)
+The **Tell Olive to add all ingredients to my cart** checkbox (on by default)
+includes an instruction to add every item and quantity without asking for item-by-item
+confirmation. It asks Olive to match available pack sizes as closely as possible,
+rounding up or adding extra packs if needed, and tells it never to proceed to
+checkout or payment. It also reminds Olive that you will review the cart before
+checkout.
+The separate **Just add** checkbox was removed because it duplicated this request.
+Woolworths says Olive can suggest and add items to the cart, but customers remain
+in control and must complete checkout. Its public guidance does not establish that
+“Just add, don't confirm” suppresses Olive's clarification prompts.
+
+Choose one **Product preference** for Olive: **Any**, **Specials & lower prices**,
+or **Premium**. The latter two add a preference to the copied prompt, not a
+filter or guarantee. When either is selected, the prompt explicitly says not to
+skip an ingredient if there is no preferred match, and to use the closest suitable
+in-stock product at its usual price instead. [Woolworths' Olive announcement](https://www.woolworthsgroup.com.au/au/en/our-newsroom/media-releases/latest-news/2026/woolworths-takes-the-hassle-out-of-the-weekly-shop-with-new-digi.html)
 describes specials and smart swaps; [Canstar's review](https://www.canstar.com.au/news/woolies-launches-revamped-ai-chatbot/)
 notes these compare Woolworths products rather than other supermarkets. Check
 suggested products, prices, brands and sizes yourself before checkout.

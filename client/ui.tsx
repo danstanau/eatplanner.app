@@ -1,7 +1,7 @@
 import * as React from "react";
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from "react";
 import {
-  ActionIcon, Button, Checkbox, Group, Loader, Modal, Notification, NumberInput, Paper, Select, Textarea, TextInput, VisuallyHidden,
+  ActionIcon, Button, Checkbox, Group, Loader, Modal, Notification, NumberInput, Paper, SegmentedControl, Select, Textarea, TextInput, VisuallyHidden,
 } from "@mantine/core";
 import {
   addDays, api, CATEGORIES, dateLabel, DAYS, ingredientLine, mondayFor, parseIngredientLines,
@@ -425,9 +425,7 @@ function ShoppingPanel({ week, user, notify, onShare }: {
   const storageKey = householdKey(user, `have:${week.week}:${week.revision}`);
   const [includePantry, setIncludePantry] = useState(true);
   const [olive, setOlive] = useState(true);
-  const [justAdd, setJustAdd] = useState(false);
-  const [lookForSpecials, setLookForSpecials] = useState(false);
-  const [preferPremium, setPreferPremium] = useState(false);
+  const [productPreference, setProductPreference] = useState<"any" | "specials" | "premium">("any");
   const [status, setStatus] = useState("");
   const [haveItems, setHaveItems] = useState<Set<string>>(() => {
     try {
@@ -444,17 +442,19 @@ function ShoppingPanel({ week, user, notify, onShare }: {
   const items = week.shoppingList;
   const itemsToBuy = items.filter((item) => (includePantry || !item.pantry) && !haveItems.has(`${item.name}|${item.unit}`));
   const text = shoppingText(itemsToBuy, true);
-  const preferenceText = [
-    lookForSpecials ? "Please choose specials or lower-priced suitable alternatives when available." : "",
-    preferPremium ? "Please prefer premium products and brands when available." : "",
-  ].filter(Boolean);
+  const preferenceText = productPreference === "specials"
+    ? "Please prefer specials and lower-priced suitable alternatives when available."
+    : productPreference === "premium"
+      ? "Please prefer premium products and brands when available."
+      : "";
   const instructions = [
-    olive ? "Add these items to my cart" : "",
-    ...(olive ? preferenceText : []),
-    olive && preferenceText.length
-      ? "Important: Add every ingredient listed below. These are preferences, not requirements; never skip or defer an item because no special or premium match is available. Add the closest suitable in-stock option at its usual price instead."
+    olive
+      ? "Add every ingredient and quantity listed below directly to my cart without asking me to confirm items one by one. Match available pack sizes and quantities as closely as possible, rounding up or adding extra packs if needed. If an exact match is unavailable, choose the closest suitable in-stock option. Never proceed to checkout or payment. I will review the cart before checkout."
       : "",
-    justAdd ? "Just add, don't confirm" : "",
+    olive && preferenceText ? preferenceText : "",
+    olive && preferenceText
+      ? "This is a preference, not a requirement: do not skip an ingredient if no preferred match is available. Add the closest suitable in-stock product at its usual price instead."
+      : "",
   ].filter(Boolean);
   const copyText = instructions.length && text ? `${instructions.join("\n")}\n\n${text}` : text;
   const alreadyHave = items.filter((item) => haveItems.has(`${item.name}|${item.unit}`)).length;
@@ -484,7 +484,7 @@ function ShoppingPanel({ week, user, notify, onShare }: {
       }
     }
     setStatus(copied
-      ? olive || justAdd ? "Ingredients copied. Open Olive in the Woolworths app, paste into the chat and send." : "Ingredients copied. Paste into Olive or a supported Woolworths list-entry field."
+      ? olive ? "Ingredients copied. Open Olive in the Woolworths app, paste into the chat and send." : "Ingredients copied. Paste into Olive or a supported Woolworths list-entry field."
       : "Your browser couldn't copy automatically. The ingredients are selected: press and hold, then tap Copy.");
     if (openShop && copied) window.location.assign("https://www.woolworths.com.au/");
   }
@@ -532,21 +532,24 @@ function ShoppingPanel({ week, user, notify, onShare }: {
       <div>
         <h3>Take your ingredients to Woolworths</h3>
         <label className="check-field compact"><Checkbox checked={olive} onChange={(event) => setOlive(event.currentTarget.checked)} />
-          <span>Include Olive instruction: "Add these items to my cart"</span></label>
-        <label className="check-field compact"><Checkbox checked={justAdd} onChange={(event) => setJustAdd(event.currentTarget.checked)} />
-          <span><strong>Just add</strong><small>Adds "Just add, don't confirm". Olive may still require confirmation.</small></span></label>
+          <span>Tell Olive to add all ingredients to my cart</span></label>
         <div className="shopping-preference">
-          <span className="field-label">Product preferences <span className="muted">(for Olive)</span></span>
-          <label className="check-field compact"><Checkbox checked={lookForSpecials} disabled={!olive} aria-label="Look for specials"
-            onChange={(event) => setLookForSpecials(event.currentTarget.checked)} />
-            <span>Look for specials and lower-priced alternatives</span></label>
-          <label className="check-field compact"><Checkbox checked={preferPremium} disabled={!olive} aria-label="Prefer premium products"
-            onChange={(event) => setPreferPremium(event.currentTarget.checked)} />
-            <span>Prefer premium products and brands</span></label>
+          <span className="field-label">Product preference <span className="muted">(for Olive)</span></span>
+          <SegmentedControl id="shopping-product-preference" aria-label="Product preference for Olive"
+            className="shopping-preference-control" classNames={{ label: "shopping-preference-segment" }}
+            fullWidth disabled={!olive} value={productPreference}
+            onChange={(value) => {
+              if (value === "any" || value === "specials" || value === "premium") setProductPreference(value);
+            }}
+            data={[
+              { label: "Any", value: "any" },
+              { label: "Specials & lower prices", value: "specials" },
+              { label: "Premium", value: "premium" },
+            ]} />
           <small>These are requests for Olive, not guarantees. Check its product suggestions before adding them.</small>
         </div>
         <ol className="shopping-instructions">
-          <li>Choose which pantry items to include and any Olive product preferences, then copy your ingredients.</li>
+          <li>Choose which pantry items to include and an optional Olive product preference, then copy your ingredients.</li>
           <li>In the Woolworths app, choose Pick up or Delivery mode and open Olive beside the home-page search bar. Press and hold the chat field, tap Paste, then send.</li>
           <li>Follow Olive's prompts and check product matches, pack sizes and quantities. You complete checkout yourself.</li>
         </ol>

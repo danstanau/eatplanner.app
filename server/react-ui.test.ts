@@ -38,6 +38,7 @@ test("React planner loads the weeks screen, navigates, and opens planning contro
     Element: browser.Element,
     Node: browser.Node,
     MutationObserver: browser.MutationObserver,
+    ResizeObserver: class { observe() {} unobserve() {} disconnect() {} },
     getComputedStyle: browser.getComputedStyle.bind(browser),
     requestAnimationFrame: browser.requestAnimationFrame.bind(browser),
     cancelAnimationFrame: browser.cancelAnimationFrame.bind(browser),
@@ -195,32 +196,34 @@ test("React planner loads the weeks screen, navigates, and opens planning contro
   });
   assert.match(document.querySelector(".shopping-progress")?.textContent ?? "", /2 to buy · 1 already have/);
   assert.doesNotMatch(document.querySelector<HTMLTextAreaElement>(".shopping-text")?.value ?? "", /olive oil/);
-  const specialsPreference = document.querySelector<HTMLInputElement>('input[aria-label="Look for specials"]');
-  const premiumPreference = document.querySelector<HTMLInputElement>('input[aria-label="Prefer premium products"]');
+  const anyPreference = document.querySelector<HTMLInputElement>('#shopping-product-preference input[value="any"]');
+  const specialsPreference = document.querySelector<HTMLInputElement>('#shopping-product-preference input[value="specials"]');
+  const premiumPreference = document.querySelector<HTMLInputElement>('#shopping-product-preference input[value="premium"]');
+  assert.ok(anyPreference);
   assert.ok(specialsPreference);
   assert.ok(premiumPreference);
+  assert.equal(anyPreference.checked, true);
+  assert.match(document.querySelector<HTMLTextAreaElement>(".shopping-text")?.value ?? "", /Add every ingredient and quantity listed below directly to my cart/);
+  assert.match(document.querySelector<HTMLTextAreaElement>(".shopping-text")?.value ?? "", /Match available pack sizes and quantities as closely as possible/);
+  assert.match(document.querySelector<HTMLTextAreaElement>(".shopping-text")?.value ?? "", /Never proceed to checkout or payment/);
+  assert.match(document.querySelector<HTMLTextAreaElement>(".shopping-text")?.value ?? "", /I will review the cart before checkout/);
   await act(async () => {
     specialsPreference.click();
     await delay(10);
   });
   const specialsOnly = document.querySelector<HTMLTextAreaElement>(".shopping-text")?.value ?? "";
-  assert.match(specialsOnly, /Please choose specials or lower-priced suitable alternatives/);
-  assert.match(specialsOnly, /Add every ingredient listed below/);
-  assert.match(specialsOnly, /never skip or defer an item/);
+  assert.equal(specialsPreference.checked, true);
+  assert.match(specialsOnly, /Please prefer specials and lower-priced suitable alternatives/);
+  assert.match(specialsOnly, /do not skip an ingredient if no preferred match is available/);
   assert.match(specialsOnly, /lamb mince/);
   assert.match(specialsOnly, /black pepper/);
   await act(async () => {
     premiumPreference.click();
     await delay(10);
   });
-  const bothPreferences = document.querySelector<HTMLTextAreaElement>(".shopping-text")?.value ?? "";
-  assert.match(bothPreferences, /Please choose specials or lower-priced suitable alternatives/);
-  assert.match(bothPreferences, /Please prefer premium products/);
-  await act(async () => {
-    specialsPreference.click();
-    await delay(10);
-  });
   const premiumOnly = document.querySelector<HTMLTextAreaElement>(".shopping-text")?.value ?? "";
-  assert.doesNotMatch(premiumOnly, /Please choose specials/);
+  assert.equal(premiumPreference.checked, true);
+  assert.equal(specialsPreference.checked, false);
+  assert.doesNotMatch(premiumOnly, /Please prefer specials/);
   assert.match(premiumOnly, /Please prefer premium products/);
 });
