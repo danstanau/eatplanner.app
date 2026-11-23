@@ -239,9 +239,11 @@ dialog .action-row > :first-child { margin-right: 0; }
 
 .recipe-form { margin-top: 24px; }
 .recipe-photo-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
-.upload-box { min-width: 0; padding: 20px; border: 1.5px dashed var(--line-control); border-radius: var(--radius-control); }
+.upload-box { min-width: 0; border-color: var(--line-control); background: var(--surface); }
 .upload-box h3 { margin-bottom: 6px; font-size: 1.25rem; }
-.upload-box input[type=file] { display: block; min-height: 44px; margin: 12px 0; }
+.upload-box input[type=file] { display: none; }
+.photo-picker { margin: 16px 0; }
+.photo-picker-actions { flex-wrap: wrap; }
 .upload-preview { display: block; max-width: 100%; max-height: 260px; margin: 0 0 14px; border-radius: var(--radius-photo); object-fit: contain; }
 .upload-box .photo-credit { margin: -6px 0 12px; }
 .upload-status:not(:empty) { margin-top: 12px; }

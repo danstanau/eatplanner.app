@@ -265,22 +265,15 @@ input[type=checkbox]:checked::after {
 
 .toast {
   position: fixed;
-  bottom: 24px;
-  left: 50%;
-  z-index: 40;
-  width: max-content;
+  top: calc(24px + env(safe-area-inset-top));
+  right: 24px;
+  z-index: 300;
+  width: min(440px, calc(100% - 32px));
   max-width: min(620px, calc(100% - 32px));
-  margin: 0;
-  padding: 13px 18px;
-  border-radius: var(--radius-control);
-  background: var(--ink);
-  color: var(--bg);
-  font-size: var(--text-sm);
-  font-weight: 600;
-  line-height: 1.5;
-  transform: translateX(-50%);
 }
-.toast.is-error { background: var(--danger); color: var(--on-danger); }
+.toast .mantine-Notification-root {
+  box-shadow: var(--shadow);
+}
 
 dialog {
   width: min(880px, calc(100% - 32px));
@@ -401,7 +394,7 @@ dialog h2 + .muted { margin-top: 10px; }
   .mantine-Modal-inner { align-items: flex-end; padding: 0; }
   .app-modal .dialog-actions { top: -14px; }
   .dialog-actions { top: -14px; margin: -10px -8px -34px auto; }
-  .toast { bottom: calc(82px + env(safe-area-inset-bottom)); }
+  .toast { top: calc(12px + env(safe-area-inset-top)); right: 16px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

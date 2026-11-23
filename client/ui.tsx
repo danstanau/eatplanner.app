@@ -1,7 +1,7 @@
 import * as React from "react";
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from "react";
 import {
-  ActionIcon, Button, Checkbox, Loader, Modal, NumberInput, Select, Textarea, TextInput, VisuallyHidden,
+  ActionIcon, Button, Checkbox, Group, Loader, Modal, Notification, NumberInput, Paper, Select, Textarea, TextInput, VisuallyHidden,
 } from "@mantine/core";
 import {
   addDays, api, CATEGORIES, dateLabel, DAYS, ingredientLine, mondayFor, parseIngredientLines,
@@ -258,7 +258,17 @@ export function App() {
           </select>
         </label>
       </footer>
-      {toast && <div className={`toast${toast.error ? " is-error" : ""}`} role={toast.error ? "alert" : "status"}>{toast.text}</div>}
+      {toast && <div className="toast" role={toast.error ? "alert" : "status"}>
+        <Notification
+          color={toast.error ? "red" : "green"}
+          title={toast.error ? "Something went wrong" : "Done"}
+          withCloseButton
+          closeButtonProps={{ "aria-label": "Dismiss notification" }}
+          onClose={() => setToast(null)}
+        >
+          {toast.text}
+        </Notification>
+      </div>}
       <Modal opened={modal !== null} onClose={dismissModal}
         title={modalTitle ? <VisuallyHidden>{modalTitle}</VisuallyHidden> : null}
         withCloseButton={false} size={modal?.kind === "edit-recipe" ? "xl" : "lg"} centered={false}
@@ -997,6 +1007,28 @@ async function preparePhoto(file: File, signal?: AbortSignal): Promise<string> {
   } finally { bitmap.close(); }
 }
 
+function PhotoPicker({ disabled, onFile }: { disabled: boolean; onFile: (file?: File) => void }) {
+  const cameraInput = useRef<HTMLInputElement>(null);
+  const libraryInput = useRef<HTMLInputElement>(null);
+  function handleChange(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.currentTarget.files?.[0];
+    event.currentTarget.value = "";
+    if (file) onFile(file);
+  }
+  return <div className="photo-picker">
+    <input ref={cameraInput} type="file" accept="image/*,.heic,.heif" capture="environment"
+      disabled={disabled} onChange={handleChange} />
+    <input ref={libraryInput} type="file" accept="image/*,.heic,.heif"
+      disabled={disabled} onChange={handleChange} />
+    <Group gap="sm" className="photo-picker-actions">
+      <Button type="button" disabled={disabled} onClick={() => cameraInput.current?.click()}>Take a photo</Button>
+      <Button type="button" variant="default" disabled={disabled} onClick={() => libraryInput.current?.click()}>
+        Choose from library
+      </Button>
+    </Group>
+  </div>;
+}
+
 function RecipeEditor({ recipe, onSaved, notify }: {
   recipe?: Recipe;
   onSaved: (recipe: Recipe) => void;
@@ -1078,6 +1110,7 @@ function RecipeEditor({ recipe, onSaved, notify }: {
   async function chooseDishPhoto(file?: File) {
     if (!file) return;
     setBusy(true);
+    setError("");
     setStatus("Preparing dish photo...");
     try {
       setImage(await preparePhoto(file));
@@ -1133,22 +1166,20 @@ function RecipeEditor({ recipe, onSaved, notify }: {
     {!recipe && <p className="muted">Other signed-in households can find recipes you add.</p>}
     <form className="recipe-form" onSubmit={(event) => void save(event)}>
       <div className="recipe-photo-options">
-        <section className="upload-box"><h3>Recipe page</h3>
+        <Paper component="section" className="upload-box" withBorder shadow="xs" radius="lg" p="lg"><h3>Recipe page</h3>
           <p className="muted">Select a photo of the ingredients and method to start reading with Copilot, or enter them manually below.</p>
-          <input type="file" accept="image/*,.heic,.heif" aria-label="Choose or take a photo of the recipe page" disabled={busy}
-            onChange={(event) => { void importRecipe(event.currentTarget.files?.[0]); event.currentTarget.value = ""; }} />
+          <PhotoPicker disabled={busy} onFile={(file) => { void importRecipe(file); }} />
           <p className="muted upload-status" role="status">{status}</p>
           {readingController.current && <Button className="button secondary" type="button" onClick={() => readingController.current?.abort()}>Cancel reading</Button>}
           {recipePagePreview && <img className="upload-preview" src={recipePagePreview} alt="Selected recipe page" />}
-        </section>
-        <section className="upload-box"><h3>Dish photo</h3>
+        </Paper>
+        <Paper component="section" className="upload-box" withBorder shadow="xs" radius="lg" p="lg"><h3>Dish photo</h3>
           <p className="muted">Choose an image or take a photo of the finished dish. This is separate from the recipe page.</p>
-          <input type="file" accept="image/*,.heic,.heif" aria-label="Choose or take a photo of the finished dish" disabled={busy}
-            onChange={(event) => { void chooseDishPhoto(event.currentTarget.files?.[0]); event.currentTarget.value = ""; }} />
+          <PhotoPicker disabled={busy} onFile={(file) => { void chooseDishPhoto(file); }} />
           <img className="upload-preview" src={image} alt="Recipe cover photo" />
           {imageCredit && <p className="fineprint photo-credit">Photo by {imageCredit.creator} ({imageCredit.license})</p>}
           <Button className="button secondary" type="button" disabled={busy} onClick={() => void searchImage()}>Find a photo with Copilot</Button>
-        </section>
+        </Paper>
       </div>
       <p className="fineprint recipe-photo-note">Reading a recipe photo or finding a dish photo uses GitHub Copilot and your allowance. Images are resized locally. Only import recipes you have permission to use.</p>
       {warnings.length > 0 && <div className="import-warnings" role="status"><strong>Review before saving</strong>
