@@ -210,8 +210,8 @@ export function createApp(services: Services, store = new Store(), options: { al
     response.json(Object.values(weeks).map((week) => ({
       week: week.week, status: week.status, count: week.meals.length,
       days: week.meals.map((meal) => meal.day),
-      titles: week.meals.map((meal) => meal.recipe.title),
-      images: week.meals.map((meal) => meal.recipe.image),
+      titles: week.meals.map((meal) => "recipe" in meal ? meal.recipe.title : meal.title),
+      images: week.meals.map((meal) => "recipe" in meal ? meal.recipe.image : ""),
     })));
   });
   app.get("/api/weeks/:week", async (request, response) => {
@@ -247,6 +247,10 @@ export function createApp(services: Services, store = new Store(), options: { al
       if (current) assertEditable(current, input.revision ?? 0);
       else if (input.revision) throw new AppError(409, "This week no longer exists. Reload before planning.");
       const next = planWeek(key, input, recipePool(state.recipes, sources, scope));
+      if (current) {
+        next.meals.push(...current.meals.filter((meal) => "type" in meal && !input.days.includes(meal.day)));
+        next.meals.sort((a, b) => a.day - b.day);
+      }
       next.revision = (current?.revision ?? 0) + 1;
       state.weeks[key] = next;
       return next;
@@ -276,6 +280,34 @@ export function createApp(services: Services, store = new Store(), options: { al
       return week;
     }));
   });
+  app.post("/api/weeks/:week/custom", async (request, response) => {
+    const key = weekKeySchema.parse(request.params.week);
+    const input = revisionSchema.extend({ day: daySchema, title: z.string().trim().min(1).max(120) }).parse(request.body);
+    response.json(await storeFor(response).update((state) => {
+      const week = requireWeek(state.weeks, key);
+      assertEditable(week, input.revision);
+      const existing = week.meals.find((meal) => meal.day === input.day);
+      if (existing && "recipe" in existing) throw new AppError(409, "Choose an open night to add a custom plan.");
+      if (existing) existing.title = input.title;
+      else week.meals.push({ day: input.day, type: "custom", title: input.title });
+      week.meals.sort((a, b) => a.day - b.day);
+      week.revision++;
+      return week;
+    }));
+  });
+  app.post("/api/weeks/:week/remove-custom", async (request, response) => {
+    const key = weekKeySchema.parse(request.params.week);
+    const input = revisionSchema.extend({ day: daySchema }).parse(request.body);
+    response.json(await storeFor(response).update((state) => {
+      const week = requireWeek(state.weeks, key);
+      assertEditable(week, input.revision);
+      const index = week.meals.findIndex((meal) => meal.day === input.day);
+      if (index < 0 || "recipe" in week.meals[index]) throw new AppError(404, "There is no custom plan on that day.");
+      week.meals.splice(index, 1);
+      week.revision++;
+      return week;
+    }));
+  });
   app.post("/api/weeks/:week/cooked", async (request, response) => {
     const key = weekKeySchema.parse(request.params.week);
     const input = z.object({
@@ -285,6 +317,7 @@ export function createApp(services: Services, store = new Store(), options: { al
       const week = requireWeek(state.weeks, key);
       const meal = week.meals.find((item) => item.day === input.day);
       if (!meal) throw new AppError(404, "There is no meal on that day.");
+      if (!("recipe" in meal)) throw new AppError(409, "Custom plans don't have cooking progress.");
       if (meal.recipe.id !== input.recipeId) throw new AppError(409, "This meal changed. Reload the week before marking it cooked.");
       meal.cooked = input.cooked;
       return week;

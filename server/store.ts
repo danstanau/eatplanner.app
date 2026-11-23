@@ -40,7 +40,7 @@ export class Store {
     // Older files kept ownership implicitly in the file that held the recipe.
     for (const recipe of this.state.recipes) this.fillOwner(recipe);
     for (const week of Object.values(this.state.weeks)) {
-      for (const meal of week.meals) this.fillOwner(meal.recipe);
+      for (const meal of week.meals) if ("recipe" in meal) this.fillOwner(meal.recipe);
     }
     return this.state;
   }

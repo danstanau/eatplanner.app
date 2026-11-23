@@ -33,13 +33,19 @@ export const batchPlanningSchema = planningSchema.omit({ revision: true }).exten
 export const shoppingItemSchema = z.object({
   name: z.string(), quantity: z.number(), unit: z.string(), pantry: z.boolean(),
 });
+export const customMealSchema = z.object({
+  day: daySchema,
+  type: z.literal("custom"),
+  title: z.string().trim().min(1).max(120),
+});
+const recipeMealSchema = z.object({ day: daySchema, recipe: recipeSchema, cooked: z.boolean().optional() });
 export const weekSchema = z.object({
   week: weekKeySchema,
   people: z.number().int().min(1).max(12),
   adults: z.number().int().min(0).max(12).optional(),
   children: z.number().int().min(0).max(12).optional(),
   rules: rulesSchema,
-  meals: z.array(z.object({ day: daySchema, recipe: recipeSchema, cooked: z.boolean().optional() })).min(1).max(7),
+  meals: z.array(z.union([recipeMealSchema, customMealSchema])).min(1).max(7),
   status: z.enum(["draft", "confirmed"]),
   confirmedAt: z.string().nullable(),
   revision: z.number().int().min(1),
@@ -96,7 +102,8 @@ export function planWeek(week: string, input: Planning, recipes: Recipe[]): Week
 export function alternatives(week: Week, day: number, recipes: Recipe[]): Recipe[] {
   const current = week.meals.find((meal) => meal.day === day);
   if (!current) throw new AppError(404, "There is no meal on that day.");
-  const others = week.meals.filter((meal) => meal.day !== day).map((meal) => meal.recipe);
+  if (!("recipe" in current)) throw new AppError(422, "Custom plans don't have recipe alternatives.");
+  const others = week.meals.flatMap((meal) => meal.day !== day && "recipe" in meal ? [meal.recipe] : []);
   const candidates = recipes.filter((recipe) => recipe.id !== current.recipe.id &&
     eligible(recipe, week.rules) &&
     !others.some((other) => recipe.id === other.id || (week.rules.differentProteins && recipe.protein === other.protein)));
@@ -114,6 +121,7 @@ export function swapMeal(week: Week, day: number, recipes: Recipe[], recipeId?: 
   if (!replacement) throw new AppError(422, "No alternative fits your rules. Change your planning rules or add another recipe.");
   const meal = week.meals.find((item) => item.day === day);
   if (!meal) throw new AppError(404, "Meal not found.");
+  if (!("recipe" in meal)) throw new AppError(422, "Custom plans don't have recipe alternatives.");
   meal.recipe = replacement;
   delete meal.cooked;
 }
@@ -140,7 +148,9 @@ function normalise(ingredient: Ingredient): { quantity: number; unit: string } {
 
 export function shoppingList(week: Pick<Week, "meals" | "people">): ShoppingItem[] {
   const items = new Map<string, ShoppingItem>();
-  for (const { recipe } of week.meals) {
+  for (const meal of week.meals) {
+    if (!("recipe" in meal)) continue;
+    const { recipe } = meal;
     for (const ingredient of recipe.ingredients) {
       const { quantity, unit } = normalise(ingredient);
       const name = ingredient.name.trim().toLowerCase().replace(/\s+/g, " ");

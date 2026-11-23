@@ -6,7 +6,7 @@ import {
 import {
   addDays, api, CATEGORIES, dateLabel, DAYS, ingredientLine, mondayFor, parseIngredientLines,
   PROTEINS, readRoute, RECIPE_SCOPES, shoppingText, today, weekLabel, writeRoute,
-  type AppRoute, type ImageCredit, type Ingredient, type Recipe, type RecipeScope, type Summary, type User, type Week,
+  type AppRoute, type ImageCredit, type Ingredient, type Meal, type Recipe, type RecipeScope, type Summary, type User, type Week,
 } from "./shared";
 
 type Route = AppRoute;
@@ -16,6 +16,7 @@ type ModalState =
   | { kind: "edit-recipe"; recipe?: Recipe }
   | { kind: "edit-week"; week: Week }
   | { kind: "swap"; day: number }
+  | { kind: "custom-plan"; day: number }
   | { kind: "household"; household?: Household; mode?: "name" | "password" }
   | { kind: "share-week" }
   | { kind: "share-shopping"; week: Week; includePantry: boolean }
@@ -117,6 +118,7 @@ export function App() {
     : modal?.kind === "edit-recipe" ? modal.recipe ? `Edit ${modal.recipe.title}` : "Add a recipe"
       : modal?.kind === "edit-week" ? "Change planning rules"
         : modal?.kind === "swap" ? `Swap ${DAYS[modal.day]}'s dinner`
+          : modal?.kind === "custom-plan" ? `${week?.meals.some((meal) => meal.day === modal.day && "type" in meal) ? "Edit" : "Add"} a plan for ${DAYS[modal.day]}`
           : modal?.kind === "household" ? !modal.household ? "Add household"
             : modal.mode === "name" ? "Change household name" : "Reset household password"
             : modal?.kind === "share-week" ? "Share this week"
@@ -299,6 +301,11 @@ export function App() {
           setWeek(updated);
           setModal(null);
           notify("Dinner swapped.");
+        }} />}
+        {modal?.kind === "custom-plan" && week && <CustomPlanEditor week={week} day={modal.day} onSaved={(updated) => {
+          setWeek(updated);
+          setModal(null);
+          notify("Plan saved.");
         }} />}
         {modal?.kind === "household" && <HouseholdEditor household={modal.household} mode={modal.mode} onSaved={(message) => {
           setModal(null);
@@ -528,7 +535,8 @@ function RecipeDetail({ recipe, servings, week, day, currentWeek, user, onWeek, 
 }) {
   const [step, setStep] = useState(0);
   const meal = week && day !== undefined && currentWeek?.week === week
-    ? currentWeek.meals.find((item) => item.day === day && item.recipe.id === recipe.id)
+    ? currentWeek.meals.find((item): item is Extract<Meal, { recipe: Recipe }> =>
+      item.day === day && "recipe" in item && item.recipe.id === recipe.id)
     : undefined;
   const storageKey = week !== undefined && day !== undefined
     ? householdKey(user, `cook:${week}:${day}:${recipe.id}`)
@@ -617,7 +625,7 @@ function ShareWeek({ week }: { week: Week }) {
     const meals = DAYS.map((day, index) => ({ day, meal: week.meals.find((item) => item.day === index) }));
     context.font = "600 34px sans-serif";
     const rows = meals.map(({ meal }) => {
-      const title = meal?.recipe.title ?? "Night off";
+      const title = meal ? "recipe" in meal ? meal.recipe.title : meal.title : "Night off";
       const lines: string[] = [];
       let line = "";
       for (const word of title.split(/\s+/)) {
@@ -678,7 +686,7 @@ function ShareWeek({ week }: { week: Week }) {
       <Button className="button" disabled={!url} onClick={() => void share()}>Share card</Button>
       {url && <a className="button secondary" href={url} download={fileName}>Download PNG</a>}
     </div>
-    {url && <img className="share-preview" src={url} alt={`Meal plan for ${weekLabel(week.week)}. ${week.meals.map((meal) => `${DAYS[meal.day]}: ${meal.recipe.title}`).join(". ")}`} />}
+    {url && <img className="share-preview" src={url} alt={`Meal plan for ${weekLabel(week.week)}. ${week.meals.map((meal) => `${DAYS[meal.day]}: ${"recipe" in meal ? meal.recipe.title : meal.title}`).join(". ")}`} />}
   </>;
 }
 
@@ -807,6 +815,37 @@ function SwapPicker({ week, day, onChoose }: { week: Week; day: number; onChoose
         <img src={recipe.image} alt="" loading="lazy" />
         <div><strong>{recipe.title}</strong><p>{PROTEINS[recipe.protein]}, {recipe.prepMinutes + recipe.cookMinutes} min</p></div>
       </button>)}</div>
+  </>;
+}
+
+function CustomPlanEditor({ week, day, onSaved }: { week: Week; day: number; onSaved: (week: Week) => void }) {
+  const existing = week.meals.find((meal) => meal.day === day);
+  const [title, setTitle] = useState(existing && "type" in existing ? existing.title : "");
+  const [error, setError] = useState("");
+  const [saving, setSaving] = useState(false);
+  async function save(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setSaving(true);
+    setError("");
+    try {
+      onSaved(await api<Week>(`/weeks/${week.week}/custom`, { day, title, revision: week.revision }));
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "The plan couldn't be saved.");
+    } finally { setSaving(false); }
+  }
+  return <>
+    <h2>{existing && "type" in existing ? "Edit your plan" : "Add a plan"}</h2>
+    <p className="muted">Add anything you want to remember for this night. It won't add ingredients to your shopping list.</p>
+    <form className="custom-plan-form" onSubmit={(event) => void save(event)}>
+      <Field label="What's planned?" help="For example: Eating out at Thai, leftovers, or dinner with friends.">
+        <TextInput value={title} onChange={(event) => setTitle(event.currentTarget.value)} maxLength={120} required autoFocus
+          placeholder="Eating out at Thai" />
+      </Field>
+      {error && <p className="notice" role="alert">{error}</p>}
+      <div className="form-bottom"><Button className="button" type="submit" disabled={saving || !title.trim()}>
+        {saving ? "Saving..." : "Save plan"}
+      </Button></div>
+    </form>
   </>;
 }
 
@@ -1349,6 +1388,16 @@ function WeekPage({ week, weekKey, user, onWeek, onRoute, onModal, notify, run }
     onWeek(updated);
     return updated;
   }
+  const moveControl = (meal: Meal, index: number) => <select aria-label={`Change day for ${"recipe" in meal ? meal.recipe.title : meal.title}`}
+    value={index} onChange={(event) => {
+      const control = event.currentTarget;
+      void run(async () => {
+        try {
+          await mutate("move", { from: index, to: Number(control.value) });
+          notify("Dinner moved. Two dinners trade places when both nights are taken.");
+        } finally { control.value = String(index); }
+      });
+    }}>{DAYS.map((name, dayIndex) => <option value={dayIndex} key={name}>Move to {name}</option>)}</select>;
 
   if (!week) return <>
     <div className="action-row"><Button className="text-button" variant="subtle" onClick={navigateBack}>All weeks</Button></div>
@@ -1383,26 +1432,32 @@ function WeekPage({ week, weekKey, user, onWeek, onRoute, onModal, notify, run }
       const date = addDays(weekKey, index);
       return <article className={`day-card${meal ? "" : " day-off"}${date === today() ? " today-card" : ""}`} key={day}>
         <div className="day-card-heading"><strong>{day}</strong><span>{date === today() ? "Today, " : ""}{dateLabel(date)}</span></div>
-        {!meal ? <div className="off-content"><h3>Night off</h3><p>Leftovers, takeaway, or whatever happens.</p></div> :
-          <>
-            <button type="button" className="recipe-open" onClick={() => onRoute({ view: "week", week: weekKey, recipe: meal.recipe.id, day: String(index) })}>
-              <img src={meal.recipe.image} alt={meal.recipe.title} loading="lazy" className="meal-photo" />
-              <div className="meal-copy"><div className="recipe-meta"><Tag>{PROTEINS[meal.recipe.protein]}</Tag><span>{meal.recipe.prepMinutes + meal.recipe.cookMinutes} min</span></div>
-                <h3>{meal.recipe.title}</h3><p>{CATEGORIES[meal.recipe.category]}</p>
-                {meal.cooked ? <span className="tag green meal-completion">Cooked</span> : <span className="card-link">{locked ? "Let's cook" : "Read recipe"}</span>}
-              </div>
-            </button>
-            {!locked && <div className="meal-actions"><Button className="text-button" variant="subtle" onClick={() => onModal({ kind: "swap", day: index })}>Swap</Button>
-              <select aria-label={`Change day for ${meal.recipe.title}`} value={index} onChange={(event) => {
-                const control = event.currentTarget;
-                void run(async () => {
-                try {
-                  await mutate("move", { from: index, to: Number(control.value) });
-                  notify("Dinner moved. Two dinners trade places when both nights are taken.");
-                } finally { control.value = String(index); }
-              }); }}>{DAYS.map((name, dayIndex) => <option value={dayIndex} key={name}>Move to {name}</option>)}</select>
-            </div>}
-          </>}
+        {!meal ? <div className="off-content"><div><h3>Night off</h3><p>Leftovers, takeaway, or whatever happens.</p></div>
+          {!locked && <Button className="text-button" variant="subtle" onClick={() => onModal({ kind: "custom-plan", day: index })}>Add a plan</Button>}</div>
+          : "recipe" in meal
+            ? <>
+              <button type="button" className="recipe-open" onClick={() => onRoute({ view: "week", week: weekKey, recipe: meal.recipe.id, day: String(index) })}>
+                <img src={meal.recipe.image} alt={meal.recipe.title} loading="lazy" className="meal-photo" />
+                <div className="meal-copy"><div className="recipe-meta"><Tag>{PROTEINS[meal.recipe.protein]}</Tag><span>{meal.recipe.prepMinutes + meal.recipe.cookMinutes} min</span></div>
+                  <h3>{meal.recipe.title}</h3><p>{CATEGORIES[meal.recipe.category]}</p>
+                  {meal.cooked ? <span className="tag green meal-completion">Cooked</span> : <span className="card-link">{locked ? "Let's cook" : "Read recipe"}</span>}
+                </div>
+              </button>
+              {!locked && <div className="meal-actions"><Button className="text-button" variant="subtle" onClick={() => onModal({ kind: "swap", day: index })}>Swap</Button>
+                {moveControl(meal, index)}
+              </div>}
+            </>
+            : <>
+              <div className="custom-plan"><span className="eyebrow">Custom plan</span><h3>{meal.title}</h3></div>
+              {!locked && <div className="meal-actions custom-plan-actions">
+                <Button className="text-button" variant="subtle" onClick={() => onModal({ kind: "custom-plan", day: index })}>Edit</Button>
+                <Button className="text-button" variant="subtle" onClick={() => void run(async () => {
+                  await mutate("remove-custom", { day: index });
+                  notify("Custom plan removed.");
+                })}>Remove</Button>
+                {moveControl(meal, index)}
+              </div>}
+            </>}
       </article>;
     })}</div>
     {locked ? <ShoppingPanel week={week} user={user} notify={notify}

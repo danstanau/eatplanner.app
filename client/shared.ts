@@ -44,7 +44,7 @@ export type Recipe = {
 };
 export type Ingredient = { name: string; quantity: number; unit: string; pantry: boolean };
 export type ImageCredit = { creator: string; sourceUrl: string; creatorUrl?: string; license: string; licenseUrl: string };
-export type Meal = { day: number; recipe: Recipe; cooked?: boolean };
+export type Meal = { day: number; recipe: Recipe; cooked?: boolean } | { day: number; type: "custom"; title: string };
 export type ShoppingItem = Ingredient;
 export type Week = {
   week: string;
