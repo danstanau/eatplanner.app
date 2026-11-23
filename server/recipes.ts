@@ -24,6 +24,14 @@ export const recipeContentSchema = z.object({
   notes: z.string().max(1500),
 });
 
+const extractionIngredientSchema = ingredientSchema.extend({
+  quantity: z.number().positive().max(100_000).nullable(),
+  unit: z.enum(units).nullable(),
+});
+const extractionRecipeSchema = recipeContentSchema.extend({
+  ingredients: z.array(extractionIngredientSchema).min(1).max(40),
+});
+
 export const recipeImageSchema = z.string().max(3_000_000).refine((value) => {
   if (/^\/images\/[a-z0-9-]+\.jpg$/.test(value) || /^data:image\/(?:jpeg|png|webp);base64,[A-Za-z0-9+/]+=*$/.test(value)) return true;
   try {
@@ -55,9 +63,46 @@ export const recipeSchema = newRecipeSchema.extend({
   householdId: z.union([z.literal(MAIN_HOUSEHOLD_ID), z.uuid()]).optional(),
 });
 export const extractionSchema = z.object({
-  recipe: recipeContentSchema.nullable(),
+  recipe: extractionRecipeSchema.nullable(),
   warnings: z.array(z.string().max(500)).max(25),
 });
+
+export const modelExtractionSchema = extractionSchema.extend({
+  recipe: extractionRecipeSchema.extend({
+    ingredients: z.array(extractionIngredientSchema.extend({
+      estimated: z.boolean(),
+    })).min(1).max(40),
+  }).nullable(),
+  warnings: z.array(z.string().max(500)).max(12),
+});
+
+export function prepareExtraction(result: z.infer<typeof modelExtractionSchema>): Extraction {
+  if (!result.recipe) return result;
+  const estimated: string[] = [];
+  let incomplete = 0;
+  const ingredients = result.recipe.ingredients.map(({ estimated: isEstimated, ...ingredient }) => {
+    if (ingredient.quantity === null || ingredient.unit === null) {
+      incomplete++;
+    } else if (isEstimated) {
+      estimated.push(ingredient.name);
+    }
+    return ingredient;
+  });
+  const warnings: string[] = [];
+  let group = "";
+  for (const item of estimated) {
+    if (group && group.length + item.length + 2 > 440) {
+      warnings.push(`Estimated amounts to review: ${group}.`);
+      group = "";
+    }
+    group += `${group ? ", " : ""}${item}`;
+  }
+  if (group) warnings.push(`Estimated amounts to review: ${group}.`);
+  if (incomplete) {
+    warnings.push(`Complete missing quantities or units for ${incomplete} ingredient${incomplete === 1 ? "" : "s"} before saving.`);
+  }
+  return { recipe: { ...result.recipe, ingredients }, warnings: [...warnings, ...result.warnings] };
+}
 
 export const recipeImageSearchSchema = z.object({
   title: z.string().trim().min(1).max(100),

@@ -39,6 +39,9 @@ The SDK runs on the server with tools and skills disabled. Credentials never go
 to the browser. If `auto` doesn't select a vision-capable model for imports or
 photo search, set
 `COPILOT_VISION_MODEL` to one available on your account and restart the server.
+When a photo doesn't show an ingredient quantity or unit, the import suggests an
+amount using the recipe's context and flags it for review. If it cannot make a
+reasonable estimate, the field stays blank and must be completed before saving.
 `COPILOT_MODEL`, `PORT` and `COPILOT_CLI_PATH` are also optional configuration.
 To prefer Unsplash for photo search, create an API app at
 [Unsplash Developers](https://unsplash.com/developers), then set

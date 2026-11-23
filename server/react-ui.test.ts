@@ -92,7 +92,8 @@ test("React planner loads the weeks screen, navigates, and opens planning contro
     await delay(10);
   });
   assert.equal(document.querySelector('[role="dialog"] [class*="title"]')?.textContent, "Add a recipe");
-  assert.ok(document.querySelector('[aria-label="Choose or take a photo of the recipe page"]'));
+  assert.deepEqual([...document.querySelectorAll<HTMLButtonElement>('[role="dialog"] .photo-picker-actions button')]
+    .map((button) => button.textContent?.trim()), ["Take a photo", "Choose from library", "Take a photo", "Choose from library"]);
   await act(async () => {
     document.querySelector<HTMLButtonElement>(".close-button")?.click();
     await delay(10);

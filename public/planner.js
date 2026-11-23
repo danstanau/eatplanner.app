@@ -1092,7 +1092,7 @@ function addRecipeDialog(existing, updateUrl = true) {
       title.value = recipe.title; description.value = recipe.description; category.value = recipe.category;
       protein.value = recipe.protein; diet.value = recipe.diet; servings.value = recipe.servings;
       prep.value = recipe.prepMinutes; cook.value = recipe.cookMinutes;
-      ingredients.value = recipe.ingredients.map((item) => `${item.quantity} | ${item.unit} | ${item.name}${item.pantry ? " | pantry" : ""}`).join("\n");
+      ingredients.value = recipe.ingredients.map((item) => `${item.quantity ?? ""} | ${item.unit ?? ""} | ${item.name}${item.pantry ? " | pantry" : ""}`).join("\n");
       steps.value = recipe.steps.join("\n"); notes.value = recipe.notes;
       reviewed.checked = false;
       warnings.replaceChildren(h("strong", { text: "Review before saving" }),
@@ -1167,7 +1167,7 @@ function addRecipeDialog(existing, updateUrl = true) {
     warnings, field("Recipe name", title), field("Description", description),
     h("div", { className: "form-grid" }, field("Category", category), field("Primary protein", protein), field("Diet", diet)),
     h("div", { className: "form-grid" }, field("Servings", servings), field("Prep minutes", prep), field("Cook minutes", cook)),
-    field("Ingredients", ingredients, "One per line: quantity | unit | name. Optionally add | pantry. Units: g, kg, ml, l, tsp, tbsp, piece, pinch. Australian tbsp = 20 ml; tsp = 5 ml. Use singular grocery names so identical ingredients combine."),
+    field("Ingredients", ingredients, "One per line: quantity | unit | name. Fill any blank quantity or unit before saving. Optionally add | pantry. Units: g, kg, ml, l, tsp, tbsp, piece, pinch. Australian tbsp = 20 ml; tsp = 5 ml. Use singular grocery names so identical ingredients combine."),
     field("Method", steps, "One complete step per line."), field("Notes and source", notes),
     h("label", { className: "check-field" }, reviewed, h("span", { text: "I've checked the amounts, dietary labels and steps against the original." })),
     h("div", { className: "form-bottom" }, h("span", { className: "muted", text: existing ? "This replaces the saved recipe." : "Saved to this household's recipe file." }), save));

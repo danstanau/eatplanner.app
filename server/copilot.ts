@@ -3,7 +3,7 @@ import { z } from "zod";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { buildPrompt, mealPlanSchema, validateMealPlan, type Preferences } from "./plan.js";
-import { extractionSchema, type Photo, type RecipeImageSearch } from "./recipes.js";
+import { modelExtractionSchema, prepareExtraction, type Photo, type RecipeImageSearch } from "./recipes.js";
 import { searchRecipePhoto } from "./photo-search.js";
 import { AppError } from "./planner.js";
 
@@ -102,20 +102,24 @@ export async function extractRecipe(photo: Photo, signal: AbortSignal) {
     const result = await Promise.race([cancelled, session.sendAndWait({
       prompt: [
         "Transcribe the recipe in this image. If no readable recipe is visible, return recipe=null and explain why in warnings. Never invent a recipe.",
-        "Preserve ingredient amounts and every method step. Use metric units.",
+        "Preserve all clearly readable ingredient amounts and every method step. Use metric units.",
         "Ingredient names must be consistent singular grocery names, without quantities or preparation instructions.",
-        "Allowed units: g, kg, ml, l, tsp, tbsp, piece, pinch. A piece can be an egg, garlic clove or slice of bread; put that in the ingredient name.",
+        "Allowed units: g, kg, ml, l, tsp, tbsp, piece, pinch. Use piece for countable items including eggs, garlic cloves, slices, bunches, cans and packets; include the item or container in the ingredient name. For example, ¼ bunch coriander is 0.25 piece coriander bunch. This is a representation of the source, not an estimate.",
+        "When a package weight or volume is stated, retain the total weight or volume instead of only counting packages: for example, two 250 g packets are 500 g. Include the packet count and size in notes when useful.",
+        "For ingredients whose quantities or units are missing or unreadable, suggest a practical amount using the dish, servings, other ingredients and visible method as context. Use typical cooking quantities, not arbitrary tiny placeholders.",
+        "Set estimated=true on each ingredient whose amount or unit was inferred, including amounts described as 'to taste'; set estimated=false only when both amount and unit are clearly supported by the source.",
+        "Preserve a readable amount when its unit is missing; infer the unit only when reasonable. If no reasonable estimate can be made, use null for the unknown quantity or unit.",
         "This app uses Australian tablespoons (20 ml) and teaspoons (5 ml). If the source uses 15 ml tablespoons, convert those amounts to ml to preserve them. Flag any uncertain source unit conversions in warnings.",
         "Choose the best primary protein group and category from the schema. Classify diet conservatively.",
-        "If the page omits metadata such as a description, servings, prep/cook times, category, primary protein or diet, infer a conservative value from the readable recipe and report that assumption in warnings. Never invent ingredients, quantities or method steps; flag unreadable details for review.",
+        "If the page omits metadata such as a description, servings, prep/cook times, category, primary protein or diet, infer a conservative value from the readable recipe and report that assumption in warnings. Never invent ingredients or method steps; flag unreadable details for review.",
         "Use notes for source information, ingredient preparation, and ambiguities. Include warnings for any unreadable text, converted units, inferred servings or inferred timings.",
-        "Never silently guess an unreadable quantity; explain it in warnings and require user review.",
+        "Explain assumptions and unreadable text in warnings; estimated ingredient quantities will be flagged separately for review.",
         "Pantry staples such as oil, spices, rice and pasta should have pantry=true.",
       ].join("\n"),
       attachments: [{ type: "blob", data: photo.data, mimeType: photo.mimeType, displayName: "recipe-photo" }],
-    }, extractionSchema, 120_000)]);
+    }, modelExtractionSchema, 120_000)]);
     completed = true;
-    return result;
+    return prepareExtraction(result);
   } finally {
     if (onAbort) signal.removeEventListener("abort", onAbort);
     try { if (!completed) await session.abort(); } finally { await session.disconnect(); }

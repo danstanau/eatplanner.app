@@ -1112,7 +1112,12 @@ function RecipeEditor({ recipe, onSaved, notify }: {
       controller.signal.throwIfAborted();
       setRecipePagePreview(prepared);
       setStatus("Reading ingredients and method with Copilot. This can take up to two minutes.");
-      const result = await api<{ recipe: Omit<Recipe, "id" | "source" | "householdId" | "image"> | null; warnings: string[] }>(
+      const result = await api<{
+        recipe: (Omit<Recipe, "id" | "source" | "householdId" | "image" | "ingredients"> & {
+          ingredients: Array<Omit<Ingredient, "quantity" | "unit"> & { quantity: number | null; unit: string | null }>;
+        }) | null;
+        warnings: string[];
+      }>(
         "/recipes/extract", { data: prepared.split(",")[1], mimeType: "image/jpeg" }, undefined, controller.signal);
       controller.signal.throwIfAborted();
       if (!result.recipe) throw new Error(result.warnings.join(" ") || "No readable recipe was found. Try a clearer photo.");
@@ -1126,7 +1131,7 @@ function RecipeEditor({ recipe, onSaved, notify }: {
       setPrepMinutes(imported.prepMinutes);
       setCookMinutes(imported.cookMinutes);
       setIngredients(imported.ingredients.map((item) =>
-        `${item.quantity} | ${item.unit} | ${item.name}${item.pantry ? " | pantry" : ""}`).join("\n"));
+        `${item.quantity ?? ""} | ${item.unit ?? ""} | ${item.name}${item.pantry ? " | pantry" : ""}`).join("\n"));
       setSteps(imported.steps.join("\n"));
       setNotes(imported.notes);
       setReviewed(false);
@@ -1238,7 +1243,7 @@ function RecipeEditor({ recipe, onSaved, notify }: {
         <Field label="Prep minutes"><NumberInput value={prepMinutes} onChange={setPrepMinutes} min={0} max={180} required /></Field>
         <Field label="Cook minutes"><NumberInput value={cookMinutes} onChange={setCookMinutes} min={0} max={360} required /></Field>
       </div>
-      <Field label="Ingredients" help="One per line: quantity | unit | name. Optionally add | pantry. Units: g, kg, ml, l, tsp, tbsp, piece, pinch. Australian tbsp = 20 ml; tsp = 5 ml.">
+      <Field label="Ingredients" help="One per line: quantity | unit | name. Fill any blank quantity or unit before saving. Optionally add | pantry. Units: g, kg, ml, l, tsp, tbsp, piece, pinch. Australian tbsp = 20 ml; tsp = 5 ml.">
         <Textarea value={ingredients} onChange={(event) => setIngredients(event.currentTarget.value)} required rows={6}
           placeholder={"400 | g | canned chickpeas\n1 | piece | lemon\n1 | tbsp | olive oil | pantry"} />
       </Field>

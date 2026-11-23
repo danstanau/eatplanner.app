@@ -31,7 +31,17 @@ test("UI completes week selection, swaps, moves, confirmation, cooking, sharing 
         }, { once: true }));
       }
       if (recipeReads === 2) await finishImport.promise;
-      return { recipe: content, warnings: ["Double-check the servings."] };
+      return recipeReads === 2
+        ? {
+          recipe: {
+            ...content,
+            ingredients: content.ingredients.map((item, index) =>
+              index === 0 ? { ...item, quantity: null, unit: null }
+                : index === 1 ? { ...item, quantity: 75, unit: "g" as const } : item),
+          },
+          warnings: ["Double-check the servings.", "Estimated amounts to review: basil pesto.", "Complete missing quantities or units for 1 ingredient before saving."],
+        }
+        : { recipe: content, warnings: ["Double-check the servings."] };
     },
     findRecipeImage: async () => ({
       image: "/images/chicken.jpg",
@@ -437,6 +447,11 @@ test("UI completes week selection, swaps, moves, confirmation, cooking, sharing 
   assert.match(document.querySelector(".upload-status.is-success")?.textContent ?? "", /Draft ready: .*Review the details below, then save/);
   assert.equal(editor("Recipe name").value, content.title);
   assert.match(document.querySelector(".import-warnings")?.textContent ?? "", /Double-check the servings/);
+  assert.match(document.querySelector(".import-warnings")?.textContent ?? "", /Estimated amounts to review: basil pesto/);
+  assert.match(document.querySelector(".import-warnings")?.textContent ?? "", /Complete missing quantities or units/);
+  const importedIngredients = editor("Ingredients");
+  assert.match(importedIngredients.value, /^\s*\|\s*\|\s*/);
+  assert.match(importedIngredients.value, /75 \| g \| basil pesto/);
   assert.equal((await store.read()).recipes.length, 1, "photo extraction remains a draft until a reviewed save");
   const photoReviewed = document.querySelector(".recipe-form > .check-field input");
   assert.ok(photoReviewed);
@@ -444,11 +459,19 @@ test("UI completes week selection, swaps, moves, confirmation, cooking, sharing 
   assert.equal(photoReviewed.checked, false);
   photoReviewed.checked = true;
   findButton("Save to my collection").click();
+  await waitFor(() => document.querySelector("#dialog-error"));
+  assert.match(document.querySelector("#dialog-error")?.textContent ?? "", /Ingredient line 1/);
+  const ingredientLines = importedIngredients.value.split("\n");
+  const missingIngredient = ingredientLines[0].split("|")[2].trim();
+  ingredientLines[0] = `1 | piece | ${missingIngredient}`;
+  importedIngredients.value = ingredientLines.join("\n");
+  findButton("Save to my collection").click();
   await waitFor(() => document.querySelectorAll(".collection-card").length === initialRecipes + 2);
   const imported = (await store.read()).recipes.at(-1);
   assert.ok(imported);
   assert.equal((await store.read()).recipes.length, 2);
   assert.equal(imported.image, dishPhoto, "the selected dish photo is saved with the imported recipe");
+  assert.equal(imported.ingredients[1].quantity, 75);
 
   Array.from(document.querySelectorAll(".collection-card")).at(-1)?.click();
   editRecipe();

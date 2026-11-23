@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 import { z } from "zod";
-import { extractionSchema, photoSchema, recipeSchema, type Recipe } from "./recipes.js";
+import { extractionSchema, modelExtractionSchema, photoSchema, prepareExtraction, recipeSchema, type Recipe } from "./recipes.js";
 import { alternatives, assertEditable, moveMeal, planWeek, planningSchema, shoppingList, swapMeal, weekKeySchema, type Rules } from "./planner.js";
 
 const recipes = z.array(recipeSchema).parse(JSON.parse(await readFile(new URL("../data/recipes.json", import.meta.url), "utf8")));
@@ -107,7 +107,40 @@ test("week validation rejects duplicate days, non-Mondays and impossible dates; 
 
 test("photo extraction schema is SDK-compatible and invalid image types are rejected", () => {
   assert.doesNotThrow(() => extractionSchema.toJSONSchema());
+  assert.doesNotThrow(() => modelExtractionSchema.toJSONSchema());
   assert.equal(extractionSchema.safeParse({ recipe: null, warnings: ["No readable recipe."] }).success, true);
+  assert.equal(extractionSchema.safeParse({
+    recipe: {
+      title: "Lamb penne", description: "Penne with lamb.", category: "comfort", protein: "lamb", diet: "omnivore",
+      servings: 2, prepMinutes: 10, cookMinutes: 20,
+      ingredients: [{ name: "lamb mince", quantity: null, unit: null, pantry: false }],
+      steps: ["Cook the pasta."], notes: "",
+    },
+    warnings: [],
+  }).success, true);
   assert.equal(photoSchema.safeParse({ mimeType: "image/png", data: Buffer.from("not an image").toString("base64") }).success, false);
   assert.equal(photoSchema.safeParse({ mimeType: "text/html", data: "PHNjcmlwdD4=" }).success, false);
+});
+
+test("photo estimates are retained and explicitly identified for review", () => {
+  const result = prepareExtraction(modelExtractionSchema.parse({
+    recipe: {
+      title: "Lamb penne", description: "Penne with lamb.", category: "comfort", protein: "lamb", diet: "omnivore",
+      servings: 2, prepMinutes: 10, cookMinutes: 20,
+      ingredients: [
+        { name: "lamb mince", quantity: 250, unit: "g", pantry: false, estimated: true },
+        { name: "pasta", quantity: 200, unit: "g", pantry: true, estimated: false },
+        { name: "oil", quantity: null, unit: null, pantry: true, estimated: true },
+      ],
+      steps: ["Cook the pasta."], notes: "",
+    },
+    warnings: ["The method is incomplete."],
+  }));
+  assert.deepEqual(result.recipe?.ingredients[0], { name: "lamb mince", quantity: 250, unit: "g", pantry: false });
+  assert.deepEqual(result.warnings, [
+    "Estimated amounts to review: lamb mince.",
+    "Complete missing quantities or units for 1 ingredient before saving.",
+    "The method is incomplete.",
+  ]);
+  assert.equal(extractionSchema.safeParse(result).success, true);
 });
