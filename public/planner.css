@@ -151,9 +151,21 @@
 .shopping-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 48px; margin-top: 24px; }
 .shopping-layout h3 { margin-bottom: 10px; font-size: var(--text-lg); }
 .shopping-progress { margin-bottom: 6px; font-size: var(--text-sm); font-weight: 650; font-variant-numeric: tabular-nums; }
+.shopping-group { margin: 0 0 24px; }
+.shopping-group-heading { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; }
+.shopping-group-heading h3 { margin: 0; }
+.shopping-group > p { margin: 8px 0; color: var(--muted); font-size: var(--text-sm); line-height: 1.5; }
+.pantry-group { padding: 16px; border: 1px solid var(--primary); border-radius: var(--radius-control); background: var(--primary-soft); }
+.pantry-group .shopping-item { border-color: color-mix(in srgb, var(--primary) 18%, transparent); }
 .shopping-item { display: flex; align-items: center; gap: 12px; min-height: 48px; padding: 8px 0; border-bottom: 1px solid var(--line); cursor: pointer; }
-.shopping-item > span:not(.tag) { flex: 1; font-variant-numeric: tabular-nums; }
-.shopping-item:has(input:checked) > span:not(.tag) { color: var(--muted); text-decoration: line-through; }
+.shopping-item > span:first-of-type { flex: 1; font-variant-numeric: tabular-nums; }
+.shopping-item-state { flex: none; color: var(--muted); font-size: var(--text-xs); }
+.shopping-item.is-on-hand .shopping-item-state { color: var(--primary); font-weight: 700; }
+.shopping-item:has(input:checked) > span:first-of-type { color: var(--muted); text-decoration: line-through; }
+.shopping-preference { margin: 18px 0; }
+.shopping-preference .field-label { display: block; margin-bottom: 6px; font-weight: 650; }
+.shopping-preference .check-field { margin: 4px 0; }
+.shopping-preference small { display: block; margin-top: 6px; color: var(--muted); font-size: var(--text-sm); }
 .shopping-instructions { margin: 16px 0; padding-left: 20px; color: var(--muted); font-size: var(--text-sm); line-height: 1.55; }
 .shopping-instructions li + li { margin-top: 8px; }
 .shopping-share-actions { display: flex; flex-wrap: wrap; gap: 10px; }
@@ -210,6 +222,7 @@ dialog .action-row > :first-child { margin-right: 0; }
 .recipe-intro > .action-row { margin-bottom: 12px; }
 .recipe-layout { display: grid; grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr); align-items: start; gap: 36px; margin: 32px 0 24px; padding-top: 28px; border-top: 2px solid var(--ink); }
 .recipe-layout h3 { margin-bottom: 8px; }
+.ingredient-check-hint { margin: 0 0 8px; font-size: var(--text-sm); }
 .cook-mode { padding: 22px 24px 24px; border-radius: var(--radius-control); background: var(--sunken); }
 .step-instruction { min-height: 9rem; margin: 10px 0 22px; font-size: clamp(1.375rem, 2.8vw, 1.75rem); font-weight: 500; font-stretch: 87.5%; line-height: 1.32; }
 .step-instruction:focus { outline: 0; }

@@ -59,7 +59,7 @@ test("React planner loads the weeks screen, navigates, and opens planning contro
         const { id: _id, source: _source, image: _image, ...content } = recipe;
         return Response.json({ recipe: content, warnings: [] });
       }
-      if (path.startsWith("/api/weeks/")) return Response.json(null);
+      if (path.startsWith("/api/weeks/")) return Response.json(responses.get(path) ?? null);
       if (!responses.has(path)) throw new Error(`Unexpected React UI request: ${path}`);
       return Response.json(responses.get(path));
     },
@@ -107,6 +107,14 @@ test("React planner loads the weeks screen, navigates, and opens planning contro
   assert.ok(dialog);
   const labelledBy = dialog.getAttribute("aria-labelledby");
   assert.equal(document.getElementById(labelledBy!)?.textContent, "Lemon pasta");
+  assert.match(dialog.textContent ?? "", /Tick ingredients as you gather them for cooking/);
+  const gatheredIngredient = dialog.querySelector<HTMLInputElement>('input[aria-label="Gathered pasta"]');
+  assert.ok(gatheredIngredient);
+  await act(async () => {
+    gatheredIngredient.click();
+    await delay(10);
+  });
+  assert.equal(gatheredIngredient.checked, true);
   await act(async () => {
     document.querySelector<HTMLButtonElement>(".close-button")?.click();
     await delay(10);
@@ -158,4 +166,56 @@ test("React planner loads the weeks screen, navigates, and opens planning contro
   });
   assert.equal(document.querySelectorAll(".day-toggle").length, 7);
   assert.ok(requests.some((path) => /^\/api\/weeks\/\d{4}-\d{2}-\d{2}$/.test(path)));
+
+  const weekKey = requests.find((path) => /^\/api\/weeks\/\d{4}-\d{2}-\d{2}$/.test(path))?.split("/").at(-1);
+  assert.ok(weekKey);
+  responses.set(`/api/weeks/${weekKey}`, {
+    week: weekKey, people: 2, adults: 2, children: 0,
+    rules: { differentProteins: false, overlapIngredients: false, maxMinutes: 60, diet: "any" },
+    meals: [], status: "confirmed", confirmedAt: "2026-11-23T00:00:00Z", revision: 1,
+    shoppingList: [
+      { name: "olive oil", quantity: 1, unit: "tbsp", pantry: true },
+      { name: "lamb mince", quantity: 500, unit: "g", pantry: false },
+      { name: "black pepper", quantity: 1, unit: "pinch", pantry: true },
+    ],
+  });
+  await act(async () => {
+    browser.history.pushState({}, "", `/?view=week&week=${weekKey}`);
+    browser.dispatchEvent(new browser.PopStateEvent("popstate"));
+    await delay(20);
+  });
+  const pantryGroup = document.querySelector(".pantry-group");
+  assert.ok(pantryGroup);
+  assert.match(pantryGroup.textContent ?? "", /Pantry staples/);
+  const pantryCheckbox = pantryGroup.querySelector<HTMLInputElement>('input[aria-label="Already have olive oil"]');
+  assert.ok(pantryCheckbox);
+  await act(async () => {
+    pantryCheckbox.click();
+    await delay(10);
+  });
+  assert.match(document.querySelector(".shopping-progress")?.textContent ?? "", /2 to buy · 1 already have/);
+  assert.doesNotMatch(document.querySelector<HTMLTextAreaElement>(".shopping-text")?.value ?? "", /olive oil/);
+  const specialsPreference = document.querySelector<HTMLInputElement>('input[aria-label="Look for specials"]');
+  const premiumPreference = document.querySelector<HTMLInputElement>('input[aria-label="Prefer premium products"]');
+  assert.ok(specialsPreference);
+  assert.ok(premiumPreference);
+  await act(async () => {
+    specialsPreference.click();
+    await delay(10);
+  });
+  assert.match(document.querySelector<HTMLTextAreaElement>(".shopping-text")?.value ?? "", /Please look for specials/);
+  await act(async () => {
+    premiumPreference.click();
+    await delay(10);
+  });
+  const bothPreferences = document.querySelector<HTMLTextAreaElement>(".shopping-text")?.value ?? "";
+  assert.match(bothPreferences, /Please look for specials/);
+  assert.match(bothPreferences, /Please prefer premium products/);
+  await act(async () => {
+    specialsPreference.click();
+    await delay(10);
+  });
+  const premiumOnly = document.querySelector<HTMLTextAreaElement>(".shopping-text")?.value ?? "";
+  assert.doesNotMatch(premiumOnly, /Please look for specials/);
+  assert.match(premiumOnly, /Please prefer premium products/);
 });

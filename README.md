@@ -188,16 +188,28 @@ original total until replanned.
 60 ml olive oil
 ```
 
-Ingredients marked `pantry` in a recipe are included in the shopping and
-Woolworths lists by default. Untick **Include pantry items in Woolworths list**
-to omit them. The checkboxes beside individual ingredients are only for tracking
-shopping progress; they do not affect what gets copied.
+Pantry staples are shown in their own highlighted section. Tick **Already have
+it** beside any ingredient you have; checked items are left off copied and shared
+lists. Unchecked pantry staples are included by default; turn off **Include
+unchecked pantry items in Woolworths list** to omit them. These checks are saved
+in this browser for the current plan.
 
 The **Include Olive instruction** checkbox (on by default) prefixes the copied
 text with “Add these items to my cart”. Turn it off for plain ingredient lines.
 The separate **Just add** checkbox (off by default) adds “Just add, don't confirm”.
 It can be used with or without the first instruction and requests fewer prompts,
 but Olive may still require confirmation.
+The optional **Look for specials and lower-priced alternatives** and
+**Prefer premium products and brands** checkboxes independently add requests to
+the copied prompt; you can select either, both, or neither. Woolworths says Olive
+can suggest specials and swaps and that shoppers can specify preferences, but
+these phrases are requests, not guaranteed ranking rules. [Woolworths' Olive announcement](https://www.woolworthsgroup.com.au/au/en/our-newsroom/media-releases/latest-news/2026/woolworths-takes-the-hassle-out-of-the-weekly-shop-with-new-digi.html)
+describes specials and smart swaps; [Canstar's review](https://www.canstar.com.au/news/woolies-launches-revamped-ai-chatbot/)
+notes these compare Woolworths products rather than other supermarkets. Check
+suggested products, prices, brands and sizes yourself before checkout.
+To give Woolworths direct feedback about Olive, open the chat's three-dot menu
+and choose **Provide Feedback**, as described in the
+[Olive help page](https://www.woolworths.com.au/shop/services/olive).
 In the Woolworths app, choose Pick up or Delivery mode, open Olive next to the
 home-page search bar, paste into the chat and send. Olive is not available on the
 website or in in-store mode. The instruction does not bypass confirmations;

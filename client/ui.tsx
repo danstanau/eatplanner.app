@@ -19,7 +19,7 @@ type ModalState =
   | { kind: "custom-plan"; day: number }
   | { kind: "household"; household?: Household; mode?: "name" | "password" }
   | { kind: "share-week" }
-  | { kind: "share-shopping"; week: Week; includePantry: boolean }
+  | { kind: "share-shopping"; week: Week; items: Ingredient[] }
   | null;
 type Household = { id: string; name: string };
 type Session = { enabled: boolean; authenticated: boolean; user?: User };
@@ -313,7 +313,7 @@ export function App() {
           notify(message);
         }} />}
         {modal?.kind === "share-week" && week && <ShareWeek week={week} />}
-        {modal?.kind === "share-shopping" && <ShareShopping week={modal.week} includePantry={modal.includePantry} notify={notify} />}
+        {modal?.kind === "share-shopping" && <ShareShopping week={modal.week} items={modal.items} notify={notify} />}
       </Modal>
     </div>;
 }
@@ -420,40 +420,49 @@ function ShoppingPanel({ week, user, notify, onShare }: {
   week: Week;
   user?: User;
   notify: (message: string, error?: boolean) => void;
-  onShare: (includePantry: boolean) => void;
+  onShare: (includePantry: boolean, haveItems: Set<string>) => void;
 }) {
-  const storageKey = householdKey(user, `checked:${week.week}:${week.revision}`);
+  const storageKey = householdKey(user, `have:${week.week}:${week.revision}`);
   const [includePantry, setIncludePantry] = useState(true);
   const [olive, setOlive] = useState(true);
   const [justAdd, setJustAdd] = useState(false);
+  const [lookForSpecials, setLookForSpecials] = useState(false);
+  const [preferPremium, setPreferPremium] = useState(false);
   const [status, setStatus] = useState("");
-  const [checked, setChecked] = useState<Set<string>>(() => {
+  const [haveItems, setHaveItems] = useState<Set<string>>(() => {
     try {
       const saved = localStorage.getItem(storageKey);
-      const legacy = !user || user.isAdmin ? localStorage.getItem(`mealplan.ai:checked:${week.week}:${week.revision}`) : null;
-      const values: unknown = JSON.parse(saved ?? legacy ?? "[]");
-      if (!Array.isArray(values) || values.some((item) => typeof item !== "string")) throw new Error("Invalid saved checklist.");
-      if (saved === null && values.length) localStorage.setItem(storageKey, JSON.stringify(values));
+      const values: unknown = JSON.parse(saved ?? "[]");
+      if (!Array.isArray(values) || values.some((item) => typeof item !== "string")) throw new Error("Invalid saved pantry checklist.");
       return new Set(values);
     } catch (error) {
       console.error(error);
-      notify("The saved shopping ticks could not be loaded. Your confirmed list is safe.", true);
+      notify("The saved 'already have it' checks could not be loaded. Your confirmed list is safe.", true);
       return new Set();
     }
   });
-  const items = week.shoppingList.filter((item) => includePantry || !item.pantry);
-  const text = shoppingText(week.shoppingList, includePantry);
-  const instructions = [olive ? "Add these items to my cart" : "", justAdd ? "Just add, don't confirm" : ""].filter(Boolean);
+  const items = week.shoppingList;
+  const itemsToBuy = items.filter((item) => (includePantry || !item.pantry) && !haveItems.has(`${item.name}|${item.unit}`));
+  const text = shoppingText(itemsToBuy, true);
+  const preferenceText = [
+    lookForSpecials ? "Please look for specials and lower-priced suitable alternatives where available." : "",
+    preferPremium ? "Please prefer premium products and brands where available; avoid budget alternatives." : "",
+  ].filter(Boolean);
+  const instructions = [
+    olive ? "Add these items to my cart" : "",
+    ...(olive ? preferenceText : []),
+    justAdd ? "Just add, don't confirm" : "",
+  ].filter(Boolean);
   const copyText = instructions.length && text ? `${instructions.join("\n")}\n\n${text}` : text;
-  const completed = items.filter((item) => checked.has(`${item.name}|${item.unit}`)).length;
+  const alreadyHave = items.filter((item) => haveItems.has(`${item.name}|${item.unit}`)).length;
 
   function toggle(key: string) {
-    const updated = new Set(checked);
+    const updated = new Set(haveItems);
     if (updated.has(key)) updated.delete(key);
     else updated.add(key);
-    setChecked(updated);
+    setHaveItems(updated);
     try { localStorage.setItem(storageKey, JSON.stringify([...updated])); }
-    catch (error) { console.error(error); notify("This browser couldn't save your shopping ticks.", true); }
+    catch (error) { console.error(error); notify("This browser couldn't save your 'already have it' checks.", true); }
   }
 
   async function copy(openShop = false) {
@@ -481,23 +490,41 @@ function ShoppingPanel({ week, user, notify, onShare }: {
     <div className="section-bar"><div><h2>Shopping list</h2></div>
       <div className="shopping-share-actions">
         <Button className="button" onClick={() => void copy()}>Copy shopping list</Button>
-        <Button className="button secondary" onClick={() => onShare(includePantry)}>Share shopping list</Button>
+        <Button className="button secondary" onClick={() => onShare(includePantry, haveItems)}>Share shopping list</Button>
       </div>
     </div>
-    <p className="muted">Combined and scaled for {peopleLabel(week)}. Quantities are recipe amounts, not supermarket pack sizes. Ingredients marked Pantry go into the Woolworths list by default; untick the option below to leave them out. The item checkboxes are just shopping progress.</p>
+    <p className="muted">Combined and scaled for {peopleLabel(week)}. Quantities are recipe amounts, not supermarket pack sizes. Tick <strong>Already have it</strong> to leave an ingredient off the copied list.</p>
     <label className="check-field compact"><Checkbox checked={includePantry} onChange={(event) => setIncludePantry(event.currentTarget.checked)} />
-      <span>Include pantry items in Woolworths list</span></label>
+      <span>Include unchecked pantry items in Woolworths list</span></label>
     <div className="shopping-layout">
       <div>
         <p className="shopping-progress" role="status" aria-live="polite">
-          {items.length ? `${completed} of ${items.length} items checked` : "No items in this list."}</p>
-        <div className="shopping-checklist">{items.map((item) => {
-          const key = `${item.name}|${item.unit}`;
-          return <label className="shopping-item" key={key}>
-            <Checkbox checked={checked.has(key)} onChange={() => toggle(key)} />
-            <span>{ingredientLine(item)}</span>{item.pantry && <Tag>Pantry</Tag>}
-          </label>;
-        })}</div>
+          {items.length ? `${itemsToBuy.length} to buy · ${alreadyHave} already have` : "No items in this list."}</p>
+        {items.some((item) => item.pantry) && <section className="shopping-group pantry-group" aria-labelledby="pantry-items-title">
+          <div className="shopping-group-heading"><h3 id="pantry-items-title">Pantry staples</h3><Tag>Check what you have</Tag></div>
+          <p>These are often kept on hand. Tick <strong>Already have it</strong> to skip it, or untick “Include unchecked pantry items” to leave all pantry items off the Woolworths list.</p>
+          <div className="shopping-checklist">{items.filter((item) => item.pantry).map((item) => {
+            const key = `${item.name}|${item.unit}`;
+            const onHand = haveItems.has(key);
+            return <label className={`shopping-item pantry-item${onHand ? " is-on-hand" : ""}`} key={key}>
+              <Checkbox checked={onHand} aria-label={`Already have ${item.name}`} onChange={() => toggle(key)} />
+              <span>{ingredientLine(item)}</span>
+              <span className="shopping-item-state">{onHand ? "Already have it" : "Need to buy"}</span>
+            </label>;
+          })}</div>
+        </section>}
+        <section className="shopping-group" aria-labelledby="other-items-title">
+          <h3 id="other-items-title">Other ingredients</h3>
+          <div className="shopping-checklist">{items.filter((item) => !item.pantry).map((item) => {
+            const key = `${item.name}|${item.unit}`;
+            const onHand = haveItems.has(key);
+            return <label className={`shopping-item${onHand ? " is-on-hand" : ""}`} key={key}>
+              <Checkbox checked={onHand} aria-label={`Already have ${item.name}`} onChange={() => toggle(key)} />
+              <span>{ingredientLine(item)}</span>
+              <span className="shopping-item-state">{onHand ? "Already have it" : "Need to buy"}</span>
+            </label>;
+          })}</div>
+        </section>
       </div>
       <div>
         <h3>Take your ingredients to Woolworths</h3>
@@ -505,8 +532,18 @@ function ShoppingPanel({ week, user, notify, onShare }: {
           <span>Include Olive instruction: "Add these items to my cart"</span></label>
         <label className="check-field compact"><Checkbox checked={justAdd} onChange={(event) => setJustAdd(event.currentTarget.checked)} />
           <span><strong>Just add</strong><small>Adds "Just add, don't confirm". Olive may still require confirmation.</small></span></label>
+        <div className="shopping-preference">
+          <span className="field-label">Product preferences <span className="muted">(for Olive)</span></span>
+          <label className="check-field compact"><Checkbox checked={lookForSpecials} disabled={!olive} aria-label="Look for specials"
+            onChange={(event) => setLookForSpecials(event.currentTarget.checked)} />
+            <span>Look for specials and lower-priced alternatives</span></label>
+          <label className="check-field compact"><Checkbox checked={preferPremium} disabled={!olive} aria-label="Prefer premium products"
+            onChange={(event) => setPreferPremium(event.currentTarget.checked)} />
+            <span>Prefer premium products and brands</span></label>
+          <small>These are requests for Olive, not guarantees. Check its product suggestions before adding them.</small>
+        </div>
         <ol className="shopping-instructions">
-          <li>Choose whether to include pantry staples and the Olive instruction, then copy your ingredients.</li>
+          <li>Choose which pantry items to include and any Olive product preferences, then copy your ingredients.</li>
           <li>In the Woolworths app, choose Pick up or Delivery mode and open Olive beside the home-page search bar. Press and hold the chat field, tap Paste, then send.</li>
           <li>Follow Olive's prompts and check product matches, pack sizes and quantities. You complete checkout yourself.</li>
         </ol>
@@ -534,6 +571,8 @@ function RecipeDetail({ recipe, servings, week, day, currentWeek, user, onWeek, 
   notify: (message: string, error?: boolean) => void;
 }) {
   const [step, setStep] = useState(0);
+  const [gatheredIngredients, setGatheredIngredients] = useState<Set<string>>(() => new Set());
+  useEffect(() => setGatheredIngredients(new Set()), [recipe.id]);
   const meal = week && day !== undefined && currentWeek?.week === week
     ? currentWeek.meals.find((item): item is Extract<Meal, { recipe: Recipe }> =>
       item.day === day && "recipe" in item && item.recipe.id === recipe.id)
@@ -591,8 +630,20 @@ function RecipeDetail({ recipe, servings, week, day, currentWeek, user, onWeek, 
       {meal && <div className="action-row"><Button className="button" disabled={busy} onClick={() => void cooked()}>{meal.cooked ? "Undo cooked" : "Cooked!"}</Button>
         <span className="muted" role="status">{meal.cooked ? "Cooked." : "Not cooked yet."}</span></div>}
       <div className="recipe-layout">
-        <section><h3>What you'll need</h3><div className="recipe-ingredients">{recipe.ingredients.map((item) =>
-          <label className="shopping-item" key={`${item.name}|${item.unit}`}><Checkbox /><span>{ingredientLine(item, servingsMultiplier)}</span></label>)}</div></section>
+        <section><h3>What you'll need</h3><p className="muted ingredient-check-hint">Tick ingredients as you gather them for cooking.</p>
+          <div className="recipe-ingredients">{recipe.ingredients.map((item) => {
+            const key = `${item.name}|${item.unit}`;
+            return <label className="shopping-item" key={key}>
+              <Checkbox checked={gatheredIngredients.has(key)} aria-label={`Gathered ${item.name}`}
+                onChange={() => setGatheredIngredients((current) => {
+                  const updated = new Set(current);
+                  if (updated.has(key)) updated.delete(key);
+                  else updated.add(key);
+                  return updated;
+                })} />
+              <span>{ingredientLine(item, servingsMultiplier)}</span>
+            </label>;
+          })}</div></section>
         <section className="cook-mode" aria-label="Cooking method">
           <button type="button" className="all-steps-toggle" onClick={() => setShowAll((value) => !value)}>{showAll ? "Back to step-by-step" : "See the whole method"}</button>
           {showAll ? <ol className="all-steps">{recipe.steps.map((item, index) => <li key={index}>{item}</li>)}</ol> :
@@ -690,8 +741,8 @@ function ShareWeek({ week }: { week: Week }) {
   </>;
 }
 
-function ShareShopping({ week, includePantry, notify }: { week: Week; includePantry: boolean; notify: (message: string, error?: boolean) => void }) {
-  const items = useMemo(() => shoppingText(week.shoppingList, includePantry).split("\n").filter(Boolean), [week.shoppingList, includePantry]);
+function ShareShopping({ week, items: shoppingItems, notify }: { week: Week; items: Ingredient[]; notify: (message: string, error?: boolean) => void }) {
+  const items = useMemo(() => shoppingText(shoppingItems, true).split("\n").filter(Boolean), [shoppingItems]);
   const date = weekLabel(week.week);
   const text = `Woolworths shopping list — ${date}\n\n${items.length ? items.join("\n") : "No ingredients on this list."}`;
   const [url, setUrl] = useState("");
@@ -1475,7 +1526,12 @@ function WeekPage({ week, weekKey, user, onWeek, onRoute, onModal, notify, run }
       </article>;
     })}</div>
     {locked ? <ShoppingPanel week={week} user={user} notify={notify}
-      onShare={(includePantry) => onModal({ kind: "share-shopping", week, includePantry })} /> : <div className="confirm-bar">
+      onShare={(includePantry, haveItems) => onModal({
+        kind: "share-shopping",
+        week,
+        items: week.shoppingList.filter((item) =>
+          (includePantry || !item.pantry) && !haveItems.has(`${item.name}|${item.unit}`)),
+      })} /> : <div className="confirm-bar">
       <div><h2>Happy with this week?</h2><p>Lock it in to build one shopping list for all of it.</p></div>
       <Button className="button" onClick={() => void run(async () => {
         const updated = await mutate("confirm");
