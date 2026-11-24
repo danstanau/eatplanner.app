@@ -22,13 +22,17 @@ let stopping = false;
 async function shutdown() {
   if (stopping) return;
   stopping = true;
+  // Exit 0 on a requested stop so Railway does not report a crash on redeploys.
+  const force = setTimeout(() => process.exit(0), 8000);
+  force.unref();
   server.close();
+  server.closeAllConnections();
   try {
     await stopCopilot();
   } catch (error) {
     console.error("[eatplanner.app] Shutdown failed:", error);
-    process.exitCode = 1;
   }
+  process.exit(0);
 }
 process.on("SIGINT", shutdown);
 process.on("SIGTERM", shutdown);
