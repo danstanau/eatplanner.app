@@ -7,6 +7,55 @@ import { Window } from "happy-dom";
 import { MantineProvider } from "@mantine/core";
 import { App } from "../client/ui.tsx";
 
+test("unauthenticated visitors see the public sales page with sign-in and unavailable registration", async (t) => {
+  const browser = new Window({ url: "http://127.0.0.1:3000/" });
+  const document = browser.document;
+  document.body.innerHTML = '<div id="root"></div>';
+  const globals: Record<string, unknown> = {
+    window: browser,
+    document,
+    navigator: browser.navigator,
+    localStorage: browser.localStorage,
+    HTMLElement: browser.HTMLElement,
+    Element: browser.Element,
+    Node: browser.Node,
+    MutationObserver: browser.MutationObserver,
+    ResizeObserver: class { observe() {} unobserve() {} disconnect() {} },
+    getComputedStyle: browser.getComputedStyle.bind(browser),
+    requestAnimationFrame: browser.requestAnimationFrame.bind(browser),
+    cancelAnimationFrame: browser.cancelAnimationFrame.bind(browser),
+    fetch: async (input: RequestInfo | URL) => {
+      assert.equal(String(input), "/api/auth/session");
+      return Response.json({ enabled: true, authenticated: false });
+    },
+  };
+  const descriptors = new Map(Object.keys(globals).map((key) => [key, Object.getOwnPropertyDescriptor(globalThis, key)]));
+  for (const [key, value] of Object.entries(globals)) Object.defineProperty(globalThis, key, { configurable: true, writable: true, value });
+  Object.defineProperty(globalThis, "IS_REACT_ACT_ENVIRONMENT", { configurable: true, writable: true, value: true });
+  const root = createRoot(document.querySelector("#root")!);
+  t.after(async () => {
+    await act(async () => root.unmount());
+    await browser.happyDOM.abort();
+    for (const [key, descriptor] of descriptors) {
+      if (descriptor) Object.defineProperty(globalThis, key, descriptor);
+      else Reflect.deleteProperty(globalThis, key);
+    }
+    Reflect.deleteProperty(globalThis, "IS_REACT_ACT_ENVIRONMENT");
+  });
+
+  await act(async () => {
+    root.render(React.createElement(MantineProvider, null, React.createElement(App)));
+    await delay(20);
+  });
+  assert.match(document.querySelector("h1")?.textContent ?? "", /Make a plan/);
+  assert.equal(document.querySelectorAll(".sales-step").length, 3);
+  assert.equal(document.querySelector<HTMLAnchorElement>(".sales-signin")?.getAttribute("href"), "/login");
+  const register = document.querySelector<HTMLAnchorElement>(".sales-register");
+  assert.equal(register?.getAttribute("aria-disabled"), "true");
+  assert.equal(register?.hasAttribute("href"), false);
+  assert.match(document.querySelector("#register-note")?.textContent ?? "", /isn’t available yet/);
+});
+
 test("React planner loads the weeks screen, navigates, and opens planning controls", async (t) => {
   const browser = new Window({ url: "http://127.0.0.1:3000/" });
   const document = browser.document;

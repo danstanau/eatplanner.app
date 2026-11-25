@@ -4,6 +4,7 @@ import { MantineProvider, createTheme } from "@mantine/core";
 import "@mantine/core/styles.css";
 import "../public/base.css";
 import "../public/planner.css";
+import "../public/sales.css";
 import { App } from "./ui";
 
 if (window.location.pathname === "/login") void import("../public/login.css");

@@ -226,7 +226,9 @@ export function App() {
     window.location.replace(new URLSearchParams(window.location.search).get("next") ?? "/");
   }
 
-  return session?.enabled && !authenticated
+  return session?.enabled && !authenticated && window.location.pathname !== "/login"
+    ? <SalesPage />
+    : session?.enabled && !authenticated
     ? <Login notify={notify} theme={theme} setTheme={setTheme} />
     : <div className="app-shell">
       <header className="topbar">
@@ -320,6 +322,88 @@ export function App() {
 
 function canEditRecipe(recipe: Recipe, user: User) {
   return recipe.source === "personal" && recipe.householdId === user.id;
+}
+
+function SalesPage() {
+  return <div className="sales-page">
+    <header className="sales-nav">
+      <a className="brand" href="/"><img src="/favicon.svg" alt="" width="64" height="64" />eatplanner<span>.app</span></a>
+      <nav aria-label="Page navigation">
+        <a className="sales-nav-how" href="#how-it-works">How it works</a>
+        <a className="sales-signin" href="/login">Sign in <span aria-hidden="true">→</span></a>
+        <a className="sales-register" role="link" aria-disabled="true" aria-describedby="register-note" tabIndex={-1}>
+          Register <span className="sales-soon">Coming soon</span>
+        </a>
+      </nav>
+    </header>
+
+    <main>
+      <section className="sales-hero">
+        <div className="sales-hero-copy">
+          <p className="sales-eyebrow"><span aria-hidden="true">✳</span> A calmer way to plan dinner</p>
+          <h1>Make a plan.<br /><span>Love dinner again.</span></h1>
+          <p className="sales-lede">A week of dinners, sorted around your household. Pick your nights, find meals everyone can get behind, and finish with one ready-to-go shopping list.</p>
+          <div className="sales-actions">
+            <a className="sales-primary" href="/login">Sign in to your planner <span aria-hidden="true">→</span></a>
+            <a className="sales-secondary" href="#how-it-works">See how it works <span aria-hidden="true">↓</span></a>
+          </div>
+          <p className="sales-reassurance"><span aria-hidden="true">✓</span> Made for your household, not another meal-kit subscription</p>
+        </div>
+
+        <div className="sales-hero-art" aria-label="A preview of a week of planned dinners">
+          <div className="sales-note"><span className="sales-note-icon" aria-hidden="true">✳</span><span>One less thing<br />to figure out.</span></div>
+          <div className="sales-board">
+            <div className="sales-board-heading"><div><span className="sales-board-kicker">YOUR WEEK, AT A GLANCE</span><h2>Good things cooking</h2></div><span className="sales-week-pill">5 dinners</span></div>
+            <div className="sales-meal-list">
+              <article className="sales-meal"><img src="/images/pasta.jpg" alt="" /><span className="sales-meal-day">MON</span><span className="sales-meal-name">Creamy tomato pasta</span><span className="sales-meal-time">25 min</span></article>
+              <article className="sales-meal"><img src="/images/chicken.jpg" alt="" /><span className="sales-meal-day">TUE</span><span className="sales-meal-name">Lemony roast chicken</span><span className="sales-meal-time">45 min</span></article>
+              <article className="sales-meal"><img src="/images/salmon.jpg" alt="" /><span className="sales-meal-day">WED</span><span className="sales-meal-name">Sticky salmon bowls</span><span className="sales-meal-time">30 min</span></article>
+            </div>
+            <div className="sales-board-footer"><span><span className="sales-check" aria-hidden="true">✓</span> Your list is taking shape</span><span>12 ingredients</span></div>
+          </div>
+          <span className="sales-spark sales-spark-one" aria-hidden="true">✳</span>
+          <span className="sales-spark sales-spark-two" aria-hidden="true">✦</span>
+        </div>
+      </section>
+
+      <section className="sales-how" id="how-it-works">
+        <div className="sales-section-intro">
+          <p className="sales-eyebrow">From “what’s for dinner?” to done</p>
+          <h2>A little plan goes<br />a long way.</h2>
+          <p>Keep the decisions that matter. Let the busywork take care of itself.</p>
+        </div>
+        <div className="sales-steps">
+          <article className="sales-step">
+            <span className="sales-step-number">01</span>
+            <span className="sales-step-icon" aria-hidden="true">◷</span>
+            <h3>Choose your nights</h3>
+            <p>Pick the evenings you need covered, how many people are eating, and the kind of meals that suit your week.</p>
+          </article>
+          <article className="sales-step">
+            <span className="sales-step-number">02</span>
+            <span className="sales-step-icon" aria-hidden="true">✳</span>
+            <h3>Make it your menu</h3>
+            <p>Get dinner ideas to start from. Swap a meal, tweak the plan, or bring in recipes your household already loves.</p>
+          </article>
+          <article className="sales-step">
+            <span className="sales-step-number">03</span>
+            <span className="sales-step-icon" aria-hidden="true">✓</span>
+            <h3>Shop once, feel ready</h3>
+            <p>Lock in your week to bring ingredients together in one list. Share it, take it shopping, and enjoy having a plan.</p>
+          </article>
+        </div>
+      </section>
+
+      <section className="sales-last-word">
+        <div><p className="sales-eyebrow">Dinner, with a plan</p><h2>Your week is waiting<br />to come together.</h2></div>
+        <div className="sales-last-actions">
+          <a className="sales-primary" href="/login">Sign in to eatplanner <span aria-hidden="true">→</span></a>
+          <span id="register-note" className="sales-register-note">New household registration isn’t available yet.</span>
+        </div>
+      </section>
+    </main>
+    <footer className="sales-footer"><a className="brand" href="/"><img src="/favicon.svg" alt="" width="64" height="64" />eatplanner<span>.app</span></a><span>Make room for good dinners.</span></footer>
+  </div>;
 }
 
 function PlanningForm({ week, weekKey, onSaved, dialogTitle }: {

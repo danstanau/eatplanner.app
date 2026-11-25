@@ -169,7 +169,8 @@ export function householdAuth(config?: AuthConfig, households = new Households()
   });
   router.use((request, response, next) => {
     const publicFiles = ["/login.js", "/login.css", "/login-preview.svg", "/theme.js", "/base.css", "/fonts/bricolage-grotesque.woff2", "/favicon.svg", "/apple-touch-icon.png"];
-    if (!config || response.locals.identity || publicFiles.includes(request.path) || request.path.startsWith("/build/")) { next(); return; }
+    if (!config || response.locals.identity || request.path === "/" || request.path === "/index.html" ||
+      publicFiles.includes(request.path) || request.path.startsWith("/build/")) { next(); return; }
     if (request.path.startsWith("/api/")) {
       response.status(401).json({ error: "Please sign in to your household." });
     } else {
