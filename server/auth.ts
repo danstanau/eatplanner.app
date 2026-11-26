@@ -181,7 +181,9 @@ export function householdAuth(config?: AuthConfig, households = new Households()
     response.type("html").send(html.replaceAll("__CSP_NONCE__", response.locals.styleNonce ?? ""));
   });
   router.use((request, response, next) => {
-    const publicFiles = ["/login.js", "/login.css", "/login-preview.svg", "/theme.js", "/base.css", "/fonts/bricolage-grotesque.woff2", "/favicon.svg", "/apple-touch-icon.png"];
+    const publicFiles = ["/login.js", "/login.css", "/login-preview.svg", "/theme.js", "/base.css", "/fonts/bricolage-grotesque.woff2", "/favicon.svg", "/apple-touch-icon.png",
+      // Bundled photos shown in the signed-out sales page preview.
+      "/images/pasta.jpg", "/images/chicken.jpg", "/images/salmon.jpg"];
     if (!config || response.locals.identity || request.path === "/" || request.path === "/index.html" ||
       publicFiles.includes(request.path) || request.path.startsWith("/build/")) { next(); return; }
     if (request.path.startsWith("/api/")) {

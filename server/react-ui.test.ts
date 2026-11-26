@@ -386,3 +386,60 @@ test("React planner loads the weeks screen, navigates, and opens planning contro
   assert.doesNotMatch(premiumOnly, /Please prefer specials/);
   assert.match(premiumOnly, /Please prefer premium products/);
 });
+
+test("the household shopping list loads after a profile is chosen", async (t) => {
+  const browser = new Window({ url: "http://127.0.0.1:3000/?view=shopping" });
+  const document = browser.document;
+  document.body.innerHTML = '<div id="root"></div>';
+  const profile = { id: "8b0f3f4e-6c2a-4f1e-9d3b-1a2b3c4d5e6f", name: "Sam" };
+  let selected = false;
+  const globals: Record<string, unknown> = {
+    window: browser,
+    document,
+    navigator: browser.navigator,
+    localStorage: browser.localStorage,
+    HTMLElement: browser.HTMLElement,
+    Element: browser.Element,
+    Node: browser.Node,
+    MutationObserver: browser.MutationObserver,
+    ResizeObserver: class { observe() {} unobserve() {} disconnect() {} },
+    getComputedStyle: browser.getComputedStyle.bind(browser),
+    requestAnimationFrame: browser.requestAnimationFrame.bind(browser),
+    cancelAnimationFrame: browser.cancelAnimationFrame.bind(browser),
+    fetch: async (input: RequestInfo | URL) => {
+      const path = String(input);
+      if (path === "/api/auth/session") {
+        return Response.json({ enabled: true, authenticated: true, user: { id: "home", role: "household", ...(selected ? { profile } : {}) } });
+      }
+      if (path === "/api/profiles") return Response.json([profile]);
+      if (path === "/api/profiles/select") { selected = true; return Response.json(profile); }
+      if (path === "/api/recipes") return Response.json([]);
+      if (path === "/api/shopping") return Response.json({ revision: 0, items: [] });
+      throw new Error(`Unexpected React UI request: ${path}`);
+    },
+  };
+  const descriptors = new Map(Object.keys(globals).map((key) => [key, Object.getOwnPropertyDescriptor(globalThis, key)]));
+  for (const [key, value] of Object.entries(globals)) Object.defineProperty(globalThis, key, { configurable: true, writable: true, value });
+  Object.defineProperty(globalThis, "IS_REACT_ACT_ENVIRONMENT", { configurable: true, writable: true, value: true });
+  const root = createRoot(document.querySelector("#root")!);
+  t.after(async () => {
+    await act(async () => root.unmount());
+    await browser.happyDOM.abort();
+    for (const [key, descriptor] of descriptors) {
+      if (descriptor) Object.defineProperty(globalThis, key, descriptor);
+      else Reflect.deleteProperty(globalThis, key);
+    }
+    Reflect.deleteProperty(globalThis, "IS_REACT_ACT_ENVIRONMENT");
+  });
+
+  await act(async () => {
+    root.render(React.createElement(MantineProvider, null, React.createElement(App)));
+    await delay(20);
+  });
+  await act(async () => {
+    document.querySelector<HTMLButtonElement>(".profile-button")?.click();
+    await delay(20);
+  });
+  assert.equal(document.querySelector("#view h1")?.textContent, "Shopping list");
+  assert.match(document.querySelector("#view")?.textContent ?? "", /Your shopping list is empty/);
+});

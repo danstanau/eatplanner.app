@@ -1,7 +1,7 @@
 import * as React from "react";
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from "react";
 import {
-  ActionIcon, Button, Checkbox, Group, Loader, Modal, Notification, NumberInput, Paper, SegmentedControl, Select, Textarea, TextInput, VisuallyHidden,
+  ActionIcon, Button, Checkbox, Group, Loader, Modal, Notification, NumberInput, Paper, SegmentedControl, Select, Textarea, TextInput, useMantineColorScheme, VisuallyHidden,
 } from "@mantine/core";
 import {
   addDays, api, CATEGORIES, dateLabel, DAYS, ingredientLine, mondayFor, parseIngredientLines,
@@ -36,6 +36,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 function useTheme() {
+  const { setColorScheme } = useMantineColorScheme();
   const [theme, setTheme] = useState<"system" | "light" | "dark">(() => {
     try {
       const saved = localStorage.getItem("eatplanner.app:theme");
@@ -48,9 +49,8 @@ function useTheme() {
   useEffect(() => {
     if (theme === "system") delete document.documentElement.dataset.theme;
     else document.documentElement.dataset.theme = theme;
-    document.documentElement.dataset.mantineColorScheme = theme === "system"
-      ? window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"
-      : theme;
+    // Mantine owns data-mantine-color-scheme; writing it directly gets overridden by the OS preference.
+    setColorScheme(theme === "system" ? "auto" : theme);
     const color = theme === "light" ? "#f4f6f5" : theme === "dark" ? "#0e1426" : undefined;
     for (const meta of document.querySelectorAll<HTMLMetaElement>('meta[name="theme-color"]')) {
       if (color) meta.content = color;
@@ -62,7 +62,7 @@ function useTheme() {
     } catch (error) {
       console.error("Appearance preference could not be saved:", error);
     }
-  }, [theme]);
+  }, [theme, setColorScheme]);
   return [theme, setTheme] as const;
 }
 
@@ -110,6 +110,7 @@ export function App() {
   const [week, setWeek] = useState<Week | null>(null);
   const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState<ModalState>(null);
+  const [recipeFullscreen, setRecipeFullscreen] = useState(false);
   const [toast, setToast] = useState<Toast>(null);
   const [busy, setBusy] = useState(false);
   const [adminRefresh, setAdminRefresh] = useState(0);
@@ -139,14 +140,19 @@ export function App() {
   const navigate = useCallback((next: AppRoute, replace = false) => {
     writeRoute(next, replace);
     setModal(null);
+    setRecipeFullscreen(false);
     setRoute(readRoute());
   }, []);
   const dismissModal = useCallback(() => {
     setModal(null);
+    setRecipeFullscreen(false);
     const current = readRoute();
     if (current.edit === "1" && current.recipe) navigate({ ...current, edit: undefined }, true);
     else if (current.recipe || current.edit) navigate({ ...current, recipe: undefined, day: undefined, edit: undefined }, true);
   }, [navigate]);
+  useEffect(() => {
+    if (modal?.kind !== "recipe") setRecipeFullscreen(false);
+  }, [modal?.kind]);
 
   const loadSession = useCallback(async () => {
     const current = await api<Session>("/auth/session");
@@ -183,7 +189,7 @@ export function App() {
     const timer = window.setInterval(() => { if (!document.hidden) void refresh(); }, 10000);
     window.addEventListener("focus", refresh);
     return () => { active = false; window.clearInterval(timer); window.removeEventListener("focus", refresh); };
-  }, [session?.enabled, session?.authenticated, applyShopping, notify]);
+  }, [session?.enabled, session?.authenticated, session?.user?.profile?.id, applyShopping, notify]);
 
   useEffect(() => {
     let active = true;
@@ -319,8 +325,18 @@ export function App() {
       <Modal opened={modal !== null} onClose={dismissModal}
         title={modalTitle ? <VisuallyHidden>{modalTitle}</VisuallyHidden> : null}
         withCloseButton={false} size={modal?.kind === "edit-recipe" ? "xl" : "lg"} centered={false}
-        classNames={{ header: "modal-a11y-header", content: "app-modal", body: "app-modal-body" }}>
+        classNames={{ header: "modal-a11y-header", content: `app-modal${recipeFullscreen && modal?.kind === "recipe" ? " app-modal-fullscreen" : ""}`, body: "app-modal-body" }}>
         <div className="dialog-actions">
+          {modal?.kind === "recipe" && <Button className="dialog-icon-button" variant="subtle"
+            aria-label={recipeFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
+            title={recipeFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
+            onClick={() => setRecipeFullscreen((current) => !current)}>
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d={recipeFullscreen
+                ? "M8 3v5H3M16 3v5h5M8 21v-5H3m13 5v-5h5"
+                : "M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5"} />
+            </svg>
+          </Button>}
           {modal?.kind === "recipe" && session?.user && canEditRecipe(modal.recipe, session.user) &&
             <Button className="dialog-icon-button" variant="subtle" aria-label="Edit recipe" title="Edit recipe"
               onClick={() => {
@@ -460,7 +476,7 @@ function SalesPage() {
       <section className="sales-how" id="how-it-works">
         <div className="sales-section-intro">
           <p className="sales-eyebrow">From “what’s for dinner?” to done</p>
-          <h2>A little plan goes<br />a long way.</h2>
+          <h2>A little plan goes{" "}<br />a long way.</h2>
           <p>Keep the decisions that matter. Let the busywork take care of itself.</p>
         </div>
         <div className="sales-steps">
