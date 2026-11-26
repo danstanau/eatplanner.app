@@ -72,11 +72,16 @@ test("React planner loads the weeks screen, navigates, and opens planning contro
     ["/api/auth/session", { enabled: false, authenticated: true }],
     ["/api/recipes", [recipe]],
     ["/api/weeks", []],
+    ["/api/shopping", { revision: 0, items: [] }],
   ]);
   const requests: string[] = [];
   const originalFetch = globalThis.fetch;
   let conversionFailure: "json" | "text" | null = null;
   let conversions = 0;
+  let copiedText = "";
+  Object.defineProperty(browser.navigator, "clipboard", {
+    configurable: true, value: { writeText: async (text: string) => { copiedText = text; } },
+  });
   const jpeg = Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0x4a, 0x46, 0x49, 0x46]);
   const globals: Record<string, unknown> = {
     window: browser,
@@ -96,9 +101,25 @@ test("React planner loads the weeks screen, navigates, and opens planning contro
       assert.equal(image.type, "image/jpeg");
       return { width: 1200, height: 900, close() {} };
     },
-    fetch: async (input: RequestInfo | URL) => {
+    fetch: async (input: RequestInfo | URL, init?: RequestInit) => {
       const path = String(input);
       requests.push(path);
+      if (path === "/api/shopping" && init?.method === "POST") {
+        const current = responses.get(path) as { revision: number; items: { id: string; name: string; checked: boolean }[] };
+        const names = (JSON.parse(String(init.body)) as { names: string[] }).names;
+        const updated = { revision: current.revision + 1, items: [...current.items, ...names.map((name, index) => ({ id: `item-${index}`, name, checked: false }))] };
+        responses.set(path, updated);
+        return Response.json(updated);
+      }
+      if (path.startsWith("/api/shopping/")) {
+        const current = responses.get("/api/shopping") as { revision: number; items: { id: string; name: string; checked: boolean }[] };
+        const id = path.split("/").at(-1);
+        const items = init?.method === "DELETE" ? current.items.filter((item) => item.id !== id)
+          : current.items.map((item) => item.id === id ? { ...item, ...JSON.parse(String(init?.body)) } : item);
+        const updated = { revision: current.revision + 1, items };
+        responses.set("/api/shopping", updated);
+        return Response.json(updated);
+      }
       if (path === "/api/recipes/convert-heic") {
         conversions++;
         if (conversionFailure === "json") return Response.json({ error: "This HEIC photo couldn't be opened." }, { status: 422 });
@@ -140,6 +161,7 @@ test("React planner loads the weeks screen, navigates, and opens planning contro
     await delay(20);
   });
   assert.equal(document.querySelector("#view h1")?.textContent, "This week");
+  assert.match(document.querySelector("#nav-shopping")?.textContent ?? "", /Shopping list \(0\)/);
   assert.equal(document.querySelectorAll(".strip-cell").length, 7);
   assert.ok([...document.querySelectorAll("[style]")].some((element) => element.getAttribute("style")?.includes("--button-bg")));
 
@@ -245,6 +267,69 @@ test("React planner loads the weeks screen, navigates, and opens planning contro
   });
   assert.match(document.querySelector(".shopping-progress")?.textContent ?? "", /2 to buy · 1 already have/);
   assert.doesNotMatch(document.querySelector<HTMLTextAreaElement>(".shopping-text")?.value ?? "", /olive oil/);
+  await act(async () => {
+    [...document.querySelectorAll("button")].find((button) => button.textContent?.includes("Add to household list"))?.click();
+    await delay(10);
+  });
+  assert.match(document.querySelector("#nav-shopping")?.textContent ?? "", /Shopping list \(2\)/);
+  await act(async () => {
+    document.querySelector<HTMLButtonElement>("#nav-shopping")?.click();
+    await delay(10);
+  });
+  assert.equal(document.querySelector("#view h1")?.textContent, "Shopping list");
+  assert.ok(document.querySelector('input[aria-label="Edit 500 g lamb mince"]'));
+  assert.equal(document.querySelectorAll(".household-shopping-row").length, 2);
+  await act(async () => {
+    document.querySelector<HTMLInputElement>('input[aria-label="Mark 500 g lamb mince as bought"]')?.click();
+    await delay(10);
+  });
+  assert.ok(document.querySelector<HTMLInputElement>('input[aria-label="Mark 500 g lamb mince as needed"]')?.checked);
+  await act(async () => {
+    document.querySelector<HTMLButtonElement>('button[aria-label="Remove 500 g lamb mince"]')?.click();
+    await delay(10);
+  });
+  assert.match(document.querySelector("#nav-shopping")?.textContent ?? "", /Shopping list \(1\)/);
+  await act(async () => {
+    browser.history.back();
+    await delay(20);
+  });
+  responses.set("/api/shopping", {
+    revision: 10,
+    items: [
+      { id: "duplicate", name: "1 PINCH BLACK PEPPER", checked: false },
+      { id: "extra", name: "Dish soap", checked: false },
+      { id: "bought", name: "Apples", checked: true },
+    ],
+  });
+  await act(async () => {
+    browser.dispatchEvent(new browser.Event("focus"));
+    await delay(10);
+  });
+  const combined = document.querySelector<HTMLTextAreaElement>(".shopping-text")?.value ?? "";
+  assert.match(combined, /500 g lamb mince/);
+  assert.match(combined, /Dish soap/);
+  assert.doesNotMatch(combined, /Apples|olive oil/);
+  assert.equal((combined.match(/black pepper/gi) ?? []).length, 1);
+  await act(async () => {
+    [...document.querySelectorAll("button")].find((button) => button.textContent === "Copy shopping list")?.click();
+    await delay(10);
+  });
+  assert.equal(copiedText, combined);
+  const includePantry = [...document.querySelectorAll("label")].find((label) => label.textContent?.includes("Include unchecked pantry items"))
+    ?.querySelector<HTMLInputElement>("input");
+  assert.ok(includePantry);
+  await act(async () => {
+    includePantry.click();
+    await delay(10);
+  });
+  const withoutPantry = document.querySelector<HTMLTextAreaElement>(".shopping-text")?.value ?? "";
+  assert.doesNotMatch(withoutPantry, /1 pinch black pepper/);
+  assert.match(withoutPantry, /1 PINCH BLACK PEPPER/);
+  assert.match(withoutPantry, /Dish soap/);
+  await act(async () => {
+    includePantry.click();
+    await delay(10);
+  });
   const anyPreference = document.querySelector<HTMLInputElement>('#shopping-product-preference input[value="any"]');
   const specialsPreference = document.querySelector<HTMLInputElement>('#shopping-product-preference input[value="specials"]');
   const premiumPreference = document.querySelector<HTMLInputElement>('#shopping-product-preference input[value="premium"]');

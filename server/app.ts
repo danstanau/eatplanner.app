@@ -146,6 +146,47 @@ export function createApp(services: Services, store = new Store(), options: { al
   app.get("/api/status", async (_request, response) => {
     response.json(await services.getStatus());
   });
+  const shoppingName = z.string().trim().min(1).max(200).regex(/^[^\u0000-\u001f\u007f]+$/, "Use a name on one line.");
+  app.get("/api/shopping", async (_request, response) => {
+    response.json((await storeFor(response).read()).shopping);
+  });
+  app.post("/api/shopping", async (request, response) => {
+    const { names } = z.object({ names: z.array(shoppingName).min(1).max(500) }).strict().parse(request.body);
+    response.status(201).json(await storeFor(response).update((state) => {
+      const existing = new Set(state.shopping.items.map((item) => item.name.toLowerCase()));
+      for (const name of names) {
+        if (!existing.has(name.toLowerCase())) {
+          state.shopping.items.push({ id: randomUUID(), name, checked: false });
+          existing.add(name.toLowerCase());
+        }
+      }
+      if (state.shopping.items.length > 1000) throw new AppError(400, "The shopping list can hold up to 1000 items.");
+      state.shopping.revision++;
+      return state.shopping;
+    }));
+  });
+  app.patch("/api/shopping/:id", async (request, response) => {
+    const id = z.uuid().parse(request.params.id);
+    const input = z.object({ name: shoppingName.optional(), checked: z.boolean().optional() }).strict()
+      .refine((value) => value.name !== undefined || value.checked !== undefined).parse(request.body);
+    response.json(await storeFor(response).update((state) => {
+      const item = state.shopping.items.find((entry) => entry.id === id);
+      if (!item) throw new AppError(404, "This shopping item no longer exists.");
+      Object.assign(item, input);
+      state.shopping.revision++;
+      return state.shopping;
+    }));
+  });
+  app.delete("/api/shopping/:id", async (request, response) => {
+    const id = z.uuid().parse(request.params.id);
+    response.json(await storeFor(response).update((state) => {
+      const index = state.shopping.items.findIndex((entry) => entry.id === id);
+      if (index < 0) throw new AppError(404, "This shopping item no longer exists.");
+      state.shopping.items.splice(index, 1);
+      state.shopping.revision++;
+      return state.shopping;
+    }));
+  });
   app.get("/api/recipes", async (request, response) => {
     const scope = recipeScopeSchema.optional().parse(request.query.scope) ?? DEFAULT_RECIPE_SCOPE;
     const [local, sources] = await Promise.all([storeFor(response).readRecipes(), recipeSources(response, scope)]);

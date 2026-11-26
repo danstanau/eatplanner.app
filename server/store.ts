@@ -8,9 +8,13 @@ import { weekKeySchema, weekSchema, type Week } from "./planner.js";
 const stateSchema = z.object({
   recipes: z.array(recipeSchema),
   weeks: z.record(weekKeySchema, weekSchema),
+  shopping: z.object({
+    revision: z.number().int().min(0),
+    items: z.array(z.object({ id: z.uuid(), name: z.string().trim().min(1).max(200), checked: z.boolean() })).max(1000),
+  }).default({ revision: 0, items: [] }),
 });
 const starterRecipesSchema = z.array(recipeSchema.extend({ source: z.literal("collection") }));
-type State = { recipes: Recipe[]; weeks: Record<string, Week> };
+type State = { recipes: Recipe[]; weeks: Record<string, Week>; shopping: z.infer<typeof stateSchema>["shopping"] };
 
 export function householdDataPath(filename: string): string {
   const directory = process.env.DATA_DIR?.trim() || fileURLToPath(new URL("../data/", import.meta.url));
@@ -33,7 +37,7 @@ export class Store {
       this.state = stateSchema.parse(JSON.parse(await readFile(this.path, "utf8")));
     } catch (error) {
       if (!(error instanceof Error && "code" in error && error.code === "ENOENT")) throw error;
-      this.state = { recipes: [], weeks: {} };
+      this.state = { recipes: [], weeks: {}, shopping: { revision: 0, items: [] } };
     }
     // Older saves included a copy of the bundled library.
     this.state.recipes = this.state.recipes.filter((recipe) => recipe.source === "personal");

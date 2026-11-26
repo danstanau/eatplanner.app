@@ -87,7 +87,28 @@ test("super admin manages isolated households and persists their data under DATA
   const beta = await betaResponse.json();
   assert.equal((await request("/admin/households", admin, { name: " alpha ", password: "test12" })).status, 409);
   const alphaCookie = await login(" alpha ", "alpha-password");
+  const secondAlphaCookie = await login("Alpha", "alpha-password");
   const betaCookie = await login("Beta", "beta-password");
+  assert.equal((await request("/shopping")).status, 401);
+  assert.deepEqual(await (await request("/shopping", alphaCookie)).json(), { revision: 0, items: [] });
+  assert.equal((await request("/shopping", alphaCookie, { names: ["  "] })).status, 400);
+  const additions = await Promise.all([
+    request("/shopping", alphaCookie, { names: ["Milk", "Eggs"] }),
+    request("/shopping", secondAlphaCookie, { names: ["Bread"] }),
+  ]);
+  assert.ok(additions.every((result) => result.status === 201));
+  const sharedShopping = await (await request("/shopping", secondAlphaCookie)).json();
+  assert.deepEqual(sharedShopping.items.map((item: { name: string }) => item.name).sort(), ["Bread", "Eggs", "Milk"]);
+  const milk = sharedShopping.items.find((item: { name: string }) => item.name === "Milk");
+  assert.equal((await request(`/shopping/${milk.id}`, secondAlphaCookie, { name: "Oat milk", checked: true }, "PATCH")).status, 200);
+  assert.equal((await request("/shopping", alphaCookie, { names: ["oat milk"] })).status, 201);
+  const editedShopping = await (await request("/shopping", alphaCookie)).json();
+  assert.equal(editedShopping.items.length, 3);
+  assert.deepEqual(editedShopping.items.find((item: { id: string }) => item.id === milk.id), { id: milk.id, name: "Oat milk", checked: true });
+  assert.deepEqual(await (await request("/shopping", betaCookie)).json(), { revision: 0, items: [] });
+  assert.equal((await request(`/shopping/${milk.id}`, betaCookie, {}, "DELETE")).status, 404);
+  assert.equal((await request(`/shopping/${milk.id}`, alphaCookie, {}, "DELETE")).status, 200);
+  assert.equal((await request(`/shopping/${milk.id}`, alphaCookie, {}, "DELETE")).status, 404);
   assert.deepEqual((await (await request("/auth/session", alphaCookie)).json()).user, {
     id: alpha.id, name: "Alpha", isAdmin: false,
   });
@@ -192,6 +213,7 @@ test("super admin manages isolated households and persists their data under DATA
   const restartedAdmin = await login("stanfield", "admin-password");
   assert.deepEqual(await (await request("/admin/households", restartedAdmin)).json(), listed);
   const restartedAlpha = await login("New Alpha", "reset-password");
+  assert.deepEqual((await (await request("/shopping", restartedAlpha)).json()).items.map((item: { name: string }) => item.name).sort(), ["Bread", "Eggs"]);
   assert.ok((await (await request("/recipes", restartedAlpha)).json()).some((item: { id: string }) => item.id === personal.id));
   assert.equal((await (await request("/weeks", restartedAlpha)).json()).length, 4);
   assert.ok((await (await request("/recipes", restartedAdmin)).json()).some((item: { id: string }) => item.id === adminRecipe.id));

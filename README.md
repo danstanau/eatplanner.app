@@ -180,7 +180,16 @@ original total until replanned.
 
 ### Woolworths
 
-“Copy shopping list” copies plain lines such as:
+The main **Shopping list** is shared and saved for the household. Add, edit,
+check off or remove items there; other household members see changes when they
+return to the app or within about ten seconds while it is open. From a locked
+week, **Add to household list** adds the selected ingredients without replacing
+other items. Re-adding an identical item does not create a duplicate.
+
+“Copy shopping list” and **Copy & open Woolworths** include the locked week's
+selected ingredients and unchecked household-list items. Identical lines are
+included once; checked household items are omitted. The combined list updates
+as the household list refreshes. The copied list contains plain lines such as:
 
 ```text
 800 g chicken thigh
@@ -189,10 +198,11 @@ original total until replanned.
 ```
 
 Pantry staples are shown in their own highlighted section. Tick **Already have
-it** beside any ingredient you have; checked items are left off copied and shared
-lists. Unchecked pantry staples are included by default; turn off **Include
-unchecked pantry items in Woolworths list** to omit them. These checks are saved
-in this browser for the current plan.
+it** beside any ingredient you have; those week ingredients are left off copied
+and shared lists. An unchecked household-list item is still included even if a
+matching week ingredient is excluded. Unchecked pantry staples are included by
+default; turn off **Include unchecked pantry items in Woolworths list** to omit
+them. These checks are saved in this browser for the current plan.
 
 The **Tell Olive to add all ingredients to my cart** checkbox (on by default)
 includes an instruction to add every item and quantity without asking for item-by-item
@@ -330,9 +340,10 @@ a locked week. The week card shows a cooked badge; **Undo cooked** clears it.
 This status is saved for the household, follows a meal when moved, and resets
 when that meal is swapped. It does not change shopping quantities or checkmarks.
 
-Shopping checkmarks and cooking progress live in the current browser's
-`localStorage`; the actual recipes and weeks are saved on the server. Clearing
-site data removes those checkmarks, not your saved plans. The previous starter
+The locked week's “Already have it” checks and recipe cooking checklist live
+in the current browser's `localStorage`; the household shopping list, recipes
+and weeks are saved on the server. Clearing site data removes those local
+checks, not your saved plans or household shopping list. The previous starter
 app's generated browser-only plan is not automatically converted to a dated
 week; its old localStorage entry is left untouched.
 

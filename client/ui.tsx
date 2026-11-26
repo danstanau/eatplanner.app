@@ -6,7 +6,7 @@ import {
 import {
   addDays, api, CATEGORIES, dateLabel, DAYS, ingredientLine, mondayFor, parseIngredientLines,
   PROTEINS, readRoute, RECIPE_SCOPES, shoppingText, today, weekLabel, writeRoute,
-  type AppRoute, type ImageCredit, type Ingredient, type Meal, type Recipe, type RecipeScope, type Summary, type User, type Week,
+  type AppRoute, type HouseholdShopping, type ImageCredit, type Ingredient, type Meal, type Recipe, type RecipeScope, type Summary, type User, type Week,
 } from "./shared";
 
 type Route = AppRoute;
@@ -113,6 +113,7 @@ export function App() {
   const [toast, setToast] = useState<Toast>(null);
   const [busy, setBusy] = useState(false);
   const [adminRefresh, setAdminRefresh] = useState(0);
+  const [shopping, setShopping] = useState<HouseholdShopping | null>(null);
   const authenticated = Boolean(session?.authenticated);
   const modalTitle = modal?.kind === "recipe" ? modal.recipe.title
     : modal?.kind === "edit-recipe" ? modal.recipe ? `Edit ${modal.recipe.title}` : "Add a recipe"
@@ -159,6 +160,29 @@ export function App() {
     try { setWeek(await api<Week | null>(`/weeks/${key}`)); }
     finally { setBusy(false); }
   }, []);
+  const applyShopping = useCallback((next: HouseholdShopping) => {
+    setShopping((current) => !current || next.revision >= current.revision ? next : current);
+  }, []);
+  const changeShopping = useCallback(async (path: string, body: unknown, method?: string) => {
+    applyShopping(await api<HouseholdShopping>(path, body, method));
+  }, [applyShopping]);
+
+  useEffect(() => {
+    if (!session || (session.enabled && !session.authenticated)) return;
+    let active = true;
+    const refresh = async () => {
+      try {
+        const next = await api<HouseholdShopping>("/shopping");
+        if (active) applyShopping(next);
+      } catch (error) {
+        if (active) notify(error instanceof Error ? error.message : "Couldn't load the shopping list.", true);
+      }
+    };
+    void refresh();
+    const timer = window.setInterval(() => { if (!document.hidden) void refresh(); }, 10000);
+    window.addEventListener("focus", refresh);
+    return () => { active = false; window.clearInterval(timer); window.removeEventListener("focus", refresh); };
+  }, [session?.enabled, session?.authenticated, applyShopping, notify]);
 
   useEffect(() => {
     let active = true;
@@ -212,15 +236,16 @@ export function App() {
     if (loading || busy) return <Loading message={route.view === "week" ? "Opening your week..." : "Finding your weeks..."} />;
     if (route.view === "week" && route.week) return <WeekPage
       key={route.week} week={week} weekKey={route.week} user={session.user}
-      onWeek={setWeek} onRoute={navigate} onModal={setModal} notify={notify} run={run}
+      onWeek={setWeek} onRoute={navigate} onModal={setModal} notify={notify} run={run} changeShopping={changeShopping} shopping={shopping}
     />;
+    if (route.view === "shopping") return <HouseholdShoppingPage shopping={shopping} changeShopping={changeShopping} run={run} />;
     if (route.view === "recipes") return <RecipesPage
       recipes={recipes} route={route} user={session.user} onRoute={navigate}
     />;
     if (route.view === "admin") return <AdminPage key={adminRefresh} user={session.user} onModal={setModal} />;
     return <WeeksPage summaries={summaries} recipeCount={recipes.length} onWeek={(key) => navigate({ view: "week", week: key })}
       onPlan={(key) => navigate({ view: "week", week: key })} />;
-  }, [session, authenticated, loading, busy, route, week, recipes, summaries, notify, run, navigate, adminRefresh]);
+  }, [session, authenticated, loading, busy, route, week, recipes, summaries, notify, run, navigate, adminRefresh, shopping, changeShopping]);
 
   if (window.location.pathname === "/login" && session?.enabled && authenticated) {
     window.location.replace(new URLSearchParams(window.location.search).get("next") ?? "/");
@@ -240,6 +265,9 @@ export function App() {
           <Button id="nav-recipes" className={`nav-link${route.view === "recipes" ? " active" : ""}`} variant="subtle"
             aria-current={route.view === "recipes" ? "page" : undefined} onClick={() => navigate({ view: "recipes" })}>
             <svg className="icon" aria-hidden="true"><use href="/icons.svg#book" /></svg><span>Recipes</span></Button>
+          <Button id="nav-shopping" className={`nav-link${route.view === "shopping" ? " active" : ""}`} variant="subtle"
+            aria-current={route.view === "shopping" ? "page" : undefined} onClick={() => navigate({ view: "shopping" })}>
+            <span>Shopping list{shopping ? ` (${shopping.items.length})` : ""}</span></Button>
           <Button id="add-recipe" className="button small" onClick={() => {
             const current = readRoute();
             navigate(current.view === "week" ? { ...current, edit: "new" } : { view: "recipes", edit: "new" });
@@ -322,6 +350,51 @@ export function App() {
 
 function canEditRecipe(recipe: Recipe, user: User) {
   return recipe.source === "personal" && recipe.householdId === user.id;
+}
+
+function HouseholdShoppingPage({ shopping, changeShopping, run }: {
+  shopping: HouseholdShopping | null;
+  changeShopping: (path: string, body: unknown, method?: string) => Promise<void>;
+  run: (action: () => Promise<void>, control?: HTMLButtonElement | null) => Promise<void>;
+}) {
+  const [name, setName] = useState("");
+  return <>
+    <PageHeading title="Shopping list" description="A shared list for everyone in your household." />
+    <form className="household-shopping-add" onSubmit={(event) => {
+      event.preventDefault();
+      const value = name.trim();
+      if (!value) return;
+      void run(async () => { await changeShopping("/shopping", { names: [value] }); setName(""); });
+    }}>
+      <TextInput label="Add an item" value={name} maxLength={200} onChange={(event) => setName(event.currentTarget.value)} />
+      <Button className="button" type="submit" disabled={!name.trim()}>Add item</Button>
+    </form>
+    {!shopping ? <Loading message="Loading shopping list..." /> : shopping.items.length === 0
+      ? <p className="muted">Your shopping list is empty. Add an item above.</p>
+      : <div className="household-shopping-list">{shopping.items.map((item) =>
+        <HouseholdShoppingRow key={item.id} item={item} changeShopping={changeShopping} run={run} />)}</div>}
+  </>;
+}
+
+function HouseholdShoppingRow({ item, changeShopping, run }: {
+  item: HouseholdShopping["items"][number];
+  changeShopping: (path: string, body: unknown, method?: string) => Promise<void>;
+  run: (action: () => Promise<void>, control?: HTMLButtonElement | null) => Promise<void>;
+}) {
+  const [name, setName] = useState(item.name);
+  useEffect(() => { setName(item.name); }, [item.name]);
+  const path = `/shopping/${item.id}`;
+  return <form className="household-shopping-row" onSubmit={(event) => {
+    event.preventDefault();
+    void run(() => changeShopping(path, { name: name.trim() }, "PATCH"));
+  }}>
+    <Checkbox checked={item.checked} aria-label={`Mark ${item.name} as ${item.checked ? "needed" : "bought"}`}
+      onChange={(event) => { const checked = event.currentTarget.checked; void run(() => changeShopping(path, { checked }, "PATCH")); }} />
+    <TextInput aria-label={`Edit ${item.name}`} value={name} maxLength={200} onChange={(event) => setName(event.currentTarget.value)} />
+    <Button className="button secondary" type="submit" disabled={!name.trim() || name.trim() === item.name}>Save</Button>
+    <Button className="button secondary" type="button" aria-label={`Remove ${item.name}`}
+      onClick={() => void run(() => changeShopping(path, {}, "DELETE"))}>Remove</Button>
+  </form>;
 }
 
 function SalesPage() {
@@ -500,11 +573,13 @@ function householdKey(user?: User, suffix = "") {
   return `eatplanner.app:${household}${suffix}`;
 }
 
-function ShoppingPanel({ week, user, notify, onShare }: {
+function ShoppingPanel({ week, user, notify, onShare, changeShopping, shopping }: {
   week: Week;
   user?: User;
   notify: (message: string, error?: boolean) => void;
   onShare: (includePantry: boolean, haveItems: Set<string>) => void;
+  changeShopping: (path: string, body: unknown, method?: string) => Promise<void>;
+  shopping: HouseholdShopping | null;
 }) {
   const storageKey = householdKey(user, `have:${week.week}:${week.revision}`);
   const [includePantry, setIncludePantry] = useState(true);
@@ -525,7 +600,15 @@ function ShoppingPanel({ week, user, notify, onShare }: {
   });
   const items = week.shoppingList;
   const itemsToBuy = items.filter((item) => (includePantry || !item.pantry) && !haveItems.has(`${item.name}|${item.unit}`));
-  const text = shoppingText(itemsToBuy, true);
+  const lines = itemsToBuy.map((item) => ingredientLine(item));
+  const seen = new Set(lines.map((line) => line.toLowerCase()));
+  for (const item of shopping?.items ?? []) {
+    if (!item.checked && !seen.has(item.name.toLowerCase())) {
+      lines.push(item.name);
+      seen.add(item.name.toLowerCase());
+    }
+  }
+  const text = lines.join("\n");
   const preferenceText = productPreference === "specials"
     ? "Please prefer specials and lower-priced suitable alternatives when available."
     : productPreference === "premium"
@@ -540,7 +623,7 @@ function ShoppingPanel({ week, user, notify, onShare }: {
       ? "This is a preference, not a requirement: do not skip an ingredient if no preferred match is available. Add the closest suitable in-stock product at its usual price instead."
       : "",
   ].filter(Boolean);
-  const copyText = instructions.length && text ? `${instructions.join("\n")}\n\n${text}` : text;
+  const copyText = !shopping ? "" : instructions.length && text ? `${instructions.join("\n")}\n\n${text}` : text;
   const alreadyHave = items.filter((item) => haveItems.has(`${item.name}|${item.unit}`)).length;
 
   function toggle(key: string) {
@@ -576,11 +659,18 @@ function ShoppingPanel({ week, user, notify, onShare }: {
   return <section className="shopping-panel" id="shopping">
     <div className="section-bar"><div><h2>Shopping list</h2></div>
       <div className="shopping-share-actions">
-        <Button className="button" onClick={() => void copy()}>Copy shopping list</Button>
+        <Button className="button secondary" disabled={!itemsToBuy.length} onClick={() => void (async () => {
+          try {
+            await changeShopping("/shopping", { names: itemsToBuy.map((item) => ingredientLine(item)) });
+            notify("Ingredients added to your household shopping list.");
+          } catch (error) { notify(error instanceof Error ? error.message : "Couldn't add ingredients.", true); }
+        })()}>Add to household list</Button>
+        <Button className="button" disabled={!shopping} onClick={() => void copy()}>Copy shopping list</Button>
         <Button className="button secondary" onClick={() => onShare(includePantry, haveItems)}>Share shopping list</Button>
       </div>
     </div>
     <p className="muted">Combined and scaled for {peopleLabel(week)}. Quantities are recipe amounts, not supermarket pack sizes. Tick <strong>Already have it</strong> to leave an ingredient off the copied list.</p>
+    <p className="muted">{shopping ? "Copying also includes unchecked items from your household shopping list. Identical lines are included once." : "Loading your household shopping list before copying."}</p>
     <label className="check-field compact"><Checkbox checked={includePantry} onChange={(event) => setIncludePantry(event.currentTarget.checked)} />
       <span>Include unchecked pantry items in Woolworths list</span></label>
     <div className="shopping-layout">
@@ -638,7 +728,7 @@ function ShoppingPanel({ week, user, notify, onShare }: {
           <li>Follow Olive's prompts and check product matches, pack sizes and quantities. You complete checkout yourself.</li>
         </ol>
         <div className="shopping-copy-actions">
-          <Button className="button" onClick={() => void copy(true)}>Copy &amp; open Woolworths</Button>
+          <Button className="button" disabled={!shopping} onClick={() => void copy(true)}>Copy &amp; open Woolworths</Button>
           <a className="button secondary" href="https://www.woolworths.com.au/">Open Woolworths</a>
         </div>
         <p className="muted" role="status" aria-live="polite">{status}</p>
@@ -1525,7 +1615,7 @@ function WeeksPage({ summaries, recipeCount, onWeek, onPlan }: {
   </>;
 }
 
-function WeekPage({ week, weekKey, user, onWeek, onRoute, onModal, notify, run }: {
+function WeekPage({ week, weekKey, user, onWeek, onRoute, onModal, notify, run, changeShopping, shopping }: {
   week: Week | null;
   weekKey: string;
   user?: User;
@@ -1534,6 +1624,8 @@ function WeekPage({ week, weekKey, user, onWeek, onRoute, onModal, notify, run }
   onModal: (modal: ModalState) => void;
   notify: (message: string, error?: boolean) => void;
   run: (action: () => Promise<void>, control?: HTMLButtonElement | null) => Promise<void>;
+  changeShopping: (path: string, body: unknown, method?: string) => Promise<void>;
+  shopping: HouseholdShopping | null;
 }) {
   const locked = week?.status === "confirmed";
   const navigateBack = () => onRoute({ view: "weeks" });
@@ -1615,7 +1707,7 @@ function WeekPage({ week, weekKey, user, onWeek, onRoute, onModal, notify, run }
             </>}
       </article>;
     })}</div>
-    {locked ? <ShoppingPanel week={week} user={user} notify={notify}
+    {locked ? <ShoppingPanel week={week} user={user} notify={notify} changeShopping={changeShopping} shopping={shopping}
       onShare={(includePantry, haveItems) => onModal({
         kind: "share-shopping",
         week,

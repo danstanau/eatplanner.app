@@ -46,6 +46,7 @@ export type Ingredient = { name: string; quantity: number; unit: string; pantry:
 export type ImageCredit = { creator: string; sourceUrl: string; creatorUrl?: string; license: string; licenseUrl: string };
 export type Meal = { day: number; recipe: Recipe; cooked?: boolean } | { day: number; type: "custom"; title: string };
 export type ShoppingItem = Ingredient;
+export type HouseholdShopping = { revision: number; items: { id: string; name: string; checked: boolean }[] };
 export type Week = {
   week: string;
   people: number;
@@ -61,7 +62,7 @@ export type Week = {
 export type Summary = { week: string; status: Week["status"]; count: number; days: number[]; titles: string[]; images?: string[] };
 export type User = { id: string; name: string; isAdmin: boolean };
 export type AppRoute = {
-  view: "weeks" | "week" | "recipes" | "admin";
+  view: "weeks" | "week" | "recipes" | "shopping" | "admin";
   week?: string | null;
   recipe?: string | null;
   day?: string | null;
@@ -142,6 +143,7 @@ export function readRoute(): AppRoute {
   const view = params.get("view");
   const scope = params.get("scope");
   if (view === "admin") return { view };
+  if (view === "shopping") return { view };
   if (view === "week" && /^\d{4}-\d{2}-\d{2}$/.test(params.get("week") ?? "")) {
     return { view, week: params.get("week")!, recipe: params.get("recipe"), day: params.get("day"), edit: params.get("edit") };
   }
