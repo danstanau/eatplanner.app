@@ -77,7 +77,7 @@ export async function generatePlan(preferences: Preferences) {
   }
 }
 
-export async function extractRecipe(photo: Photo, signal: AbortSignal) {
+export async function extractRecipe(photos: Photo[], signal: AbortSignal) {
   const auth = await requireCopilotAuth();
   signal.throwIfAborted();
   const session = await client.createSession({
@@ -101,7 +101,7 @@ export async function extractRecipe(photo: Photo, signal: AbortSignal) {
     });
     const result = await Promise.race([cancelled, session.sendAndWait({
       prompt: [
-        "Transcribe the recipe in this image. If no readable recipe is visible, return recipe=null and explain why in warnings. Never invent a recipe.",
+        `Transcribe the recipe using all ${photos.length} supplied image${photos.length === 1 ? "" : "s"}. They may show different sides or pages of the same recipe card, so combine their readable text into one recipe. If no readable recipe is visible, return recipe=null and explain why in warnings. Never invent a recipe.`,
         "Preserve all clearly readable ingredient amounts and every method step. Use metric units.",
         "Ingredient names must be consistent singular grocery names, without quantities or preparation instructions.",
         "Allowed units: g, kg, ml, l, tsp, tbsp, piece, pinch. Use piece for countable items including eggs, garlic cloves, slices, bunches, cans and packets; include the item or container in the ingredient name. For example, ¼ bunch coriander is 0.25 piece coriander bunch. This is a representation of the source, not an estimate.",
@@ -116,7 +116,9 @@ export async function extractRecipe(photo: Photo, signal: AbortSignal) {
         "Explain assumptions and unreadable text in warnings; estimated ingredient quantities will be flagged separately for review.",
         "Pantry staples such as oil, spices, rice and pasta should have pantry=true.",
       ].join("\n"),
-      attachments: [{ type: "blob", data: photo.data, mimeType: photo.mimeType, displayName: "recipe-photo" }],
+      attachments: photos.map((photo, index) => ({
+        type: "blob" as const, data: photo.data, mimeType: photo.mimeType, displayName: `recipe-photo-${index + 1}`,
+      })),
     }, modelExtractionSchema, 120_000)]);
     completed = true;
     return prepareExtraction(result);

@@ -5,7 +5,7 @@ import { readFile } from "node:fs/promises";
 import convertHeic from "heic-convert";
 import { z } from "zod";
 import { preferencesSchema, type MealPlan, type Preferences } from "./plan.js";
-import { DEFAULT_RECIPE_SCOPE, MAIN_HOUSEHOLD_ID, extractionSchema, newRecipeSchema, photoSchema, recipeImageSearchSchema, recipeScopeSchema, type Extraction, type ImageCredit, type Photo, type Recipe, type RecipeImageSearch, type RecipeScope } from "./recipes.js";
+import { DEFAULT_RECIPE_SCOPE, MAIN_HOUSEHOLD_ID, extractionSchema, newRecipeSchema, recipePhotosSchema, recipeImageSearchSchema, recipeScopeSchema, type Extraction, type ImageCredit, type Photo, type Recipe, type RecipeImageSearch, type RecipeScope } from "./recipes.js";
 import { alternatives, AppError, assertEditable, batchPlanningSchema, daySchema, moveMeal, planningSchema, planWeek, shoppingList, swapMeal, weekKeySchema, type Week } from "./planner.js";
 import { Store } from "./store.js";
 import { hashPassword, householdAuth, type AuthConfig } from "./auth.js";
@@ -14,7 +14,7 @@ import { Households, householdNameSchema, passwordSchema } from "./households.js
 interface Services {
   generatePlan: (preferences: Preferences) => Promise<MealPlan>;
   getStatus: () => Promise<{ authenticated: boolean; model: string }>;
-  extractRecipe: (photo: Photo, signal: AbortSignal) => Promise<Extraction>;
+  extractRecipe: (photos: Photo[], signal: AbortSignal) => Promise<Extraction>;
   findRecipeImage: (recipe: RecipeImageSearch) => Promise<{ image: string; imageCredit: ImageCredit }>;
 }
 
@@ -260,7 +260,7 @@ export function createApp(services: Services, store = new Store(), options: { al
     }));
   });
   app.post("/api/recipes/extract", async (request, response) => {
-    const photo = photoSchema.parse(request.body);
+    const photos = recipePhotosSchema.parse(Array.isArray(request.body?.photos) ? request.body.photos : [request.body]);
     if (recipePhotoTask) throw new AppError(429, "Another recipe photo task is running. Please wait.");
     recipePhotoTask = true;
     const controller = new AbortController();
@@ -268,7 +268,7 @@ export function createApp(services: Services, store = new Store(), options: { al
     const cancel = () => controller.abort();
     response.once("close", cancel);
     try {
-      const result = await services.extractRecipe(photo, signal);
+      const result = await services.extractRecipe(photos, signal);
       signal.throwIfAborted();
       const extraction = extractionSchema.parse(result);
       if (!extraction.recipe) throw new AppError(422, extraction.warnings.join(" ") || "No readable recipe was found. Try a clearer photo of the ingredients and method.");

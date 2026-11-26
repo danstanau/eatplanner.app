@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 import { z } from "zod";
-import { extractionSchema, modelExtractionSchema, photoSchema, prepareExtraction, recipeSchema, type Recipe } from "./recipes.js";
+import { extractionSchema, modelExtractionSchema, photoSchema, prepareExtraction, recipePhotosSchema, recipeSchema, type Recipe } from "./recipes.js";
 import { alternatives, assertEditable, moveMeal, planWeek, planningSchema, shoppingList, swapMeal, weekKeySchema, type Rules } from "./planner.js";
 
 const recipes = z.array(recipeSchema).parse(JSON.parse(await readFile(new URL("../data/recipes.json", import.meta.url), "utf8")));
@@ -120,6 +120,12 @@ test("photo extraction schema is SDK-compatible and invalid image types are reje
   }).success, true);
   assert.equal(photoSchema.safeParse({ mimeType: "image/png", data: Buffer.from("not an image").toString("base64") }).success, false);
   assert.equal(photoSchema.safeParse({ mimeType: "text/html", data: "PHNjcmlwdD4=" }).success, false);
+  const photo = { mimeType: "image/jpeg" as const, data: Buffer.from([0xff, 0xd8, 0xff, 0, 0, 0]).toString("base64") };
+  assert.equal(recipePhotosSchema.safeParse([photo, photo]).success, true);
+  assert.equal(recipePhotosSchema.safeParse([]).success, false);
+  assert.equal(recipePhotosSchema.safeParse(Array.from({ length: 5 }, () => photo)).success, false);
+  const largePhoto = { ...photo, data: photo.data + "A".repeat(1_900_000) };
+  assert.equal(recipePhotosSchema.safeParse([largePhoto, largePhoto]).success, false);
 });
 
 test("photo estimates are retained and explicitly identified for review", () => {

@@ -78,6 +78,8 @@ test("React planner loads the weeks screen, navigates, and opens planning contro
   const originalFetch = globalThis.fetch;
   let conversionFailure: "json" | "text" | null = null;
   let conversions = 0;
+  let extractedPhotoCount = 0;
+  const canvasDimensions: Array<[number, number]> = [];
   let copiedText = "";
   Object.defineProperty(browser.navigator, "clipboard", {
     configurable: true, value: { writeText: async (text: string) => { copiedText = text; } },
@@ -127,6 +129,7 @@ test("React planner loads the weeks screen, navigates, and opens planning contro
         return new Response(jpeg, { headers: { "Content-Type": "image/jpeg" } });
       }
       if (path === "/api/recipes/extract") {
+        extractedPhotoCount = (JSON.parse(String(init?.body)) as { photos: unknown[] }).photos.length;
         const { id: _id, source: _source, image: _image, ...content } = recipe;
         return Response.json({ recipe: content, warnings: [] });
       }
@@ -139,10 +142,13 @@ test("React planner loads the weeks screen, navigates, and opens planning contro
   for (const [key, value] of Object.entries(globals)) Object.defineProperty(globalThis, key, { configurable: true, writable: true, value });
   Object.defineProperty(globalThis, "IS_REACT_ACT_ENVIRONMENT", { configurable: true, writable: true, value: true });
   Object.defineProperty(browser.HTMLCanvasElement.prototype, "getContext", {
-    configurable: true, value: () => ({ fillStyle: "", fillRect() {}, drawImage() {} }),
+    configurable: true, value: () => ({ fillStyle: "", fillRect() {}, drawImage() {}, translate() {}, rotate() {} }),
   });
   Object.defineProperty(browser.HTMLCanvasElement.prototype, "toDataURL", {
-    configurable: true, value: () => `data:image/jpeg;base64,${jpeg.toString("base64")}`,
+    configurable: true, value: function (this: HTMLCanvasElement) {
+      canvasDimensions.push([this.width, this.height]);
+      return `data:image/jpeg;base64,${jpeg.toString("base64")}`;
+    },
   });
   const root = createRoot(document.querySelector("#root")!);
   t.after(async () => {
@@ -199,8 +205,8 @@ test("React planner loads the weeks screen, navigates, and opens planning contro
   assert.deepEqual([...document.querySelectorAll<HTMLButtonElement>('[role="dialog"] .photo-picker-actions button')]
     .map((button) => button.textContent?.trim()), ["Take a photo", "Choose from library", "Take a photo", "Choose from library"]);
   const inputs = document.querySelectorAll<HTMLInputElement>('[role="dialog"] .photo-picker input[type="file"]');
-  const upload = async (input: HTMLInputElement) => {
-    Object.defineProperty(input, "files", { configurable: true, value: [new browser.File(["heic"], "photo.HEIC", { type: "image/heic" })] });
+  const upload = async (input: HTMLInputElement, files = [new browser.File(["heic"], "photo.HEIC", { type: "image/heic" })]) => {
+    Object.defineProperty(input, "files", { configurable: true, value: files });
     await act(async () => {
       input.dispatchEvent(new browser.Event("change", { bubbles: true }));
       await delay(20);
@@ -208,11 +214,30 @@ test("React planner loads the weeks screen, navigates, and opens planning contro
   };
   await upload(inputs[0]);
   assert.equal(conversions, 1);
-  assert.ok(requests.includes("/api/recipes/extract"), "recipe photo reaches extraction after conversion");
+  assert.equal(requests.includes("/api/recipes/extract"), false, "photos can be staged before they are read");
+  await upload(inputs[1], [new browser.File(["back"], "back.jpg", { type: "image/jpeg" })]);
+  await act(async () => {
+    document.querySelector<HTMLButtonElement>('[aria-label="Rotate recipe page 1 clockwise"]')?.click();
+    await delay(10);
+  });
+  assert.ok(canvasDimensions.some(([width, height]) => width === 900 && height === 1200), "rotation swaps the photo dimensions");
+  await act(async () => {
+    [...document.querySelectorAll<HTMLButtonElement>('[role="dialog"] button')]
+      .find((button) => button.textContent?.includes("Read recipe"))?.click();
+    await delay(20);
+  });
+  assert.ok(requests.includes("/api/recipes/extract"), "recipe photos reach extraction together");
+  assert.equal(extractedPhotoCount, 2);
   assert.match(document.querySelector(".upload-status")?.textContent ?? "", /Draft ready: Lemon pasta/);
   await upload(inputs[2]);
   assert.equal(conversions, 2);
   assert.match(document.querySelector(".upload-status")?.textContent ?? "", /Dish photo ready/);
+  await act(async () => {
+    [...document.querySelectorAll<HTMLButtonElement>('[role="dialog"] button')]
+      .find((button) => button.textContent?.includes("Rotate dish photo"))?.click();
+    await delay(10);
+  });
+  assert.match(document.querySelector(".upload-status")?.textContent ?? "", /Dish photo rotated/);
   conversionFailure = "json";
   await upload(inputs[2]);
   assert.equal(conversions, 3);

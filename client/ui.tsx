@@ -1304,18 +1304,42 @@ async function preparePhoto(file: File, signal?: AbortSignal): Promise<string> {
   } finally { bitmap.close(); }
 }
 
-function PhotoPicker({ disabled, onFile }: { disabled: boolean; onFile: (file?: File) => void }) {
+async function rotatePhoto(dataUrl: string): Promise<string> {
+  const [, encoded] = dataUrl.split(",");
+  if (!encoded) throw new Error("This photo couldn't be rotated.");
+  const bytes = Uint8Array.from(atob(encoded), (character) => character.charCodeAt(0));
+  const bitmap = await createImageBitmap(new Blob([bytes], { type: "image/jpeg" }));
+  try {
+    const canvas = document.createElement("canvas");
+    canvas.width = bitmap.height;
+    canvas.height = bitmap.width;
+    const context = canvas.getContext("2d");
+    if (!context) throw new Error("Your browser cannot rotate this photo.");
+    context.translate(canvas.width, 0);
+    context.rotate(Math.PI / 2);
+    context.drawImage(bitmap, 0, 0);
+    const rotated = canvas.toDataURL("image/jpeg", 0.88);
+    if (rotated.length > 2_900_000) throw new Error("This rotated photo is too large. Choose a smaller image.");
+    return rotated;
+  } finally { bitmap.close(); }
+}
+
+function PhotoPicker({ disabled, onFiles, multiple = false }: {
+  disabled: boolean;
+  onFiles: (files: File[]) => void;
+  multiple?: boolean;
+}) {
   const cameraInput = useRef<HTMLInputElement>(null);
   const libraryInput = useRef<HTMLInputElement>(null);
   function handleChange(event: React.ChangeEvent<HTMLInputElement>) {
-    const file = event.currentTarget.files?.[0];
+    const files = Array.from(event.currentTarget.files ?? []);
     event.currentTarget.value = "";
-    if (file) onFile(file);
+    if (files.length) onFiles(multiple ? files : files.slice(0, 1));
   }
   return <div className="photo-picker">
     <input ref={cameraInput} type="file" accept="image/*,.heic,.heif" capture="environment"
       disabled={disabled} onChange={handleChange} />
-    <input ref={libraryInput} type="file" accept="image/*,.heic,.heif"
+    <input ref={libraryInput} type="file" accept="image/*,.heic,.heif" multiple={multiple}
       disabled={disabled} onChange={handleChange} />
     <Group gap="sm" grow wrap="nowrap" className="photo-picker-actions">
       <Button type="button" disabled={disabled} onClick={() => cameraInput.current?.click()}>Take a photo</Button>
@@ -1350,33 +1374,68 @@ function RecipeEditor({ recipe, onSaved, notify }: {
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState("");
   const [error, setError] = useState("");
-  const [recipePagePreview, setRecipePagePreview] = useState("");
+  const [recipePagePreviews, setRecipePagePreviews] = useState<string[]>([]);
   const readingController = useRef<AbortController | null>(null);
   const [excludedPhotoSources, setExcludedPhotoSources] = useState<string[]>(recipe?.imageCredit?.sourceUrl ? [recipe.imageCredit.sourceUrl] : []);
   const recipeInput = useMemo(() => ({ title, description, category, protein, diet, servings: Number(servings),
     prepMinutes: Number(prepMinutes), cookMinutes: Number(cookMinutes), ingredients, steps, notes }), [
     title, description, category, protein, diet, servings, prepMinutes, cookMinutes, ingredients, steps, notes,
   ]);
-  async function importRecipe(file?: File) {
-    if (!file) return;
+  async function addRecipePages(files: File[]) {
+    if (!files.length) return;
+    if (recipePagePreviews.length + files.length > 4) {
+      const message = "Choose up to 4 recipe-page photos.";
+      setError(message);
+      notify(message, true);
+      return;
+    }
+    setBusy(true);
+    setError("");
+    setStatus("Preparing recipe photos...");
+    try {
+      const prepared: string[] = [];
+      for (const file of files) prepared.push(await preparePhoto(file));
+      const combinedSize = [...recipePagePreviews, ...prepared].reduce((total, photo) => total + photo.length, 0);
+      if (combinedSize > 3_700_000) throw new Error("Choose smaller photos or use fewer images (up to 4).");
+      setRecipePagePreviews((current) => [...current, ...prepared]);
+      setStatus(`${recipePagePreviews.length + prepared.length} recipe photo${recipePagePreviews.length + prepared.length === 1 ? "" : "s"} ready. Rotate any image if needed, then read the recipe.`);
+    } catch (reason) {
+      const message = reason instanceof Error ? reason.message : "Couldn't prepare these photos.";
+      setError(message);
+      setStatus("Couldn't prepare the recipe photos. Choose another image or enter the recipe below.");
+      notify(message, true);
+    } finally { setBusy(false); }
+  }
+  async function rotateRecipePage(index: number) {
+    setBusy(true);
+    setError("");
+    try {
+      const rotated = await rotatePhoto(recipePagePreviews[index]);
+      setRecipePagePreviews((current) => current.map((photo, at) => at === index ? rotated : photo));
+    } catch (reason) {
+      const message = reason instanceof Error ? reason.message : "Couldn't rotate this photo.";
+      setError(message);
+      notify(message, true);
+    } finally { setBusy(false); }
+  }
+  async function importRecipe() {
+    if (!recipePagePreviews.length) return;
     const controller = new AbortController();
     readingController.current = controller;
     setBusy(true);
     setError("");
     setWarnings([]);
     try {
-      setStatus("Preparing your recipe photo...");
-      const prepared = await preparePhoto(file, controller.signal);
-      controller.signal.throwIfAborted();
-      setRecipePagePreview(prepared);
-      setStatus("Reading ingredients and method with Copilot. This can take up to two minutes.");
+      setStatus(`Reading ${recipePagePreviews.length} recipe photo${recipePagePreviews.length === 1 ? "" : "s"} with Copilot. This can take up to two minutes.`);
       const result = await api<{
         recipe: (Omit<Recipe, "id" | "source" | "householdId" | "image" | "ingredients"> & {
           ingredients: Array<Omit<Ingredient, "quantity" | "unit"> & { quantity: number | null; unit: string | null }>;
         }) | null;
         warnings: string[];
       }>(
-        "/recipes/extract", { data: prepared.split(",")[1], mimeType: "image/jpeg" }, undefined, controller.signal);
+        "/recipes/extract", {
+          photos: recipePagePreviews.map((photo) => ({ data: photo.split(",")[1], mimeType: "image/jpeg" })),
+        }, undefined, controller.signal);
       controller.signal.throwIfAborted();
       if (!result.recipe) throw new Error(result.warnings.join(" ") || "No readable recipe was found. Try a clearer photo.");
       const imported = result.recipe;
@@ -1402,7 +1461,7 @@ function RecipeEditor({ recipe, onSaved, notify }: {
       }
       const message = reason instanceof Error ? reason.message : "Couldn't read this photo.";
       setError(message);
-      setStatus("Couldn't read this photo. Try another image or enter the recipe below.");
+      setStatus("Couldn't read these photos. Try another image or enter the recipe below.");
       notify(message, true);
     } finally {
       if (readingController.current === controller) readingController.current = null;
@@ -1420,6 +1479,19 @@ function RecipeEditor({ recipe, onSaved, notify }: {
       setStatus("Dish photo ready. It will be saved with this recipe.");
     } catch (reason) {
       const message = reason instanceof Error ? reason.message : "Couldn't prepare the dish photo.";
+      setError(message);
+      notify(message, true);
+    } finally { setBusy(false); }
+  }
+  async function rotateDishPhoto() {
+    setBusy(true);
+    setError("");
+    try {
+      setImage(await rotatePhoto(image));
+      setImageCredit(undefined);
+      setStatus("Dish photo rotated. It will be saved with this recipe.");
+    } catch (reason) {
+      const message = reason instanceof Error ? reason.message : "Couldn't rotate this photo.";
       setError(message);
       notify(message, true);
     } finally { setBusy(false); }
@@ -1470,20 +1542,35 @@ function RecipeEditor({ recipe, onSaved, notify }: {
       <div className="recipe-photo-options">
         <Paper component="section" className="upload-box" withBorder shadow="xs" radius="lg" p="lg"><h3>Recipe page</h3>
           <p className="muted">Select a photo of the ingredients and method to start reading with Copilot, or enter them manually below.</p>
-          <PhotoPicker disabled={busy} onFile={(file) => { void importRecipe(file); }} />
+          <PhotoPicker disabled={busy} multiple onFiles={(files) => { void addRecipePages(files); }} />
           <p className="muted upload-status" role="status">{status}</p>
           {readingController.current && <Button className="button secondary" type="button" onClick={() => readingController.current?.abort()}>Cancel reading</Button>}
-          {recipePagePreview && <img className="upload-preview" src={recipePagePreview} alt="Selected recipe page" />}
+          {recipePagePreviews.map((preview, index) => <div className="recipe-page-preview" key={index}>
+            <img className="upload-preview" src={preview} alt={`Recipe page ${index + 1}`} />
+            <Group gap="xs">
+              <Button className="button secondary" type="button" disabled={busy}
+                aria-label={`Rotate recipe page ${index + 1} clockwise`} onClick={() => void rotateRecipePage(index)}>Rotate 90°</Button>
+              <Button className="button secondary" type="button" disabled={busy}
+                aria-label={`Remove recipe page ${index + 1}`} onClick={() => {
+                  setRecipePagePreviews((current) => current.filter((_photo, at) => at !== index));
+                  setStatus("Recipe photo removed.");
+                }}>Remove</Button>
+            </Group>
+          </div>)}
+          <Button className="button secondary" type="button" disabled={busy || recipePagePreviews.length === 0}
+            onClick={() => void importRecipe()}>Read recipe{recipePagePreviews.length > 1 ? " pages" : ""}</Button>
         </Paper>
         <Paper component="section" className="upload-box" withBorder shadow="xs" radius="lg" p="lg"><h3>Dish photo</h3>
           <p className="muted">Choose an image or take a photo of the finished dish. This is separate from the recipe page.</p>
-          <PhotoPicker disabled={busy} onFile={(file) => { void chooseDishPhoto(file); }} />
+          <PhotoPicker disabled={busy} onFiles={(files) => { void chooseDishPhoto(files[0]); }} />
           <img className="upload-preview" src={image} alt="Recipe cover photo" />
+          {image.startsWith("data:image/") && <Button className="button secondary" type="button" disabled={busy}
+            onClick={() => void rotateDishPhoto()}>Rotate dish photo 90°</Button>}
           {imageCredit && <p className="fineprint photo-credit">Photo by {imageCredit.creator} ({imageCredit.license})</p>}
           <Button className="button secondary" type="button" disabled={busy} onClick={() => void searchImage()}>Find a photo with Copilot</Button>
         </Paper>
       </div>
-      <p className="fineprint recipe-photo-note">Reading a recipe photo or finding a dish photo uses GitHub Copilot and your allowance. Images are resized locally. Only import recipes you have permission to use.</p>
+      <p className="fineprint recipe-photo-note">Reading recipe photos or finding a dish photo uses GitHub Copilot and your allowance. You can upload up to 4 recipe-card photos. Images are resized locally. Only import recipes you have permission to use.</p>
       {warnings.length > 0 && <div className="import-warnings" role="status"><strong>Review before saving</strong>
         <ul>{warnings.map((warning, index) => <li key={index}>{warning}</li>)}</ul>
         <p>Compare quantities, units, dietary labels and method with your photo before saving.</p>
