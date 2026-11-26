@@ -3,7 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "A simple household meal planner powered by the GitHub Copilot SDK.",
+  "description": "An AI-assisted meal planner for planning meals by the week or month and copying ingredient lists for your favourite grocery store.",
+  "license": "MIT",
   "engines": {
     "node": "26.x"
   },
