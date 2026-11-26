@@ -97,6 +97,24 @@ test("super admin manages isolated households and persists their data under DATA
   const alphaProfile = await alphaProfileResponse.json();
   assert.deepEqual((await (await request("/auth/session", alphaCookie)).json()).user.profile, alphaProfile);
   assert.equal((await request("/profiles/select", secondAlphaCookie, { id: alphaProfile.id })).status, 200);
+  const starterRecipes = await (await request("/recipes", alphaCookie)).json();
+  const feedbackPath = `/recipes/${starterRecipes[0].id}/feedback`;
+  const saveFeedback = (cookie: string, rating: number | null, makeAgain: boolean) =>
+    request(feedbackPath, cookie, { rating, makeAgain }, "PUT");
+  assert.deepEqual(await (await saveFeedback(alphaCookie, 5, true)).json(), {
+    rating: 5, makeAgain: true, average: 5, ratingCount: 1, makeAgainCount: 1,
+  });
+  const otherProfileResponse = await request("/profiles", secondAlphaCookie, { name: "Alex" });
+  assert.equal(otherProfileResponse.status, 201);
+  assert.deepEqual(await (await request(feedbackPath, secondAlphaCookie)).json(), {
+    rating: null, makeAgain: false, average: 5, ratingCount: 1, makeAgainCount: 1,
+  });
+  assert.deepEqual(await (await saveFeedback(secondAlphaCookie, 3, false)).json(), {
+    rating: 3, makeAgain: false, average: 4, ratingCount: 2, makeAgainCount: 1,
+  });
+  assert.deepEqual(await (await request(feedbackPath, alphaCookie)).json(), {
+    rating: 5, makeAgain: true, average: 4, ratingCount: 2, makeAgainCount: 1,
+  });
   const additions = await Promise.all([
     request("/shopping", alphaCookie, { names: ["Milk", "Eggs"] }),
     request("/shopping", secondAlphaCookie, { names: ["Bread"] }),
