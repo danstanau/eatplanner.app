@@ -1,8 +1,9 @@
 # eatplanner.app
 
-A personal weekly meal planner with a JSON recipe collection, food photography,
-editable dinner plans, combined shopping lists and Copilot-powered recipe-photo
-transcription.
+Eat Planner is an AI-assisted meal planner for planning meals by the week or
+month and copying ingredient lists for your favourite grocery store. It includes
+a JSON recipe collection, food photography, editable dinner plans, combined
+shopping lists and Copilot-powered recipe-photo transcription.
 
 ## Run locally
 
@@ -361,6 +362,14 @@ npm test       # Rule, HTTP, storage and UI tests; no paid AI calls
 npm run build  # Build client into public/build/ and server into dist/
 npm start      # Run compiled server; keep public/ and data/ alongside dist/
 ```
+
+## License
+
+The project's original code and materials are licensed under the MIT License;
+see [LICENSE](LICENSE). Third-party assets retain their own terms. In particular,
+the bundled Bricolage Grotesque font is under the SIL Open Font License 1.1
+([public/fonts/OFL.txt](public/fonts/OFL.txt)), and the food photography has
+source-specific terms and attribution described in [Photography](#photography).
 
 ## Releases
 
