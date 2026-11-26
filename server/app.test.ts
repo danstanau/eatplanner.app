@@ -114,3 +114,41 @@ test("network-host API requests require explicit opt-in", async (t) => {
     assert.equal(status, allowNetworkAccess ? 200 : 403);
   }
 });
+
+test("recipe extraction accepts multiple validated photos", async (t) => {
+  let photoCount = 0;
+  const server = createApp({
+    extractRecipe: async (photos) => {
+      photoCount = photos.length;
+      return {
+        recipe: {
+          title: "Lamb penne", description: "Penne with lamb.", category: "comfort", protein: "lamb", diet: "omnivore",
+          servings: 2, prepMinutes: 10, cookMinutes: 20,
+          ingredients: [{ name: "lamb mince", quantity: 300, unit: "g", pantry: false }],
+          steps: ["Cook the pasta."], notes: "",
+        },
+        warnings: [],
+      };
+    },
+    findRecipeImage: async () => { throw new Error("Not used by this test"); },
+    getStatus: async () => ({ authenticated: true, model: "auto" }),
+    generatePlan: async () => plan,
+  }).listen(0, "127.0.0.1");
+  await once(server, "listening");
+  t.after(() => new Promise<void>((resolve, reject) => {
+    server.close((error) => error ? reject(error) : resolve());
+    server.closeIdleConnections();
+  }));
+  const address = server.address();
+  assert.ok(address && typeof address !== "string");
+  const photo = { mimeType: "image/jpeg", data: Buffer.from([0xff, 0xd8, 0xff, 0, 0, 0]).toString("base64") };
+  const extract = (photos: unknown[]) => fetch(`http://127.0.0.1:${address.port}/api/recipes/extract`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ photos }),
+  });
+  assert.equal((await extract([photo, photo])).status, 200);
+  assert.equal(photoCount, 2);
+  assert.equal((await extract(Array.from({ length: 5 }, () => photo))).status, 400);
+  assert.equal(photoCount, 2);
+});

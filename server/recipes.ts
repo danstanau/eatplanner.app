@@ -124,6 +124,11 @@ export const photoSchema = z.object({
       : bytes.toString("ascii", 0, 4) === "RIFF" && bytes.toString("ascii", 8, 12) === "WEBP";
   if (!valid) context.addIssue({ code: "custom", message: "The image does not match its format." });
 });
+export const recipePhotosSchema = z.array(photoSchema).min(1).max(4).superRefine((photos, context) => {
+  if (photos.reduce((total, photo) => total + photo.data.length, 0) > 3_800_000) {
+    context.addIssue({ code: "custom", message: "Choose smaller photos or use fewer images (up to 4)." });
+  }
+});
 
 export type Recipe = z.infer<typeof recipeSchema>;
 export type RecipeContent = z.infer<typeof recipeContentSchema>;
