@@ -71,11 +71,13 @@ test("React planner loads the weeks screen, navigates, and opens planning contro
   const responses = new Map<string, unknown>([
     ["/api/auth/session", { enabled: false, authenticated: true }],
     ["/api/recipes", [recipe]],
+    ["/api/favorites", []],
     ["/api/weeks", []],
     ["/api/shopping", { revision: 0, items: [] }],
   ]);
   const requests: string[] = [];
   const originalFetch = globalThis.fetch;
+  let recipeFeedback = { rating: null as number | null, makeAgain: false, average: null as number | null, ratingCount: 0, makeAgainCount: 0 };
   let conversionFailure: "json" | "text" | null = null;
   let conversions = 0;
   let extractedPhotoCount = 0;
@@ -106,6 +108,24 @@ test("React planner loads the weeks screen, navigates, and opens planning contro
     fetch: async (input: RequestInfo | URL, init?: RequestInit) => {
       const path = String(input);
       requests.push(path);
+      if (path.startsWith("/api/favorites/")) {
+        const current = responses.get("/api/favorites") as string[];
+        const { favorite } = JSON.parse(String(init?.body)) as { favorite: boolean };
+        const id = path.slice("/api/favorites/".length);
+        const updated = favorite ? [...new Set([...current, id])] : current.filter((item) => item !== id);
+        responses.set("/api/favorites", updated);
+        return Response.json(updated);
+      }
+      if (path === `/api/recipes/${recipe.id}/feedback`) {
+        if (init?.method === "PUT") {
+          const value = JSON.parse(String(init.body)) as { rating: number | null; makeAgain: boolean };
+          recipeFeedback = {
+            ...value, average: value.rating, ratingCount: value.rating === null ? 0 : 1,
+            makeAgainCount: value.makeAgain ? 1 : 0,
+          };
+        }
+        return Response.json(recipeFeedback);
+      }
       if (path === "/api/shopping" && init?.method === "POST") {
         const current = responses.get(path) as { revision: number; items: { id: string; name: string; checked: boolean }[] };
         const names = (JSON.parse(String(init.body)) as { names: string[] }).names;
@@ -178,6 +198,11 @@ test("React planner loads the weeks screen, navigates, and opens planning contro
   assert.equal(document.querySelector("#view h1")?.textContent, "Recipes");
   assert.ok(document.querySelector('[aria-label="Search recipes"]'));
   await act(async () => {
+    document.querySelector<HTMLButtonElement>(".favorite-toggle")?.click();
+    await delay(10);
+  });
+  assert.equal(document.querySelector<HTMLButtonElement>(".favorite-toggle")?.getAttribute("aria-pressed"), "true");
+  await act(async () => {
     document.querySelector<HTMLButtonElement>(".collection-card")?.click();
     await delay(10);
   });
@@ -186,6 +211,13 @@ test("React planner loads the weeks screen, navigates, and opens planning contro
   const labelledBy = dialog.getAttribute("aria-labelledby");
   assert.equal(document.getElementById(labelledBy!)?.textContent, "Lemon pasta");
   assert.match(dialog.textContent ?? "", /Tick ingredients as you gather them for cooking/);
+  await act(async () => {
+    dialog.querySelector<HTMLButtonElement>('[aria-label="5 out of 5 stars"]')?.click();
+    dialog.querySelector<HTMLInputElement>(".recipe-feedback input[type=checkbox]")?.click();
+    dialog.querySelector<HTMLButtonElement>(".recipe-feedback .button")?.click();
+    await delay(20);
+  });
+  assert.match(dialog.textContent ?? "", /Household rating: 5\.0 \/ 5/);
   const gatheredIngredient = dialog.querySelector<HTMLInputElement>('input[aria-label="Gathered pasta"]');
   assert.ok(gatheredIngredient);
   await act(async () => {
@@ -442,4 +474,62 @@ test("the household shopping list loads after a profile is chosen", async (t) =>
   });
   assert.equal(document.querySelector("#view h1")?.textContent, "Shopping list");
   assert.match(document.querySelector("#view")?.textContent ?? "", /Your shopping list is empty/);
+  assert.equal(browser.localStorage.getItem("eatplanner.app:profile:home"), profile.id);
+});
+
+test("the last household profile is restored after signing in again", async (t) => {
+  const browser = new Window({ url: "http://127.0.0.1:3000/?view=shopping" });
+  const document = browser.document;
+  document.body.innerHTML = '<div id="root"></div>';
+  const profile = { id: "8b0f3f4e-6c2a-4f1e-9d3b-1a2b3c4d5e6f", name: "Sam" };
+  browser.localStorage.setItem("eatplanner.app:profile:home", profile.id);
+  let selected = false;
+  const requests: string[] = [];
+  const globals: Record<string, unknown> = {
+    window: browser,
+    document,
+    navigator: browser.navigator,
+    localStorage: browser.localStorage,
+    HTMLElement: browser.HTMLElement,
+    Element: browser.Element,
+    Node: browser.Node,
+    MutationObserver: browser.MutationObserver,
+    ResizeObserver: class { observe() {} unobserve() {} disconnect() {} },
+    getComputedStyle: browser.getComputedStyle.bind(browser),
+    requestAnimationFrame: browser.requestAnimationFrame.bind(browser),
+    cancelAnimationFrame: browser.cancelAnimationFrame.bind(browser),
+    fetch: async (input: RequestInfo | URL) => {
+      const path = String(input);
+      requests.push(path);
+      if (path === "/api/auth/session") {
+        return Response.json({ enabled: true, authenticated: true, user: { id: "home", ...(selected ? { profile } : {}) } });
+      }
+      if (path === "/api/profiles") return Response.json([profile]);
+      if (path === "/api/profiles/select") { selected = true; return Response.json(profile); }
+      if (path === "/api/recipes") return Response.json([]);
+      if (path === "/api/shopping") return Response.json({ revision: 0, items: [] });
+      throw new Error(`Unexpected React UI request: ${path}`);
+    },
+  };
+  const descriptors = new Map(Object.keys(globals).map((key) => [key, Object.getOwnPropertyDescriptor(globalThis, key)]));
+  for (const [key, value] of Object.entries(globals)) Object.defineProperty(globalThis, key, { configurable: true, writable: true, value });
+  Object.defineProperty(globalThis, "IS_REACT_ACT_ENVIRONMENT", { configurable: true, writable: true, value: true });
+  const root = createRoot(document.querySelector("#root")!);
+  t.after(async () => {
+    await act(async () => root.unmount());
+    await browser.happyDOM.abort();
+    for (const [key, descriptor] of descriptors) {
+      if (descriptor) Object.defineProperty(globalThis, key, descriptor);
+      else Reflect.deleteProperty(globalThis, key);
+    }
+    Reflect.deleteProperty(globalThis, "IS_REACT_ACT_ENVIRONMENT");
+  });
+
+  await act(async () => {
+    root.render(React.createElement(MantineProvider, null, React.createElement(App)));
+    await delay(30);
+  });
+  assert.equal(document.querySelector("#view h1")?.textContent, "Shopping list");
+  assert.ok(requests.includes("/api/profiles/select"));
+  assert.equal(document.querySelector(".profile-picker"), null);
 });

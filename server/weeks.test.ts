@@ -51,6 +51,40 @@ test("weekly HTTP workflow persists recipes, swaps and locks, and safely imports
   const post = (path: string, body: unknown) => fetch(`${base}${path}`, {
     method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
   });
+  const favoriteId = starter[0].id;
+  assert.deepEqual(await (await fetch(`${base}/favorites`)).json(), []);
+  const savedFavorites = await fetch(`${base}/favorites/${favoriteId}`, {
+    method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ favorite: true }),
+  });
+  assert.deepEqual(await savedFavorites.json(), [favoriteId]);
+  const removedFavorite = await fetch(`${base}/favorites/${favoriteId}`, {
+    method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ favorite: false }),
+  });
+  assert.deepEqual(await removedFavorite.json(), []);
+  await fetch(`${base}/favorites/${favoriteId}`, {
+    method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ favorite: true }),
+  });
+  const feedbackPath = `/recipes/${favoriteId}/feedback`;
+  assert.deepEqual(await (await fetch(`${base}${feedbackPath}`)).json(), {
+    rating: null, makeAgain: false, average: null, ratingCount: 0, makeAgainCount: 0,
+  });
+  const feedback = async (rating: number | null, makeAgain: boolean) => fetch(`${base}${feedbackPath}`, {
+    method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ rating, makeAgain }),
+  });
+  assert.deepEqual(await (await feedback(5, true)).json(), {
+    rating: 5, makeAgain: true, average: 5, ratingCount: 1, makeAgainCount: 1,
+  });
+  assert.deepEqual(await (await feedback(3, false)).json(), {
+    rating: 3, makeAgain: false, average: 3, ratingCount: 1, makeAgainCount: 0,
+  });
+  assert.equal((await feedback(6, false)).status, 400);
+  assert.deepEqual(await (await feedback(null, false)).json(), {
+    rating: null, makeAgain: false, average: null, ratingCount: 0, makeAgainCount: 0,
+  });
+  await feedback(4, true);
+  assert.equal((await fetch(`${base}/favorites/not-a-recipe`, {
+    method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ favorite: true }),
+  })).status, 404);
   const invalidImageSearch = await post("/recipes/find-image", { title: "", description: "", protein: "", ingredients: [] });
   assert.equal(invalidImageSearch.status, 400);
   const imageSearchBody = { title: "Chicken curry", description: "A quick curry", protein: "chicken", ingredients: ["chicken thigh", "coconut milk"] };
@@ -112,13 +146,29 @@ test("weekly HTTP workflow persists recipes, swaps and locks, and safely imports
   const summariesWithCustom = await (await fetch(base + "/weeks")).json();
   assert.equal(summariesWithCustom[0].count, 4);
   assert.ok(summariesWithCustom[0].titles.includes("Eating out at Thai"));
+  assert.ok(summariesWithCustom[0].meals.some((meal: { title: string; recipeId?: string }) =>
+    meal.title === "Eating out at Thai" && meal.recipeId === undefined));
+  assert.ok(summariesWithCustom[0].meals.some((meal: { recipeId?: string }) => meal.recipeId));
   const recipeMeals = week.meals.filter((meal) => "recipe" in meal);
   week = await (await post(`${key}/confirm`, { revision: week.revision })).json();
   assert.equal(week.status, "confirmed");
   assert.ok(week.confirmedAt);
   assert.ok(week.shoppingList.length > 0);
   assert.deepEqual(week.shoppingList, shoppingList({ people: week.people, meals: recipeMeals }));
+  const cookedBeforeCopy = week.meals.find((meal) => "recipe" in meal)!;
+  week = await (await post(`${key}/cooked`, {
+    day: cookedBeforeCopy.day, recipeId: cookedBeforeCopy.recipe.id, cooked: true,
+  })).json();
   const snapshot = structuredClone(week);
+  const copied = await post("/weeks/2027-01-04/copy", { fromWeek: "2026-11-16" });
+  assert.equal(copied.status, 201);
+  const copiedWeek: Week = await copied.json();
+  assert.equal(copiedWeek.week, "2027-01-04");
+  assert.equal(copiedWeek.status, "draft");
+  assert.equal(copiedWeek.confirmedAt, null);
+  assert.deepEqual(copiedWeek.shoppingList, []);
+  assert.ok(copiedWeek.meals.every((meal) => !("recipe" in meal) || meal.cooked === undefined));
+  assert.equal((await post("/weeks/2027-01-04/copy", { fromWeek: "2026-11-16" })).status, 409);
   for (const [action, body] of [
     ["swap", { day: 2 }], ["move", { from: 2, to: 3 }],
     ["plan", { days: [1], people: 2, rules: week.rules }], ["confirm", {}],
@@ -170,6 +220,11 @@ test("weekly HTTP workflow persists recipes, swaps and locks, and safely imports
   assert.equal(summaries[0].count, 3);
 
   const saved = await store.read();
+  assert.deepEqual(saved.favoriteRecipeIds, [favoriteId]);
+  assert.equal(saved.recipeFeedback.length, 1);
+  assert.equal(saved.recipeFeedback[0].profileId, "household");
+  assert.equal(saved.recipeFeedback[0].rating, 4);
+  assert.equal(saved.recipeFeedback[0].makeAgain, true);
   const seedPath = join(temporary, "updated-starter.json");
   const updatedStarter = [
     { ...starter[0], title: "Updated starter recipe" },

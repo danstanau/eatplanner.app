@@ -141,7 +141,9 @@ then copy it into the new save directory before using the app.
 1. **Pick a week.** Weeks start on Monday. Open an existing week or choose any
    date to jump to its week. When starting a fresh week, you can plan up to 12
    consecutive weeks at once using the same cooking nights and house rules.
-   Existing weeks are never replaced by a multi-week plan.
+   Existing weeks are never replaced by a multi-week plan. You can also copy
+   an earlier plan into an empty week; the copy starts as an editable draft with
+   a fresh shopping list.
 2. **Choose cooking nights.** Toggle individual days, or quick-pick 3, 5 or 7
    dinners. Set household size, diet and total preparation/cooking time.
 3. **Set your house rules.** Require a different primary protein for every
@@ -155,7 +157,9 @@ then copy it into the new save directory before using the app.
    again to rebuild the list.
 6. **Shop and cook.** Copy the plain, one-ingredient-per-line list or tick items
    off. Open a recipe for ingredient checkboxes and large, step-by-step cooking
-   instructions. Step progress is remembered in that browser.
+   instructions. Step progress is remembered in that browser. Rate recipes and
+   mark the ones you'd make again; feedback is saved per profile and household
+   ratings are shown on the recipe.
 7. **Share.** Each planned week can produce a PNG card. Use native file sharing
    where supported, or download the PNG and send it yourself. Draft cards are
    labelled as drafts. This is a snapshot, not a live collaborative link.
@@ -164,15 +168,21 @@ then copy it into the new save directory before using the app.
 
 Planning selects from your saved recipes, without calling an AI model.
 Diet, cooking-time limits, no duplicate recipes, and optional no-repeat proteins
-are hard constraints. If there are too few matches, the app explains which rules
-to relax instead of silently ignoring them. For example, the starter collection
+are hard constraints. Recipes planned in the previous four weeks are avoided
+when other eligible recipes are available, but remain available as a fallback.
+Among equally recent choices, recipes marked “Make this again” are preferred.
+If there are too few matches, the app explains which rules to relax instead of
+silently ignoring them. For example, the starter collection
 has two vegan protein groups; a vegan plan with three dinners requires turning
 off the different-proteins rule.
 
 Ingredient overlap is a preference, not a guarantee or a globally optimal
 shopping-cost calculation. After selecting a first recipe, subsequent choices
-favour ingredients shared with earlier meals. Pantry staples don't influence this
-score. Equal scores are randomised.
+avoid recently planned recipes before favouring ingredients shared with earlier
+meals. Pantry staples don't influence the ingredient-overlap score. Equal scores
+are randomised. Mark recipes as favourites from the recipe collection and filter
+the collection by favourites or by recipes not planned recently. The collection
+also shows recent meal history.
 
 Planning records **Adults** and **Children** separately, for 1 to 12 people
 combined. Both count as one serving when scaling recipes and shopping

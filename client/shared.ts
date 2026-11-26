@@ -63,7 +63,22 @@ export type Week = {
   revision: number;
   shoppingList: ShoppingItem[];
 };
-export type Summary = { week: string; status: Week["status"]; count: number; days: number[]; titles: string[]; images?: string[] };
+export type Summary = {
+  week: string;
+  status: Week["status"];
+  count: number;
+  days: number[];
+  titles: string[];
+  images?: string[];
+  meals?: { day: number; title: string; recipeId?: string }[];
+};
+export type RecipeFeedback = {
+  rating: number | null;
+  makeAgain: boolean;
+  average: number | null;
+  ratingCount: number;
+  makeAgainCount: number;
+};
 export type User = { id: string; name: string; isAdmin: boolean };
 export type AppRoute = {
   view: "weeks" | "week" | "recipes" | "shopping" | "admin";

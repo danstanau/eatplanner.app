@@ -8,6 +8,14 @@ import { weekKeySchema, weekSchema, type Week } from "./planner.js";
 const stateSchema = z.object({
   recipes: z.array(recipeSchema),
   weeks: z.record(weekKeySchema, weekSchema),
+  favoriteRecipeIds: z.array(z.string().min(1).max(120)).max(1000).default([]),
+  recipeFeedback: z.array(z.object({
+    recipeId: z.string().min(1).max(120),
+    profileId: z.string().min(1).max(200),
+    rating: z.number().int().min(1).max(5).nullable(),
+    makeAgain: z.boolean(),
+    updatedAt: z.iso.datetime(),
+  })).max(10000).default([]),
   profiles: z.array(z.object({ id: z.uuid(), name: z.string().trim().min(1).max(200) })).max(100).default([]),
   shopping: z.object({
     revision: z.number().int().min(0),
@@ -23,6 +31,8 @@ const starterRecipesSchema = z.array(recipeSchema.extend({ source: z.literal("co
 type State = {
   recipes: Recipe[];
   weeks: Record<string, Week>;
+  favoriteRecipeIds: z.infer<typeof stateSchema>["favoriteRecipeIds"];
+  recipeFeedback: z.infer<typeof stateSchema>["recipeFeedback"];
   profiles: z.infer<typeof stateSchema>["profiles"];
   shopping: z.infer<typeof stateSchema>["shopping"];
 };
@@ -48,7 +58,7 @@ export class Store {
       this.state = stateSchema.parse(JSON.parse(await readFile(this.path, "utf8")));
     } catch (error) {
       if (!(error instanceof Error && "code" in error && error.code === "ENOENT")) throw error;
-      this.state = { recipes: [], weeks: {}, profiles: [], shopping: { revision: 0, items: [] } };
+      this.state = { recipes: [], weeks: {}, favoriteRecipeIds: [], recipeFeedback: [], profiles: [], shopping: { revision: 0, items: [] } };
     }
     // Older saves included a copy of the bundled library.
     this.state.recipes = this.state.recipes.filter((recipe) => recipe.source === "personal");

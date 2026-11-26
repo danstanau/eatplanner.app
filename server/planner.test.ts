@@ -17,6 +17,15 @@ test("a full week has one meal per chosen day and genuinely different proteins",
   }
 });
 
+test("recently planned recipes are avoided when alternatives exist but remain available as a fallback", () => {
+  const [recent, fresh] = recipes;
+  const input = { days: [0], people: 2, rules: { ...rules, differentProteins: false } };
+  assert.equal(planWeek("2026-11-16", input, [recent, fresh], new Set([recent.id])).meals[0].recipe.id, fresh.id);
+  assert.ok([recent.id, fresh.id].includes(planWeek("2026-11-16", input, [recent, fresh], new Set([recent.id, fresh.id])).meals[0].recipe.id));
+  assert.equal(planWeek("2026-11-16", input, [recent, fresh], new Set(), new Set([fresh.id])).meals[0].recipe.id, fresh.id);
+  assert.equal(planWeek("2026-11-16", input, [recent, fresh], new Set([fresh.id]), new Set([fresh.id])).meals[0].recipe.id, recent.id);
+});
+
 test("diet and time limits are hard constraints with actionable infeasibility errors", () => {
   const veganProteins = new Set(recipes.filter((recipe) => recipe.diet === "vegan").map((recipe) => recipe.protein));
   assert.throws(() => planWeek("2026-11-16", {

@@ -27,6 +27,17 @@ function requireWeek(weeks: Record<string, Week>, key: string): Week {
   if (!week) throw new AppError(404, "This week has not been planned yet.");
   return week;
 }
+function recentRecipeIds(weeks: Record<string, Week>, beforeWeek: string): Set<string> {
+  const cutoff = new Date(`${beforeWeek}T00:00:00Z`);
+  cutoff.setUTCDate(cutoff.getUTCDate() - 28);
+  const cutoffKey = cutoff.toISOString().slice(0, 10);
+  return new Set(Object.values(weeks)
+    .filter((week) => week.week >= cutoffKey && week.week < beforeWeek)
+    .flatMap((week) => week.meals.flatMap((meal) => "recipe" in meal ? [meal.recipe.id] : [])));
+}
+function makeAgainRecipeIds(feedback: { recipeId: string; makeAgain: boolean }[]): Set<string> {
+  return new Set(feedback.filter((item) => item.makeAgain).map((item) => item.recipeId));
+}
 
 export function createApp(services: Services, store = new Store(), options: { allowNetworkAccess?: boolean; auth?: AuthConfig; households?: Households } = {}) {
   const app = express();
@@ -47,6 +58,20 @@ export function createApp(services: Services, store = new Store(), options: { al
       sharedRecipes(response, scope),
     ]);
     return { starter, shared };
+  }
+  async function requireAvailableRecipe(response: Response, id: string) {
+    const [local, sources] = await Promise.all([
+      storeFor(response).readRecipes(),
+      recipeSources(response, "all"),
+    ]);
+    if (!recipePool(local, sources, "all").some((recipe) => recipe.id === id)) {
+      throw new AppError(404, "This recipe is no longer available.");
+    }
+  }
+  function feedbackProfileId(response: Response) {
+    const identity = response.locals.identity;
+    if (options.auth && !identity?.profile) throw new AppError(409, "Choose who you are before sharing recipe feedback.");
+    return identity?.profile?.id ?? "household";
   }
   function storeFor(response: Response): Store {
     if (!options.auth) return store;
@@ -226,6 +251,72 @@ export function createApp(services: Services, store = new Store(), options: { al
     const [local, sources] = await Promise.all([storeFor(response).readRecipes(), recipeSources(response, scope)]);
     response.json(recipePool(local, sources, scope));
   });
+  app.get("/api/favorites", async (_request, response) => {
+    response.json((await storeFor(response).read()).favoriteRecipeIds);
+  });
+  app.put("/api/favorites/:id", async (request, response) => {
+    const id = z.string().min(1).max(120).parse(request.params.id);
+    const { favorite } = z.object({ favorite: z.boolean() }).strict().parse(request.body);
+    if (favorite) await requireAvailableRecipe(response, id);
+    const favoriteRecipeIds = await storeFor(response).update((state) => {
+      const exists = state.favoriteRecipeIds.includes(id);
+      if (favorite && !exists) {
+        if (state.favoriteRecipeIds.length >= 1000) throw new AppError(400, "You can save up to 1000 favourite recipes.");
+        state.favoriteRecipeIds.push(id);
+      }
+      if (!favorite && exists) state.favoriteRecipeIds = state.favoriteRecipeIds.filter((item) => item !== id);
+      return state.favoriteRecipeIds;
+    });
+    response.json(favoriteRecipeIds);
+  });
+  app.get("/api/recipes/:id/feedback", async (request, response) => {
+    const id = z.string().min(1).max(120).parse(request.params.id);
+    await requireAvailableRecipe(response, id);
+    const state = await storeFor(response).read();
+    const matching = state.recipeFeedback.filter((item) => item.recipeId === id);
+    const ratings = matching.flatMap((item) => item.rating === null ? [] : [item.rating]);
+    const own = matching.find((item) => item.profileId === feedbackProfileId(response));
+    response.json({
+      rating: own?.rating ?? null,
+      makeAgain: own?.makeAgain ?? false,
+      average: ratings.length ? Math.round(ratings.reduce((sum, rating) => sum + rating, 0) / ratings.length * 10) / 10 : null,
+      ratingCount: ratings.length,
+      makeAgainCount: matching.filter((item) => item.makeAgain).length,
+    });
+  });
+  app.put("/api/recipes/:id/feedback", async (request, response) => {
+    const id = z.string().min(1).max(120).parse(request.params.id);
+    const input = z.object({
+      rating: z.number().int().min(1).max(5).nullable(),
+      makeAgain: z.boolean(),
+    }).strict().parse(request.body);
+    await requireAvailableRecipe(response, id);
+    const profileId = feedbackProfileId(response);
+    const feedback = await storeFor(response).update((state) => {
+      const index = state.recipeFeedback.findIndex((item) => item.recipeId === id && item.profileId === profileId);
+      if (input.rating === null && !input.makeAgain) {
+        if (index >= 0) state.recipeFeedback.splice(index, 1);
+      } else {
+        const updated = { recipeId: id, profileId, ...input, updatedAt: new Date().toISOString() };
+        if (index >= 0) state.recipeFeedback[index] = updated;
+        else {
+          if (state.recipeFeedback.length >= 10000) throw new AppError(400, "The household has reached its recipe feedback limit.");
+          state.recipeFeedback.push(updated);
+        }
+      }
+      const matching = state.recipeFeedback.filter((item) => item.recipeId === id);
+      const ratings = matching.flatMap((item) => item.rating === null ? [] : [item.rating]);
+      const own = matching.find((item) => item.profileId === profileId);
+      return {
+        rating: own?.rating ?? null,
+        makeAgain: own?.makeAgain ?? false,
+        average: ratings.length ? Math.round(ratings.reduce((sum, rating) => sum + rating, 0) / ratings.length * 10) / 10 : null,
+        ratingCount: ratings.length,
+        makeAgainCount: matching.filter((item) => item.makeAgain).length,
+      };
+    });
+    response.json(feedback);
+  });
   app.post("/api/recipes", async (request, response) => {
     const content = newRecipeSchema.parse(request.body);
     const recipe = { ...content, id: randomUUID(), source: "personal" as const, householdId: householdId(response) };
@@ -287,11 +378,30 @@ export function createApp(services: Services, store = new Store(), options: { al
       days: week.meals.map((meal) => meal.day),
       titles: week.meals.map((meal) => "recipe" in meal ? meal.recipe.title : meal.title),
       images: week.meals.map((meal) => "recipe" in meal ? meal.recipe.image : ""),
+      meals: week.meals.map((meal) => "recipe" in meal
+        ? { day: meal.day, title: meal.recipe.title, recipeId: meal.recipe.id }
+        : { day: meal.day, title: meal.title }),
     })));
   });
   app.get("/api/weeks/:week", async (request, response) => {
     const key = weekKeySchema.parse(request.params.week);
     response.json((await storeFor(response).read()).weeks[key] ?? null);
+  });
+  app.post("/api/weeks/:week/copy", async (request, response) => {
+    const key = weekKeySchema.parse(request.params.week);
+    const { fromWeek } = z.object({ fromWeek: weekKeySchema }).strict().parse(request.body);
+    response.status(201).json(await storeFor(response).update((state) => {
+      if (state.weeks[key]) throw new AppError(409, `The week starting ${key} already has a plan.`);
+      const source = structuredClone(requireWeek(state.weeks, fromWeek));
+      source.week = key;
+      source.status = "draft";
+      source.confirmedAt = null;
+      source.revision = 1;
+      source.shoppingList = [];
+      for (const meal of source.meals) if ("recipe" in meal) delete meal.cooked;
+      state.weeks[key] = source;
+      return source;
+    }));
   });
   app.post("/api/weeks/plan", async (request, response) => {
     const input = batchPlanningSchema.parse(request.body);
@@ -307,8 +417,11 @@ export function createApp(services: Services, store = new Store(), options: { al
       const existing = keys.find((key) => state.weeks[key]);
       if (existing) throw new AppError(409, `The week starting ${existing} already has a plan. Choose another start week or plan fewer weeks.`);
       const pool = recipePool(state.recipes, sources, scope);
-      const weeks = keys.map((key) => planWeek(key, input, pool));
-      weeks.forEach((week) => { state.weeks[week.week] = week; });
+      const weeks = keys.map((key) => {
+        const week = planWeek(key, input, pool, recentRecipeIds(state.weeks, key), makeAgainRecipeIds(state.recipeFeedback));
+        state.weeks[key] = week;
+        return week;
+      });
       return weeks;
     }));
   });
@@ -321,7 +434,8 @@ export function createApp(services: Services, store = new Store(), options: { al
       const current = state.weeks[key];
       if (current) assertEditable(current, input.revision ?? 0);
       else if (input.revision) throw new AppError(409, "This week no longer exists. Reload before planning.");
-      const next = planWeek(key, input, recipePool(state.recipes, sources, scope));
+      const next = planWeek(key, input, recipePool(state.recipes, sources, scope),
+        recentRecipeIds(state.weeks, key), makeAgainRecipeIds(state.recipeFeedback));
       if (current) {
         next.meals.push(...current.meals.filter((meal) => "type" in meal && !input.days.includes(meal.day)));
         next.meals.sort((a, b) => a.day - b.day);
@@ -337,7 +451,8 @@ export function createApp(services: Services, store = new Store(), options: { al
     const state = await storeFor(response).read();
     const week = requireWeek(state.weeks, key);
     const scope = week.rules.recipeScope ?? DEFAULT_RECIPE_SCOPE;
-    response.json(alternatives(week, day, recipePool(state.recipes, await recipeSources(response, scope), scope)));
+    response.json(alternatives(week, day, recipePool(state.recipes, await recipeSources(response, scope), scope),
+      recentRecipeIds(state.weeks, key), makeAgainRecipeIds(state.recipeFeedback)));
   });
   app.post("/api/weeks/:week/swap", async (request, response) => {
     const key = weekKeySchema.parse(request.params.week);
@@ -350,7 +465,8 @@ export function createApp(services: Services, store = new Store(), options: { al
     response.json(await own.update((state) => {
       const week = requireWeek(state.weeks, key);
       assertEditable(week, input.revision);
-      swapMeal(week, input.day, recipePool(state.recipes, sources, scope), input.recipeId);
+      swapMeal(week, input.day, recipePool(state.recipes, sources, scope), input.recipeId,
+        recentRecipeIds(state.weeks, key), makeAgainRecipeIds(state.recipeFeedback));
       week.revision++;
       return week;
     }));

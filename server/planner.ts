@@ -64,16 +64,26 @@ export function eligible(recipe: Recipe, rules: Rules): boolean {
   return true;
 }
 
-function orderCandidates(candidates: Recipe[], selected: Recipe[], overlap: boolean): Recipe[] {
+function orderCandidates(
+  candidates: Recipe[], selected: Recipe[], overlap: boolean,
+  recentRecipeIds: ReadonlySet<string>, makeAgainRecipeIds: ReadonlySet<string>,
+): Recipe[] {
   const names = new Set(selected.flatMap((recipe) => recipe.ingredients.filter((i) => !i.pantry).map((i) => i.name)));
   return candidates.map((recipe) => ({
     recipe,
+    recent: recentRecipeIds.has(recipe.id),
+    makeAgain: makeAgainRecipeIds.has(recipe.id),
     score: overlap ? recipe.ingredients.filter((i) => !i.pantry && names.has(i.name)).length : 0,
     tie: randomInt(1_000_000),
-  })).sort((a, b) => b.score - a.score || a.tie - b.tie).map(({ recipe }) => recipe);
+  })).sort((a, b) =>
+    Number(a.recent) - Number(b.recent) || Number(b.makeAgain) - Number(a.makeAgain) || b.score - a.score || a.tie - b.tie,
+  ).map(({ recipe }) => recipe);
 }
 
-export function planWeek(week: string, input: Planning, recipes: Recipe[]): Week {
+export function planWeek(
+  week: string, input: Planning, recipes: Recipe[],
+  recentRecipeIds: ReadonlySet<string> = new Set(), makeAgainRecipeIds: ReadonlySet<string> = new Set(),
+): Week {
   const children = input.children ?? 0;
   const adults = input.adults ?? input.people - children;
   if (adults < 0 || adults + children !== input.people) {
@@ -88,7 +98,7 @@ export function planWeek(week: string, input: Planning, recipes: Recipe[]): Week
   const meals = [...input.days].sort((a, b) => a - b).map((day) => {
     const options = candidates.filter((recipe) => !selected.some((other) =>
       recipe.id === other.id || (input.rules.differentProteins && recipe.protein === other.protein)));
-    const recipe = orderCandidates(options, selected, input.rules.overlapIngredients)[0];
+    const recipe = orderCandidates(options, selected, input.rules.overlapIngredients, recentRecipeIds, makeAgainRecipeIds)[0];
     if (!recipe) throw new AppError(422, "No recipe matches these planning rules.");
     selected.push(recipe);
     return { day, recipe };
@@ -99,7 +109,10 @@ export function planWeek(week: string, input: Planning, recipes: Recipe[]): Week
   };
 }
 
-export function alternatives(week: Week, day: number, recipes: Recipe[]): Recipe[] {
+export function alternatives(
+  week: Week, day: number, recipes: Recipe[],
+  recentRecipeIds: ReadonlySet<string> = new Set(), makeAgainRecipeIds: ReadonlySet<string> = new Set(),
+): Recipe[] {
   const current = week.meals.find((meal) => meal.day === day);
   if (!current) throw new AppError(404, "There is no meal on that day.");
   if (!("recipe" in current)) throw new AppError(422, "Custom plans don't have recipe alternatives.");
@@ -107,7 +120,7 @@ export function alternatives(week: Week, day: number, recipes: Recipe[]): Recipe
   const candidates = recipes.filter((recipe) => recipe.id !== current.recipe.id &&
     eligible(recipe, week.rules) &&
     !others.some((other) => recipe.id === other.id || (week.rules.differentProteins && recipe.protein === other.protein)));
-  return orderCandidates(candidates, others, week.rules.overlapIngredients);
+  return orderCandidates(candidates, others, week.rules.overlapIngredients, recentRecipeIds, makeAgainRecipeIds);
 }
 
 export function assertEditable(week: Week, revision: number) {
@@ -115,8 +128,11 @@ export function assertEditable(week: Week, revision: number) {
   if (week.status === "confirmed") throw new AppError(409, "This week is locked. Unlock it before making changes.");
 }
 
-export function swapMeal(week: Week, day: number, recipes: Recipe[], recipeId?: string) {
-  const options = alternatives(week, day, recipes);
+export function swapMeal(
+  week: Week, day: number, recipes: Recipe[], recipeId?: string,
+  recentRecipeIds: ReadonlySet<string> = new Set(), makeAgainRecipeIds: ReadonlySet<string> = new Set(),
+) {
+  const options = alternatives(week, day, recipes, recentRecipeIds, makeAgainRecipeIds);
   const replacement = recipeId ? options.find((recipe) => recipe.id === recipeId) : options[0];
   if (!replacement) throw new AppError(422, "No alternative fits your rules. Change your planning rules or add another recipe.");
   const meal = week.meals.find((item) => item.day === day);

@@ -6,7 +6,7 @@ import {
 import {
   addDays, api, CATEGORIES, dateLabel, DAYS, ingredientLine, mondayFor, parseIngredientLines,
   PROTEINS, readRoute, RECIPE_SCOPES, shoppingText, today, weekLabel, writeRoute,
-  type AppRoute, type HouseholdProfile, type HouseholdShopping, type ImageCredit, type Ingredient, type Meal, type Recipe, type RecipeScope, type Summary, type User, type Week,
+  type AppRoute, type HouseholdProfile, type HouseholdShopping, type ImageCredit, type Ingredient, type Meal, type Recipe, type RecipeFeedback, type RecipeScope, type Summary, type User, type Week,
 } from "./shared";
 
 type Route = AppRoute;
@@ -30,6 +30,28 @@ type PlanningRules = {
   diet: string;
   recipeScope: RecipeScope;
 };
+
+function rememberedProfileKey(userId: string) {
+  return `eatplanner.app:profile:${userId}`;
+}
+
+function rememberProfile(userId: string, profileId: string | null) {
+  try {
+    if (profileId) localStorage.setItem(rememberedProfileKey(userId), profileId);
+    else localStorage.removeItem(rememberedProfileKey(userId));
+  } catch (error) {
+    console.error("Profile preference could not be saved:", error);
+  }
+}
+
+function readRememberedProfile(userId: string) {
+  try {
+    return localStorage.getItem(rememberedProfileKey(userId));
+  } catch (error) {
+    console.error("Profile preference could not be loaded:", error);
+    return null;
+  }
+}
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
@@ -155,7 +177,23 @@ export function App() {
   }, [modal?.kind]);
 
   const loadSession = useCallback(async () => {
-    const current = await api<Session>("/auth/session");
+    let current = await api<Session>("/auth/session");
+    const user = current.user;
+    if (current.enabled && current.authenticated && user) {
+      if (!user.profile) {
+        const rememberedProfileId = readRememberedProfile(user.id);
+        if (rememberedProfileId) {
+          const profiles = await api<HouseholdProfile[]>("/profiles");
+          if (profiles.some((profile) => profile.id === rememberedProfileId)) {
+            await api("/profiles/select", { id: rememberedProfileId });
+            current = await api<Session>("/auth/session");
+          } else {
+            rememberProfile(user.id, null);
+          }
+        }
+      }
+      if (current.user?.profile) rememberProfile(user.id, current.user.profile.id);
+    }
     setSession(current);
     if ((current.authenticated && current.user?.profile) || (!current.enabled)) setRecipes(await api<Recipe[]>("/recipes"));
     else setRecipes([]);
@@ -209,7 +247,10 @@ export function App() {
         if (currentRoute.view === "week" && currentRoute.week) await loadWeek(currentRoute.week);
         else if (currentRoute.view === "weeks") setSummaries(await api<Summary[]>("/weeks"));
         else if (currentRoute.view === "admin") setWeek(null);
-        else if (currentRoute.view === "recipes") setWeek(null);
+        else if (currentRoute.view === "recipes") {
+          setWeek(null);
+          setSummaries(await api<Summary[]>("/weeks"));
+        }
         if (active) {
           setRoute(currentRoute);
         }
@@ -252,7 +293,7 @@ export function App() {
     />;
     if (route.view === "shopping") return <HouseholdShoppingPage shopping={shopping} changeShopping={changeShopping} run={run} />;
     if (route.view === "recipes") return <RecipesPage
-      recipes={recipes} route={route} user={session.user} onRoute={navigate}
+      recipes={recipes} summaries={summaries} route={route} user={session.user} onRoute={navigate}
     />;
     if (route.view === "admin") return <AdminPage key={adminRefresh} user={session.user} onModal={setModal} />;
     return <WeeksPage summaries={summaries} recipeCount={recipes.length} onWeek={(key) => navigate({ view: "week", week: key })}
@@ -294,6 +335,7 @@ export function App() {
         {session?.enabled && session.user?.profile && <Button id="switch-profile" className="text-button" variant="subtle"
           onClick={() => void run(async () => {
             await api("/profiles/clear", {});
+            if (session.user) rememberProfile(session.user.id, null);
             await loadSession();
           })}>
           {session.user.profile.name}
@@ -779,7 +821,7 @@ function RecipeDetail({ recipe, servings, week, day, currentWeek, user, onWeek, 
   week?: string;
   day?: number;
   currentWeek: Week | null;
-  user?: User;
+  user?: User & { profile?: HouseholdProfile };
   onWeek: (week: Week) => void;
   onClose: () => void;
   notify: (message: string, error?: boolean) => void;
@@ -814,8 +856,43 @@ function RecipeDetail({ recipe, servings, week, day, currentWeek, user, onWeek, 
   }
   const [showAll, setShowAll] = useState(true);
   const [busy, setBusy] = useState(false);
+  const [feedback, setFeedback] = useState<RecipeFeedback | null>(null);
+  const [rating, setRating] = useState<number | null>(null);
+  const [makeAgain, setMakeAgain] = useState(false);
+  const [feedbackLoading, setFeedbackLoading] = useState(true);
+  const [feedbackSaving, setFeedbackSaving] = useState(false);
+  const [feedbackError, setFeedbackError] = useState("");
+  const [feedbackReload, setFeedbackReload] = useState(0);
   const credit = recipe.imageCredit;
   const servingsMultiplier = servings / recipe.servings;
+
+  useEffect(() => {
+    let active = true;
+    setFeedbackLoading(true);
+    setFeedbackError("");
+    void api<RecipeFeedback>(`/recipes/${encodeURIComponent(recipe.id)}/feedback`).then((value) => {
+      if (!active) return;
+      setFeedback(value);
+      setRating(value.rating);
+      setMakeAgain(value.makeAgain);
+    }).catch((error: unknown) => {
+      if (active) setFeedbackError(error instanceof Error ? error.message : "Couldn't load recipe feedback.");
+    }).finally(() => { if (active) setFeedbackLoading(false); });
+    return () => { active = false; };
+  }, [recipe.id, user?.profile?.id, feedbackReload]);
+
+  async function saveFeedback() {
+    setFeedbackSaving(true);
+    setFeedbackError("");
+    try {
+      const saved = await api<RecipeFeedback>(`/recipes/${encodeURIComponent(recipe.id)}/feedback`, { rating, makeAgain }, "PUT");
+      setFeedback(saved);
+      setRating(saved.rating);
+      setMakeAgain(saved.makeAgain);
+    } catch (error) {
+      setFeedbackError(error instanceof Error ? error.message : "Couldn't save recipe feedback.");
+    } finally { setFeedbackSaving(false); }
+  }
 
   async function cooked() {
     if (!week || day === undefined || !meal) return;
@@ -841,6 +918,33 @@ function RecipeDetail({ recipe, servings, week, day, currentWeek, user, onWeek, 
       <h2>{recipe.title}</h2><p className="muted">{recipe.description}</p>
       <div className="recipe-stats"><span>Serves <strong>{servings}</strong></span><span>Prep <strong>{recipe.prepMinutes} min</strong></span>
         <span>Cook <strong>{recipe.cookMinutes} min</strong></span><span>{recipe.diet[0].toUpperCase() + recipe.diet.slice(1)}</span></div>
+      <section className="recipe-feedback" aria-labelledby="recipe-feedback-title">
+        <h3 id="recipe-feedback-title">Would you make it again?</h3>
+        {feedback && <p className="muted recipe-feedback-summary">
+          {feedback.ratingCount
+            ? `Household rating: ${feedback.average?.toFixed(1)} / 5 from ${feedback.ratingCount} ${feedback.ratingCount === 1 ? "rating" : "ratings"}. `
+            : "No ratings yet. "}
+          {feedback.makeAgainCount} {feedback.makeAgainCount === 1 ? "person" : "people"} would make it again.
+        </p>}
+        <div className="recipe-rating" role="group" aria-label="Rate this recipe from 1 to 5">
+          {Array.from({ length: 5 }, (_, index) => {
+            const value = index + 1;
+            return <Button key={value} className="rating-star" variant="subtle" type="button" aria-label={`${value} out of 5 stars`}
+              aria-pressed={rating === value} disabled={feedbackLoading || feedbackSaving}
+              onClick={() => setRating(value)}>{rating !== null && value <= rating ? "★" : "☆"}</Button>;
+          })}
+          {rating !== null && <Button className="text-button" variant="subtle" type="button" disabled={feedbackLoading || feedbackSaving}
+            onClick={() => setRating(null)}>Clear rating</Button>}
+        </div>
+        <label className="check-field compact"><Checkbox checked={makeAgain} disabled={feedbackLoading || feedbackSaving}
+          onChange={(event) => setMakeAgain(event.currentTarget.checked)} /><span>Make this again</span></label>
+        {feedbackError && <p className="notice" role="alert">{feedbackError}
+          {!feedback && <Button className="text-button" variant="subtle" onClick={() => setFeedbackReload((value) => value + 1)}>Try again</Button>}</p>}
+        <Button className="button secondary small" disabled={feedbackLoading || feedbackSaving || !feedback ||
+          (rating === feedback.rating && makeAgain === feedback.makeAgain)} onClick={() => void saveFeedback()}>
+          {feedbackSaving ? "Saving feedback..." : "Save feedback"}
+        </Button>
+      </section>
       {meal && <div className="action-row"><Button className="button" disabled={busy} onClick={() => void cooked()}>{meal.cooked ? "Undo cooked" : "Cooked!"}</Button>
         <span className="muted" role="status">{meal.cooked ? "Cooked." : "Not cooked yet."}</span></div>}
       <div className="recipe-layout">
@@ -1114,8 +1218,9 @@ function CustomPlanEditor({ week, day, onSaved }: { week: Week; day: number; onS
   </>;
 }
 
-function RecipesPage({ recipes, route, user, onRoute }: {
+function RecipesPage({ recipes, summaries, route, user, onRoute }: {
   recipes: Recipe[];
+  summaries: Summary[];
   route: Route;
   user?: User;
   onRoute: (route: AppRoute, replace?: boolean) => void;
@@ -1130,9 +1235,21 @@ function RecipesPage({ recipes, route, user, onRoute }: {
     catch (error) { console.error("Recipe layout preference could not be loaded:", error); return false; }
   });
   const [displayRecipes, setDisplayRecipes] = useState(recipes);
+  const [favoriteIds, setFavoriteIds] = useState<string[]>([]);
+  const [recipeFilter, setRecipeFilter] = useState<"all" | "favorites" | "not-recent">("all");
   const [loading, setLoading] = useState(false);
   const [loadError, setLoadError] = useState("");
+  const [favoriteError, setFavoriteError] = useState("");
   const [reload, setReload] = useState(0);
+  useEffect(() => {
+    let active = true;
+    void api<string[]>("/favorites").then((ids) => {
+      if (active) setFavoriteIds(ids);
+    }).catch((error: unknown) => {
+      if (active) setFavoriteError(error instanceof Error ? error.message : "Couldn't load favourites.");
+    });
+    return () => { active = false; };
+  }, []);
   useEffect(() => {
     let active = true;
     if (scope === "starter-and-household") { setDisplayRecipes(recipes); return; }
@@ -1146,10 +1263,32 @@ function RecipesPage({ recipes, route, user, onRoute }: {
     }).finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
   }, [scope, recipes, reload]);
+  const currentWeek = mondayFor(today());
+  const recentSummaries = summaries.filter((summary) =>
+    summary.week >= addDays(currentWeek, -28) && summary.week <= currentWeek)
+    .sort((a, b) => b.week.localeCompare(a.week));
+  const recentIds = new Set(recentSummaries.flatMap((summary) =>
+    summary.meals?.flatMap((meal) => meal.recipeId ? [meal.recipeId] : []) ?? []));
+  const lastPlanned = new Map<string, string>();
+  for (const summary of [...summaries].sort((a, b) => b.week.localeCompare(a.week))) {
+    for (const meal of summary.meals ?? []) {
+      if (meal.recipeId && !lastPlanned.has(meal.recipeId)) lastPlanned.set(meal.recipeId, summary.week);
+    }
+  }
   const filtered = displayRecipes.filter((recipe) =>
     (category === "all" || category === recipe.category) &&
     (protein === "all" || protein === recipe.protein) &&
+    (recipeFilter === "all" || (recipeFilter === "favorites" ? favoriteIds.includes(recipe.id) : !recentIds.has(recipe.id))) &&
     `${recipe.title} ${recipe.description} ${recipe.ingredients.map((item) => item.name).join(" ")}`.toLowerCase().includes(query.toLowerCase().trim()));
+  async function toggleFavorite(recipe: Recipe) {
+    const favorite = !favoriteIds.includes(recipe.id);
+    setFavoriteError("");
+    try {
+      setFavoriteIds(await api<string[]>(`/favorites/${encodeURIComponent(recipe.id)}`, { favorite }, "PUT"));
+    } catch (error) {
+      setFavoriteError(error instanceof Error ? error.message : "Couldn't update favourites.");
+    }
+  }
   function updateRoute(next: Partial<{ q: string; category: string; protein: string; scope: RecipeScope }>) {
     onRoute({ view: "recipes",
       q: (next.q ?? query).trim() || undefined,
@@ -1177,6 +1316,9 @@ function RecipesPage({ recipes, route, user, onRoute }: {
       <select aria-label="Filter recipes by protein" value={protein} onChange={(event) => {
         setProtein(event.currentTarget.value); updateRoute({ protein: event.currentTarget.value });
       }}><option value="all">Every protein</option>{Object.entries(PROTEINS).map(([key, label]) => <option value={key} key={key}>{label}</option>)}</select>
+      <select aria-label="Filter recipes" value={recipeFilter} onChange={(event) => setRecipeFilter(event.currentTarget.value as typeof recipeFilter)}>
+        <option value="all">All recipes</option><option value="favorites">Favourites</option><option value="not-recent">Not planned recently</option>
+      </select>
     </div>
     <div className="collection-layout-toggle" role="group" aria-label="Recipe card layout">
       <Button className="collection-layout-option" variant="subtle" aria-pressed={!compact} onClick={() => setLayout(false)}>Comfortable</Button>
@@ -1184,18 +1326,35 @@ function RecipesPage({ recipes, route, user, onRoute }: {
     </div>
     <p className="muted" role="status">{loading ? "Finding recipes..." : `${filtered.length} ${filtered.length === 1 ? "recipe" : "recipes"}`}</p>
     {loadError && <p className="notice" role="alert">{loadError} <Button className="text-button" variant="subtle" onClick={() => setReload((value) => value + 1)}>Try again</Button></p>}
+    {favoriteError && <p className="notice" role="alert">{favoriteError}</p>}
+    {recentSummaries.length > 0 && <section className="recipe-history" aria-labelledby="recipe-history-title">
+      <h2 id="recipe-history-title">Meal history</h2>
+      <p className="muted">Dinners planned in the last four weeks.</p>
+      <div className="recipe-history-list">{recentSummaries.map((summary) =>
+        <button className="recipe-history-week" type="button" key={summary.week}
+          onClick={() => onRoute({ view: "week", week: summary.week })}>
+          <strong>{weekLabel(summary.week)}</strong>
+          <span>{summary.meals?.map((meal) => `${DAYS[meal.day]}: ${meal.title}`).join(" · ") ?? summary.titles.join(" · ")}</span>
+        </button>)}</div>
+    </section>}
     <div className={`collection-grid${compact ? " is-compact" : ""}`}>
-      {filtered.map((recipe) => <button key={recipe.id} type="button" className="collection-card"
-        onClick={() => onRoute({ view: "recipes", recipe: recipe.id, q: query || undefined,
-          category: category === "all" ? undefined : category, protein: protein === "all" ? undefined : protein,
-          scope: scope === "starter-and-household" ? undefined : scope })}>
-        <div className="collection-image"><img src={recipe.image} alt="" loading="lazy" /></div>
-        <div className="meal-copy"><div className="recipe-meta"><span>{CATEGORIES[recipe.category]}</span><span>{recipe.prepMinutes + recipe.cookMinutes} min</span></div>
-          <h3>{recipe.title}</h3><p>{recipe.description}</p>
-          {recipe.source === "collection" ? <p className="fineprint">Starter recipe</p>
-            : user && !canEditRecipe(recipe, user) ? <p className="fineprint">Shared by another household</p> : null}
-        </div>
-      </button>)}
+      {filtered.map((recipe) => <div className="recipe-card" key={recipe.id}>
+        <button type="button" className="collection-card"
+          onClick={() => onRoute({ view: "recipes", recipe: recipe.id, q: query || undefined,
+            category: category === "all" ? undefined : category, protein: protein === "all" ? undefined : protein,
+            scope: scope === "starter-and-household" ? undefined : scope })}>
+          <div className="collection-image"><img src={recipe.image} alt="" loading="lazy" /></div>
+          <div className="meal-copy"><div className="recipe-meta"><span>{CATEGORIES[recipe.category]}</span><span>{recipe.prepMinutes + recipe.cookMinutes} min</span></div>
+            <h3>{recipe.title}</h3><p>{recipe.description}</p>
+            {lastPlanned.has(recipe.id) && <p className="fineprint">Last planned {weekLabel(lastPlanned.get(recipe.id)!)}</p>}
+            {recipe.source === "collection" ? <p className="fineprint">Starter recipe</p>
+              : user && !canEditRecipe(recipe, user) ? <p className="fineprint">Shared by another household</p> : null}
+          </div>
+        </button>
+        <Button className="favorite-toggle" variant="subtle" type="button" aria-pressed={favoriteIds.includes(recipe.id)}
+          aria-label={`${favoriteIds.includes(recipe.id) ? "Remove from" : "Add to"} favourites: ${recipe.title}`}
+          onClick={() => void toggleFavorite(recipe)}>{favoriteIds.includes(recipe.id) ? "★" : "☆"}</Button>
+      </div>)}
       {!loading && filtered.length === 0 && <p className="notice">No recipes match. Clear the search or a filter, or add your own.</p>}
     </div>
     <p className="fineprint collection-note">Photos are serving suggestions and may not show the exact recipe. Check ingredient labels for allergens and follow safe food-handling guidance.</p>
@@ -1796,6 +1955,64 @@ function WeeksPage({ summaries, recipeCount, onWeek, onPlan }: {
   </>;
 }
 
+function CopyPreviousWeek({ weekKey, onCopied, notify }: {
+  weekKey: string;
+  onCopied: (week: Week) => void;
+  notify: (message: string, error?: boolean) => void;
+}) {
+  const [opened, setOpened] = useState(false);
+  const [summaries, setSummaries] = useState<Summary[]>([]);
+  const [selected, setSelected] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+  const earlierWeeks = summaries.filter((summary) => summary.week < weekKey).sort((a, b) => b.week.localeCompare(a.week));
+
+  async function open() {
+    setOpened(true);
+    if (summaries.length) return;
+    setLoading(true);
+    setError("");
+    try {
+      const available = await api<Summary[]>("/weeks");
+      setSummaries(available);
+      setSelected(available.filter((summary) => summary.week < weekKey)
+        .sort((a, b) => b.week.localeCompare(a.week))[0]?.week ?? "");
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "Couldn't load earlier weeks.");
+    } finally { setLoading(false); }
+  }
+  async function copy() {
+    if (!selected) return;
+    setSaving(true);
+    setError("");
+    try {
+      onCopied(await api<Week>(`/weeks/${weekKey}/copy`, { fromWeek: selected }));
+      notify("Week copied as a draft. Review it before locking it in.");
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "The week couldn't be copied.");
+    } finally { setSaving(false); }
+  }
+  return <section className="copy-week-panel">
+    <Button className="button secondary" onClick={() => void open()}>Copy an earlier week</Button>
+    {opened && <>
+      {loading ? <p className="muted">Finding earlier weeks...</p> : earlierWeeks.length
+        ? <div className="copy-week-controls">
+          <Field label="Copy meals and settings from">
+            <select aria-label="Week to copy" value={selected} onChange={(event) => setSelected(event.currentTarget.value)}>
+              {earlierWeeks.map((summary) => <option value={summary.week} key={summary.week}>{weekLabel(summary.week)}</option>)}
+            </select>
+          </Field>
+          <Button className="button" disabled={!selected || saving} onClick={() => void copy()}>
+            {saving ? "Copying..." : "Copy week"}
+          </Button>
+        </div>
+        : !loading && <p className="muted">There aren't any earlier planned weeks to copy yet.</p>}
+      {error && <p className="notice" role="alert">{error}</p>}
+    </>}
+  </section>;
+}
+
 function WeekPage({ week, weekKey, user, onWeek, onRoute, onModal, notify, run, changeShopping, shopping }: {
   week: Week | null;
   weekKey: string;
@@ -1830,6 +2047,7 @@ function WeekPage({ week, weekKey, user, onWeek, onRoute, onModal, notify, run, 
   if (!week) return <>
     <div className="action-row"><Button className="text-button" variant="subtle" onClick={navigateBack}>All weeks</Button></div>
     <PageHeading title={weekLabel(weekKey)} description="Choose the nights that need dinner, then set a few rules." />
+    <CopyPreviousWeek weekKey={weekKey} notify={notify} onCopied={onWeek} />
     <PlanningForm week={null} weekKey={weekKey} onSaved={(updated) => {
       onWeek(updated);
       notify("Draft ready. Swap anything you don't fancy.");
