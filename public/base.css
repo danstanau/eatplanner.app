@@ -296,7 +296,6 @@ dialog h2 + .muted { margin-top: 10px; }
   top: -20px;
   z-index: 2;
   display: flex;
-  flex-direction: row-reverse;
   gap: 8px;
   width: max-content;
   /* The controls overlay the content without adding height. */
