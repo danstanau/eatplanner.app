@@ -6,7 +6,7 @@ import {
 import {
   addDays, api, CATEGORIES, dateLabel, DAYS, ingredientLine, mondayFor, parseIngredientLines,
   PROTEINS, readRoute, RECIPE_SCOPES, shoppingText, today, weekLabel, writeRoute,
-  type AppRoute, type HouseholdShopping, type ImageCredit, type Ingredient, type Meal, type Recipe, type RecipeScope, type Summary, type User, type Week,
+  type AppRoute, type HouseholdProfile, type HouseholdShopping, type ImageCredit, type Ingredient, type Meal, type Recipe, type RecipeScope, type Summary, type User, type Week,
 } from "./shared";
 
 type Route = AppRoute;
@@ -22,7 +22,7 @@ type ModalState =
   | { kind: "share-shopping"; week: Week; items: Ingredient[] }
   | null;
 type Household = { id: string; name: string };
-type Session = { enabled: boolean; authenticated: boolean; user?: User };
+type Session = { enabled: boolean; authenticated: boolean; user?: User & { profile?: HouseholdProfile } };
 type PlanningRules = {
   differentProteins: boolean;
   overlapIngredients: boolean;
@@ -115,6 +115,7 @@ export function App() {
   const [adminRefresh, setAdminRefresh] = useState(0);
   const [shopping, setShopping] = useState<HouseholdShopping | null>(null);
   const authenticated = Boolean(session?.authenticated);
+  const profileSelected = Boolean(!session?.enabled || session.user?.profile);
   const modalTitle = modal?.kind === "recipe" ? modal.recipe.title
     : modal?.kind === "edit-recipe" ? modal.recipe ? `Edit ${modal.recipe.title}` : "Add a recipe"
       : modal?.kind === "edit-week" ? "Change planning rules"
@@ -150,7 +151,7 @@ export function App() {
   const loadSession = useCallback(async () => {
     const current = await api<Session>("/auth/session");
     setSession(current);
-    if (current.authenticated || !current.enabled) setRecipes(await api<Recipe[]>("/recipes"));
+    if ((current.authenticated && current.user?.profile) || (!current.enabled)) setRecipes(await api<Recipe[]>("/recipes"));
     else setRecipes([]);
     return current;
   }, []);
@@ -168,7 +169,7 @@ export function App() {
   }, [applyShopping]);
 
   useEffect(() => {
-    if (!session || (session.enabled && !session.authenticated)) return;
+    if (!session || (session.enabled && (!session.authenticated || !session.user?.profile))) return;
     let active = true;
     const refresh = async () => {
       try {
@@ -192,6 +193,10 @@ export function App() {
         const currentSession = session ?? await loadSession();
         const currentRoute = readRoute();
         if (currentSession.enabled && !currentSession.authenticated) {
+          if (active) setRoute(currentRoute);
+          return;
+        }
+        if (currentSession.enabled && !currentSession.user?.profile) {
           if (active) setRoute(currentRoute);
           return;
         }
@@ -219,7 +224,7 @@ export function App() {
   }, [toast]);
 
   useEffect(() => {
-    if (!authenticated) return;
+    if (!authenticated || !profileSelected) return;
     const recipe = recipes.find((item) => item.id === route.recipe);
     if (route.edit === "new") setModal({ kind: "edit-recipe" });
     else if (recipe && route.edit === "1" && session?.user && canEditRecipe(recipe, session.user)) setModal({ kind: "edit-recipe", recipe });
@@ -228,11 +233,12 @@ export function App() {
       const day = route.view === "week" && route.day ? Number(route.day) : undefined;
       setModal({ kind: "recipe", recipe, servings: currentWeek?.people ?? recipe.servings, week: currentWeek?.week, day });
     }
-  }, [route.recipe, route.edit, route.view, route.week, route.day, recipes, authenticated, session?.user, week]);
+  }, [route.recipe, route.edit, route.view, route.week, route.day, recipes, authenticated, profileSelected, session?.user, week]);
 
   const page = useMemo(() => {
     if (!session) return <Loading message="Setting the table..." />;
     if (session.enabled && !authenticated) return <Login notify={notify} />;
+    if (session.enabled && authenticated && !profileSelected) return <ProfilePicker notify={notify} onSelected={loadSession} />;
     if (loading || busy) return <Loading message={route.view === "week" ? "Opening your week..." : "Finding your weeks..."} />;
     if (route.view === "week" && route.week) return <WeekPage
       key={route.week} week={week} weekKey={route.week} user={session.user}
@@ -245,7 +251,7 @@ export function App() {
     if (route.view === "admin") return <AdminPage key={adminRefresh} user={session.user} onModal={setModal} />;
     return <WeeksPage summaries={summaries} recipeCount={recipes.length} onWeek={(key) => navigate({ view: "week", week: key })}
       onPlan={(key) => navigate({ view: "week", week: key })} />;
-  }, [session, authenticated, loading, busy, route, week, recipes, summaries, notify, run, navigate, adminRefresh, shopping, changeShopping]);
+  }, [session, authenticated, profileSelected, loading, busy, route, week, recipes, summaries, notify, run, navigate, adminRefresh, shopping, changeShopping, loadSession]);
 
   if (window.location.pathname === "/login" && session?.enabled && authenticated) {
     window.location.replace(new URLSearchParams(window.location.search).get("next") ?? "/");
@@ -255,6 +261,8 @@ export function App() {
     ? <SalesPage />
     : session?.enabled && !authenticated
     ? <Login notify={notify} theme={theme} setTheme={setTheme} />
+    : session?.enabled && !profileSelected
+    ? <ProfilePicker notify={notify} onSelected={loadSession} />
     : <div className="app-shell">
       <header className="topbar">
         <a className="brand" href="/"><img src="/favicon.svg" alt="" width="64" height="64" />eatplanner<span>.app</span></a>
@@ -277,6 +285,13 @@ export function App() {
         {session?.user?.isAdmin && <ActionIcon id="nav-admin" className="admin-link" variant="subtle" aria-label="Admin" title="Admin"
           aria-current={route.view === "admin" ? "page" : undefined} onClick={() => navigate({ view: "admin" })}>
           <svg className="icon" aria-hidden="true"><use href="/icons.svg#settings" /></svg></ActionIcon>}
+        {session?.enabled && session.user?.profile && <Button id="switch-profile" className="text-button" variant="subtle"
+          onClick={() => void run(async () => {
+            await api("/profiles/clear", {});
+            await loadSession();
+          })}>
+          {session.user.profile.name}
+        </Button>}
         {session?.enabled && <Button id="sign-out" className="text-button" variant="subtle" onClick={() => void run(async () => {
           await api("/auth/logout", {});
           window.location.assign("/login");
@@ -390,7 +405,10 @@ function HouseholdShoppingRow({ item, changeShopping, run }: {
   }}>
     <Checkbox checked={item.checked} aria-label={`Mark ${item.name} as ${item.checked ? "needed" : "bought"}`}
       onChange={(event) => { const checked = event.currentTarget.checked; void run(() => changeShopping(path, { checked }, "PATCH")); }} />
-    <TextInput aria-label={`Edit ${item.name}`} value={name} maxLength={200} onChange={(event) => setName(event.currentTarget.value)} />
+    <div className="household-shopping-item">
+      <TextInput aria-label={`Edit ${item.name}`} value={name} maxLength={200} onChange={(event) => setName(event.currentTarget.value)} />
+      {item.createdBy && <small className="muted">Added by {item.createdBy.name}</small>}
+    </div>
     <Button className="button secondary" type="submit" disabled={!name.trim() || name.trim() === item.name}>Save</Button>
     <Button className="button secondary" type="button" aria-label={`Remove ${item.name}`}
       onClick={() => void run(() => changeShopping(path, {}, "DELETE"))}>Remove</Button>
@@ -1496,6 +1514,66 @@ function RecipeEditor({ recipe, onSaved, notify }: {
       </div>
     </form>
   </>;
+}
+
+function ProfilePicker({ notify, onSelected }: {
+  notify: (message: string, error?: boolean) => void;
+  onSelected: () => Promise<Session>;
+}) {
+  const [profiles, setProfiles] = useState<HouseholdProfile[]>([]);
+  const [name, setName] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [busy, setBusy] = useState(false);
+  useEffect(() => {
+    let active = true;
+    void api<HouseholdProfile[]>("/profiles").then((items) => {
+      if (active) setProfiles(items);
+    }).catch((error) => notify(error instanceof Error ? error.message : "Couldn't load profiles.", true))
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
+  }, [notify]);
+  const select = async (profile: HouseholdProfile) => {
+    setBusy(true);
+    try {
+      await api("/profiles/select", { id: profile.id });
+      await onSelected();
+    } catch (error) {
+      notify(error instanceof Error ? error.message : "Couldn't choose this profile.", true);
+    } finally {
+      setBusy(false);
+    }
+  };
+  const create = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const value = name.trim();
+    if (!value) return;
+    setBusy(true);
+    try {
+      await api("/profiles", { name: value });
+      await onSelected();
+    } catch (error) {
+      notify(error instanceof Error ? error.message : "Couldn't create this profile.", true);
+    } finally {
+      setBusy(false);
+    }
+  };
+  return <div className="profile-picker">
+    <PageHeading title="Who is using eatplanner?" description="Choose your profile so shopping list items can be attributed to you." />
+    {loading ? <Loading message="Finding profiles..." /> : <>
+      {profiles.length > 0 && <div className="profile-list">
+        {profiles.map((profile) =>
+          <Button key={profile.id} className="profile-button" type="button" disabled={busy}
+            onClick={() => void select(profile)}>{profile.name}</Button>)}
+      </div>}
+      <form className="profile-create" onSubmit={(event) => void create(event)}>
+        <TextInput label={profiles.length ? "Or add a profile" : "Your name"} value={name} maxLength={200}
+          autoComplete="name" disabled={busy} onChange={(event) => setName(event.currentTarget.value)} />
+        <Button className="button" type="submit" disabled={!name.trim() || busy}>
+          {profiles.length ? "Create profile" : "Create my profile"}
+        </Button>
+      </form>
+    </>}
+  </div>;
 }
 
 function Login({ notify, theme, setTheme }: {

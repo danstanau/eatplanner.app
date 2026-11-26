@@ -146,17 +146,51 @@ export function createApp(services: Services, store = new Store(), options: { al
   app.get("/api/status", async (_request, response) => {
     response.json(await services.getStatus());
   });
+  const profileName = z.string().trim().min(1).max(200).regex(/^[^\u0000-\u001f\u007f]+$/, "Use a name on one line.");
+  function requireProfile(response: Response) {
+    const profile = response.locals.identity?.profile;
+    if (!profile) throw new AppError(409, "Choose who you are before making changes.");
+    return profile;
+  }
+  app.get("/api/profiles", async (_request, response) => {
+    response.json((await storeFor(response).read()).profiles);
+  });
+  app.post("/api/profiles", async (request, response) => {
+    const { name } = z.object({ name: profileName }).strict().parse(request.body);
+    const profile = await storeFor(response).update((state) => {
+      const existing = state.profiles.find((item) => item.name.toLowerCase() === name.toLowerCase());
+      if (existing) return existing;
+      if (state.profiles.length >= 100) throw new AppError(400, "This household can have up to 100 profiles.");
+      const created = { id: randomUUID(), name };
+      state.profiles.push(created);
+      return created;
+    });
+    response.locals.selectProfile?.(profile);
+    response.status(201).json(profile);
+  });
+  app.post("/api/profiles/select", async (request, response) => {
+    const { id } = z.object({ id: z.uuid() }).strict().parse(request.body);
+    const profile = (await storeFor(response).read()).profiles.find((item) => item.id === id);
+    if (!profile) throw new AppError(404, "This profile no longer exists.");
+    response.locals.selectProfile?.(profile);
+    response.json(profile);
+  });
+  app.post("/api/profiles/clear", async (_request, response) => {
+    response.locals.clearProfile?.();
+    response.json({ selected: false });
+  });
   const shoppingName = z.string().trim().min(1).max(200).regex(/^[^\u0000-\u001f\u007f]+$/, "Use a name on one line.");
   app.get("/api/shopping", async (_request, response) => {
     response.json((await storeFor(response).read()).shopping);
   });
   app.post("/api/shopping", async (request, response) => {
     const { names } = z.object({ names: z.array(shoppingName).min(1).max(500) }).strict().parse(request.body);
+    const profile = requireProfile(response);
     response.status(201).json(await storeFor(response).update((state) => {
       const existing = new Set(state.shopping.items.map((item) => item.name.toLowerCase()));
       for (const name of names) {
         if (!existing.has(name.toLowerCase())) {
-          state.shopping.items.push({ id: randomUUID(), name, checked: false });
+          state.shopping.items.push({ id: randomUUID(), name, checked: false, createdBy: profile });
           existing.add(name.toLowerCase());
         }
       }

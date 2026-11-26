@@ -151,6 +151,12 @@
 .household-shopping-add > div, .household-shopping-row > div:nth-child(2) { flex: 1; min-width: 0; }
 .household-shopping-add, .household-shopping-list { max-width: 720px; }
 .household-shopping-row { align-items: center; }
+.household-shopping-item { min-width: 0; }
+.household-shopping-item small { display: block; margin-top: 4px; }
+.profile-picker { max-width: 560px; margin: 72px auto; }
+.profile-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin: 24px 0; }
+.profile-button { min-height: 96px; font-size: var(--text-lg); }
+.profile-create { display: grid; grid-template-columns: 1fr auto; align-items: end; gap: 12px; }
 .shopping-panel > .muted { max-width: 78ch; margin-bottom: 12px; }
 .shopping-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 48px; margin-top: 24px; }
 .shopping-layout h3 { margin-bottom: 10px; font-size: var(--text-lg); }

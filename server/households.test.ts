@@ -92,6 +92,11 @@ test("super admin manages isolated households and persists their data under DATA
   assert.equal((await request("/shopping")).status, 401);
   assert.deepEqual(await (await request("/shopping", alphaCookie)).json(), { revision: 0, items: [] });
   assert.equal((await request("/shopping", alphaCookie, { names: ["  "] })).status, 400);
+  const alphaProfileResponse = await request("/profiles", alphaCookie, { name: "Dan" });
+  assert.equal(alphaProfileResponse.status, 201);
+  const alphaProfile = await alphaProfileResponse.json();
+  assert.deepEqual((await (await request("/auth/session", alphaCookie)).json()).user.profile, alphaProfile);
+  assert.equal((await request("/profiles/select", secondAlphaCookie, { id: alphaProfile.id })).status, 200);
   const additions = await Promise.all([
     request("/shopping", alphaCookie, { names: ["Milk", "Eggs"] }),
     request("/shopping", secondAlphaCookie, { names: ["Bread"] }),
@@ -104,13 +109,17 @@ test("super admin manages isolated households and persists their data under DATA
   assert.equal((await request("/shopping", alphaCookie, { names: ["oat milk"] })).status, 201);
   const editedShopping = await (await request("/shopping", alphaCookie)).json();
   assert.equal(editedShopping.items.length, 3);
-  assert.deepEqual(editedShopping.items.find((item: { id: string }) => item.id === milk.id), { id: milk.id, name: "Oat milk", checked: true });
+  const editedMilk = editedShopping.items.find((item: { id: string }) => item.id === milk.id);
+  assert.equal(editedMilk.id, milk.id);
+  assert.equal(editedMilk.name, "Oat milk");
+  assert.equal(editedMilk.checked, true);
+  assert.deepEqual(editedMilk.createdBy, alphaProfile);
   assert.deepEqual(await (await request("/shopping", betaCookie)).json(), { revision: 0, items: [] });
   assert.equal((await request(`/shopping/${milk.id}`, betaCookie, {}, "DELETE")).status, 404);
   assert.equal((await request(`/shopping/${milk.id}`, alphaCookie, {}, "DELETE")).status, 200);
   assert.equal((await request(`/shopping/${milk.id}`, alphaCookie, {}, "DELETE")).status, 404);
   assert.deepEqual((await (await request("/auth/session", alphaCookie)).json()).user, {
-    id: alpha.id, name: "Alpha", isAdmin: false,
+    id: alpha.id, name: "Alpha", isAdmin: false, profile: alphaProfile,
   });
   for (const cookie of [alphaCookie, betaCookie]) {
     assert.equal((await request("/admin/households", cookie)).status, 403);

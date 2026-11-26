@@ -15,6 +15,7 @@ export interface AuthIdentity {
   id: string;
   name: string;
   isAdmin: boolean;
+  profile?: { id: string; name: string };
 }
 
 declare global {
@@ -22,6 +23,8 @@ declare global {
     interface Locals {
       identity?: AuthIdentity;
       styleNonce?: string;
+      selectProfile?: (profile: { id: string; name: string }) => void;
+      clearProfile?: () => void;
     }
   }
 }
@@ -64,7 +67,7 @@ const digest = (value: string) => createHash("sha256").update(value).digest();
 
 export function householdAuth(config?: AuthConfig, households = new Households()) {
   const router = express.Router();
-  const sessions = new Map<string, { expires: number; identity: AuthIdentity; passwordHash: string }>();
+  const sessions = new Map<string, { expires: number; identity: AuthIdentity; passwordHash: string; profile?: { id: string; name: string } }>();
   const attempts = new Map<string, { count: number; expires: number }>();
   const sessionLifetime = 7 * 24 * 60 * 60 * 1000;
   const attemptWindow = 15 * 60 * 1000;
@@ -92,14 +95,24 @@ export function householdAuth(config?: AuthConfig, households = new Households()
     const key = sessionKey(request);
     const session = key ? sessions.get(key) : undefined;
     if (session && key) {
-      if (session.identity.isAdmin) response.locals.identity = session.identity;
+      if (session.identity.isAdmin) {
+        response.locals.identity = { ...session.identity, ...(session.profile ? { profile: session.profile } : {}) };
+      }
       else {
         const household = await households.findById(session.identity.id);
         if (household && household.passwordHash === session.passwordHash) {
-          response.locals.identity = { id: household.id, name: household.name, isAdmin: false };
+          response.locals.identity = { id: household.id, name: household.name, isAdmin: false, ...(session.profile ? { profile: session.profile } : {}) };
         } else sessions.delete(key);
       }
     }
+    if (key) response.locals.selectProfile = (profile) => {
+      const active = sessions.get(key);
+      if (active) active.profile = profile;
+    };
+    if (key) response.locals.clearProfile = () => {
+      const active = sessions.get(key);
+      if (active) delete active.profile;
+    };
     next();
   });
   router.get("/api/auth/session", (_request, response) => {

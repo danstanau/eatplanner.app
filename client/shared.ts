@@ -46,7 +46,11 @@ export type Ingredient = { name: string; quantity: number; unit: string; pantry:
 export type ImageCredit = { creator: string; sourceUrl: string; creatorUrl?: string; license: string; licenseUrl: string };
 export type Meal = { day: number; recipe: Recipe; cooked?: boolean } | { day: number; type: "custom"; title: string };
 export type ShoppingItem = Ingredient;
-export type HouseholdShopping = { revision: number; items: { id: string; name: string; checked: boolean }[] };
+export type HouseholdProfile = { id: string; name: string };
+export type HouseholdShopping = {
+  revision: number;
+  items: { id: string; name: string; checked: boolean; createdBy?: HouseholdProfile | null }[];
+};
 export type Week = {
   week: string;
   people: number;
