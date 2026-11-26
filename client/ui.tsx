@@ -812,7 +812,7 @@ function RecipeDetail({ recipe, servings, week, day, currentWeek, user, onWeek, 
       catch (error) { console.error(error); notify("Cooking progress couldn't be saved in this browser.", true); }
     }
   }
-  const [showAll, setShowAll] = useState(false);
+  const [showAll, setShowAll] = useState(true);
   const [busy, setBusy] = useState(false);
   const credit = recipe.imageCredit;
   const servingsMultiplier = servings / recipe.servings;
