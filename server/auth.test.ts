@@ -36,7 +36,7 @@ test("household login protects private pages and APIs, rotates sessions and sign
     headers: { "Content-Type": "application/json", Origin: auth.publicOrigin, ...headers },
     body: JSON.stringify(body),
   });
-  for (const path of ["/planner.js", "/images/chicken.jpg"]) {
+  for (const path of ["/planner.js", "/images/beef.jpg"]) {
     const response = await fetch(base + path, { redirect: "manual" });
     assert.equal(response.status, 302);
     assert.ok(response.headers.get("location")?.startsWith("/login?next="));
@@ -48,7 +48,7 @@ test("household login protects private pages and APIs, rotates sessions and sign
     assert.match(await response.text(), /<div id="root">/);
     assert.equal(response.headers.get("cache-control"), "no-store");
   }
-  for (const path of ["/login", "/login.js", "/theme.js", "/base.css", "/fonts/bricolage-grotesque.woff2", "/login.css", "/login-preview.svg", "/favicon.svg", "/apple-touch-icon.png"]) {
+  for (const path of ["/login", "/login.js", "/theme.js", "/base.css", "/fonts/bricolage-grotesque.woff2", "/login.css", "/login-preview.svg", "/favicon.svg", "/apple-touch-icon.png", "/images/pasta.jpg"]) {
     assert.equal((await fetch(base + path)).status, 200);
   }
   const loginPage = await fetch(`${base}/login`);
