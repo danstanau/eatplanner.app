@@ -863,12 +863,14 @@ function showRecipe(recipe, servings = recipe.servings, weekKey, day, updateUrl 
   renderStep();
   const singleStep = h("div", { className: "single-step" }, stepCount, stepText, h("div", { className: "step-controls" }, previous, next));
   const methodToggle = h("summary", { text: "See the whole method" });
-  const allSteps = h("details", { className: "all-steps" }, methodToggle,
+  const allSteps = h("details", { className: "all-steps", open: true }, methodToggle,
     h("ol", {}, ...recipe.steps.map((text) => h("li", { text }))));
-  allSteps.addEventListener("toggle", () => {
+  function renderMethod() {
     singleStep.hidden = allSteps.open;
     methodToggle.textContent = allSteps.open ? "Back to step-by-step" : "See the whole method";
-  });
+  }
+  allSteps.addEventListener("toggle", renderMethod);
+  renderMethod();
   const credit = photoCreditParts(recipe.imageCredit);
   const scheduledMeal = weekKey !== undefined && weekKey === state.week?.week
     ? state.week.meals.find((meal) => meal.day === day && meal.recipe.id === recipe.id)

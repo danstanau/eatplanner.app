@@ -289,7 +289,7 @@ Keep the two numbered sections; they read well. Changes:
   - Previous and Next as full-width 56px buttons side by side, plus left and right arrow-key support;
   - a "Focus" toggle that expands cook mode to fill the dialog, hides everything else, and requests a screen wake lock (`navigator.wakeLock`, where available) so the phone stays awake while cooking;
   - on the last step, "Ready to serve" plays the small confetti burst.
-- "See the whole method" stays as a disclosure, with step numbers set in Fraunces.
+- "See the whole method" is open by default as a disclosure, with step numbers set in Fraunces.
 
 ### 5.6 Swap dialog
 
